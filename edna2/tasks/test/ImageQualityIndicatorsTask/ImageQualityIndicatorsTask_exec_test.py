@@ -28,7 +28,7 @@ import unittest
 
 from utils import UtilsTest
 
-from tasks import ImageQualityIndicatorsTask
+from tasks.ImageQualityIndicatorsTask import ImageQualityIndicatorsTask
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('edna2')

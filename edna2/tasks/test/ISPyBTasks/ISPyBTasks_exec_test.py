@@ -22,7 +22,7 @@ import unittest
 
 from utils import UtilsTest
 
-from tasks import ISPyBRetrieveDataCollection
+from tasks.ISPyBTasks import ISPyBRetrieveDataCollection
 
 
 class ISPyBRetrieveDataCollectionExecTest(unittest.TestCase):

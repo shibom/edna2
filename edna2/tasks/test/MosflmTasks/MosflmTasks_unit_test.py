@@ -31,7 +31,7 @@ import unittest
 from utils import UtilsTest
 
 from tasks.MosflmTasks import AbstractMosflmTask
-from tasks import MosflmIndexingTask
+from tasks.MosflmTasks import MosflmIndexingTask
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('edna2')

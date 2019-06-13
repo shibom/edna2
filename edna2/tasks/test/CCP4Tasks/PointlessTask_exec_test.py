@@ -30,7 +30,7 @@ import unittest
 from utils import UtilsTest
 from utils import UtilsConfig
 
-from tasks import PointlessTask
+from tasks.CCP4Tasks import PointlessTask
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('edna2')

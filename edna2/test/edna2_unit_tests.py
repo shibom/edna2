@@ -30,6 +30,8 @@ import unittest
 if __name__ == "__main__":
     edna2dir = os.path.dirname(os.path.dirname(__file__))
     testdata = os.path.join(os.path.dirname(edna2dir), "testdata", "testdir")
+    if not os.path.exists(testdata):
+        os.makedirs(testdata, 0o755)
     os.chdir(testdata)
     suite = unittest.TestLoader().discover(edna2dir, pattern = "*_unit_test.py")
     unittest.TextTestRunner(verbosity=2).run(suite)

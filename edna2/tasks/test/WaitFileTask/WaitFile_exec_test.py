@@ -27,7 +27,7 @@ import logging
 import unittest
 
 from utils import UtilsTest
-from tasks import WaitFileTask
+from tasks.WaitFileTask import WaitFileTask
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('edna2')

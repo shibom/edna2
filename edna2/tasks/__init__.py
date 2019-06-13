@@ -23,14 +23,3 @@ __authors__ = ["O. Svensson"]
 __license__ = "MIT"
 __date__ = "21/04/2019"
 
-from tasks.AbstractTask import AbstractTask
-from tasks.CCP4Tasks import AimlessTask
-from tasks.CCP4Tasks import PointlessTask
-from tasks.DozorTasks import ExecDozor
-from tasks.DozorTasks import ControlDozor
-from tasks.ReadImageHeader import ReadImageHeader
-from tasks.WaitFileTask import WaitFileTask
-from tasks.ISPyBTasks import ISPyBRetrieveDataCollection
-from tasks.H5ToCBFTask import H5ToCBFTask
-from tasks.MosflmTasks import MosflmIndexingTask
-from tasks.ImageQualityIndicatorsTask import ImageQualityIndicatorsTask

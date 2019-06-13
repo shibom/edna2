@@ -29,7 +29,7 @@ import json
 import unittest
 
 from utils import UtilsTest
-from tasks import ControlDozor
+from tasks.DozorTasks import ControlDozor
 
 
 class ControlDozorPlotExecTest(unittest.TestCase):

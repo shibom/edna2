@@ -27,7 +27,7 @@ import os
 import json
 import unittest
 
-from tasks import ExecDozor
+from tasks.DozorTasks import ExecDozor
 
 from utils import UtilsTest
 

@@ -31,9 +31,9 @@ __date__ = "10/05/2019"
 import logging
 import pathlib
 
-from tasks import AbstractTask
-from tasks import WaitFileTask
-from tasks import ControlDozor
+from tasks.AbstractTask import AbstractTask
+from tasks.WaitFileTask import WaitFileTask
+from tasks.DozorTasks import ControlDozor
 
 from utils import UtilsImage
 from utils import UtilsConfig

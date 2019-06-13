@@ -26,7 +26,7 @@ __date__ = "21/04/2019"
 import pathlib
 import unittest
 
-from tasks import H5ToCBFTask
+from tasks.H5ToCBFTask import H5ToCBFTask
 
 from utils import UtilsTest
 from utils import UtilsImage

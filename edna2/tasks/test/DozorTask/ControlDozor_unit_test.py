@@ -34,7 +34,7 @@ import json
 import unittest
 
 # from controltasks import ControlDozor
-from tasks import ControlDozor
+from tasks.DozorTasks import ControlDozor
 
 
 class ControlDozorUnitTest(unittest.TestCase):

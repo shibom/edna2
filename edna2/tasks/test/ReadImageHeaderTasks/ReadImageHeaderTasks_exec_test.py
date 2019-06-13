@@ -21,7 +21,7 @@ import unittest
 
 from utils import UtilsTest
 
-from tasks import ReadImageHeader
+from tasks.ReadImageHeader import ReadImageHeader
 
 
 class ReadImageHeaderTasksExecTest(unittest.TestCase):

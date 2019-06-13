@@ -30,7 +30,8 @@ import unittest
 
 from utils import UtilsConfig
 from utils import UtilsTest
-from tasks import ControlDozor
+
+from tasks.DozorTasks import ControlDozor
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('edna2')
