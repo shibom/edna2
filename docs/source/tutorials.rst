@@ -7,7 +7,7 @@ Setup for tutorials:
 
     % mkdir edna2_tests
     % cd edna2_tests
-    % git clone https://gitlab.esrf.fr/svensson/edna2
+    % git clone https://github.com/olofsvensson/edna2
     % export PYTHONPATH=`pwd`/edna2/edna2
     % export PATH=`pwd`/edna2/bin:$PATH
 

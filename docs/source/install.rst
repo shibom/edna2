@@ -6,6 +6,6 @@ you can install EDNA2 by following these steps:
 
 .. code-block:: bash
 
-    git clone https://gitlab.esrf.fr/svensson/edna2
+    git clone https://github.com/olofsvensson/edna2
     cd edna2
     python setup.py install

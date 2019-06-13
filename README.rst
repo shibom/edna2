@@ -32,8 +32,8 @@ The EDNA2 project provides a setup.py file for installation.
 Contribute
 ----------
 
-- Issue Tracker: https://gitlab.esrf.fr/svensson/edna2/issues
-- Source Code: https://gitlab.esrf.fr/svensson/edna2
+- Issue Tracker: https://github.com/olofsvensson/edna2/issues
+- Source Code: https://github.com/olofsvensson/edna2
 
 Support
 -------
@@ -44,5 +44,6 @@ License
 -------
 
 The source code of *edna2* is licensed under the MIT license.
-See the `LICENSE <https://github.com/silx-kit/silx/blob/master/LICENSE>`_ and
-`copyright <https://github.com/silx-kit/silx/blob/master/copyright>`_ files for details.
+See the `LICENSE <https://github.com/olofsvensson/edna2/blob/master/LICENSE>`_
+and `copyright <https://github.com/olofsvensson/edna2/blob/master/copyright>`_
+files for details.

@@ -1,5 +1,5 @@
 Project overview
 ================
 
-- `Source repository <https://gitlab.esrf.fr/svensson/edna2>`_
-- `Issue tracker <https://gitlab.esrf.fr/svensson/edna2/issues>`_
+- `Source repository <https://github.com/olofsvensson/edna2>`_
+- `Issue tracker <https://github.com/olofsvensson/edna2/issues>`_
