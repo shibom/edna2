@@ -1,0 +1,11 @@
+{
+	"doDistlSignalStrength": false,
+	"doIndexing": false,
+	"doUploadToIspyb": false,
+	"directory": "$EDNA2_TESTDATA_IMAGES",
+	"template": "mesh-test_1_####.cbf",
+	"startNo": 1,
+	"endNo": 5,
+    "batchSize": 5,
+    "fastMesh": false
+}

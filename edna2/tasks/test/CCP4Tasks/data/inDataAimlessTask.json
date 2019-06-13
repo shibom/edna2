@@ -1,0 +1,10 @@
+{
+	"input_file": "$EDNA2_TESTDATA_IMAGES/ep__unmerged_anom_pointless_multirecord.mtz",
+    "output_file": "$EDNA2_TMP_DATA/ep__anom_aimless.mtz",
+    "command_file": "$EDNA2_TASK_DATA/ep__anom_aimless.inp",
+    "dataCollectionID": 2179462,
+    "start_image": 1,
+    "end_image": 100,
+	"res": 1.750000e+00,
+    "anom": true
+}

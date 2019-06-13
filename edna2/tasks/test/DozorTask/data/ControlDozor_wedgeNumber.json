@@ -1,0 +1,8 @@
+{
+	"batchSize": 740,
+	"wedgeNumber": 10,
+    "directory": "/data/visitor/mx415/id30a2/20160315/RAW_DATA/test3",
+    "template": "mx415_1_%04d.cbf",
+    "startNo": 1,
+    "endNo": 740
+}

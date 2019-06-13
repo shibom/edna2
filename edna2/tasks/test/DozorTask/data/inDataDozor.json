@@ -1,0 +1,16 @@
+{
+	"detectorType": "pilatus6m",
+	"exposureTime": 0.1,
+	"spotSize":  3,
+	"detectorDistance": 269.60,
+	"wavelength": 0.976254,
+	"fractionPolatization": 0.99,
+	"orgx": 1216.90,
+	"orgy": 1259.98,
+	"oscillationRange": 0.2,
+	"imageStep": 0.2,
+	"startingAngle": 92.1515,
+	"firstImageNumber": 1,
+	"numberImages": 10,
+	"nameTemplateImage": "$EDNA2_TESTDATA_IMAGES/x_1_????.cbf"
+}

@@ -1,0 +1,461 @@
+#
+# Copyright (c) European Synchrotron Radiation Facility (ESRF)
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+
+__authors__ = ["O. Svensson"]
+__license__ = "MIT"
+__date__ = "10/05/2019"
+
+# Corresponding EDNA code:
+# https://github.com/olofsvensson/edna-mx
+# mxPluginExec/plugins/EDPluginGroupMOSFLM-v1.0/plugins/EDPluginMOSFLMv10.py
+# mxPluginExec/plugins/EDPluginGroupMOSFLM-v1.0/plugins/EDPluginMOSFLMIndexingv10.py
+
+import abc
+import pprint
+import logging
+import xmltodict
+
+from tasks.AbstractTask import AbstractTask
+
+from utils import UtilsPath
+from utils import UtilsConfig
+from utils import UtilsDnaTables
+
+logger = logging.getLogger('edna2')
+
+
+class AbstractMosflmTask(AbstractTask):
+    """
+    Common base class for all MOSLFM tasks
+    """
+
+    def run(self, inData):
+        commandLine = 'mosflm DNA dnaTables.xml'
+        listCommand = self.generateMOSFLMCommands(inData)
+        self.setLogFileName('mosflm.log')
+        self.runCommandLine(commandLine, listCommand=listCommand)
+        # Work in progress!
+        outData = self.parseMosflmOutput(self.getWorkingDirectory())
+        return outData
+
+    def generateMOSFLMCommands(self, inData):
+        """
+        This method creates a list of MOSFLM indexing commands given a valid
+        XSDataMOSFLMInput as self.getDataInput()
+        """
+        detector = inData['detector']
+        detectorType = detector['type']
+        detectorCommand = detectorType
+        # Check if reversephi and omega are configured
+        omega = UtilsConfig.get('MOSFLM', 'omega')
+        if omega is not None:
+            detectorCommand += " OMEGA {0}".format(omega)
+        reversePhi = UtilsConfig.get('MOSFLM', 'reversePhi')
+        if reversePhi is not None:
+            detectorCommand += " REVERSEPHI"
+        listCommand = [
+            "WAVELENGTH {0}".format(inData['wavelength']),
+            "DISTANCE {0}".format(inData['distance']),
+            "BEAM {0} {1}".format(inData['beam']['x'], inData['beam']['y']),
+            "DETECTOR {0}".format(detectorCommand),
+            "DIRECTORY {0}".format(inData['directory']),
+            "TEMPLATE {0}".format(inData['template'])
+        ]
+        if 'symmetry' in inData:
+            listCommand.append("SYMMETRY {0}".format(inData['symmetry']))
+        if 'mosaicity' in inData:
+            listCommand.append("MOSAIC {0}".format(inData['mosaicity']))
+
+        #     strNewmatFileName = self.getNewmatFileName()
+        #
+        #     xsDataNewmatMatrix = xsDataMOSFLMInput.getMatrix()
+        #     if (xsDataNewmatMatrix is not None):
+        #         self.writeDataMOSFLMNewmat(xsDataNewmatMatrix, self.getMatrixFileName())
+        #         listCommand.append("MATRIX " + self.getMatrixFileName())
+        #
+        # Add exclude regions if Pilatus
+        if detectorType == 'PILATUS':
+            if detector['numberPixelX'] == 1475 and \
+               detector['numberPixelY'] == 1679:                
+                # Pilatus 2M
+                listCommand.append("LIMITS EXCLUDE    0.0  83.76  288.96   85.14")
+                listCommand.append("LIMITS EXCLUDE    0.0 168.73  288.96  170.10")
+                listCommand.append("LIMITS EXCLUDE   33.54   0.0   36.63  253.87")
+                listCommand.append("LIMITS EXCLUDE   70.00   0.0   73.1   253.87")
+                listCommand.append("LIMITS EXCLUDE  106.46   0.0  109.56  253.87")
+                listCommand.append("LIMITS EXCLUDE  142.93   0.0  146.02  253.87")
+                listCommand.append("LIMITS EXCLUDE  179.39   0.0  182.49  253.87")
+                listCommand.append("LIMITS EXCLUDE  215.86   0.0  218.95  253.87")
+                listCommand.append("LIMITS EXCLUDE  252.32   0.0  255.42  253.87")
+            elif detector['numberPixelX'] == 2463 and \
+               detector['numberPixelY'] == 2527:
+                # Pilatus 6M
+                listCommand.append("LIMITS EXCLUDE  0.0 338.77 434.6 340.24")
+                listCommand.append("LIMITS EXCLUDE  0.0 253.80 434.6 255.28")
+                listCommand.append("LIMITS EXCLUDE  0.0 168.83 434.6 170.21")
+                listCommand.append("LIMITS EXCLUDE  0.0  83.86 434.6  85.24")
+                listCommand.append("LIMITS EXCLUDE 398.18  0.0 401.28 423.6")
+                listCommand.append("LIMITS EXCLUDE 361.72  0.0 364.81 423.6")
+                listCommand.append("LIMITS EXCLUDE 325.25  0.0 328.35 423.6")
+                listCommand.append("LIMITS EXCLUDE 288.79  0.0 291.88 423.6")
+                listCommand.append("LIMITS EXCLUDE 252.32  0.0 255.42 423.6")
+                listCommand.append("LIMITS EXCLUDE 215.86  0.0 218.96 423.6")
+                listCommand.append("LIMITS EXCLUDE 179.40  0.0 182.49 423.6")
+                listCommand.append("LIMITS EXCLUDE 142.93  0.0 145.86 423.6")
+                listCommand.append("LIMITS EXCLUDE 106.47  0.0 109.56 423.6")
+                listCommand.append("LIMITS EXCLUDE  70.00  0.0 73.10  423.6")
+                listCommand.append("LIMITS EXCLUDE  33.54  0.0 36.64  423.6")
+
+        # Check if raster is configured
+        raster = UtilsConfig.get('MOSFLM', 'raster')
+        if raster is not None:
+            listCommand.append("RASTER {0}".format(raster))
+        # Check if polarization is configured
+        polarization = UtilsConfig.get('MOSFLM', 'polarization')
+        if polarization is not None:
+            listCommand.append("POLARIZATION {0}".format(polarization))
+        return listCommand
+
+    def getNewmatFileName(self):
+        newmatFileName = self.__class__.__name__ + "_newmat.mat"
+        return newmatFileName
+    #
+    # def setNewmatFileName(self, _strMOSFLMNewmatFileName):
+    #     self.strMOSFLMNewmatFileName = _strMOSFLMNewmatFileName
+    #
+    # def getMatrixFileName(self):
+    #     if (self.strMOSFLMMatrixFileName is None):
+    #         self.strMOSFLMMatrixFileName = self.getScriptBaseName() + "_matrix.mat"
+    #     return self.strMOSFLMMatrixFileName
+    #
+    # def setMatrixFileName(self, _strMOSFLMMatrixFileName):
+    #     self.strMOSFLMMatrixFileName = _strMOSFLMMatrixFileName
+    #
+    def splitStringIntoListOfFloats(self, input):
+        listFloats = []
+        listString = input.split()
+        for element in listString:
+            if element != "":
+                listFloats.append(float(element))
+        return listFloats
+
+    #
+    # def getDataMOSFLMMatrix(self, _strMatrixFileName=None):
+    #     self.DEBUG("EDPluginMOSFLMv10.getDataMOSFLMMatrix")
+    #     strMatrixFileName = None
+    #     if (_strMatrixFileName is None):
+    #         strMatrixFileName = self.getMatrixFileName()
+    #     else:
+    #         strMatrixFileName = _strMatrixFileName
+    #     xsDataMOSFLMNewmatMatrix = self.getDataMOSFLMNewmat(strMatrixFileName)
+    #     return xsDataMOSFLMNewmatMatrix
+    #
+
+    def getNewmat(self, newMatFilePath):
+        mosflmNewmat = None
+        listOfListOfFloat = []
+        with open(str(newMatFilePath)) as f:
+            listLine = f.readlines()
+        # Convert into list of lists of float
+        for line in listLine:
+            if not line.startswith("SYMM"):
+                listOfListOfFloat.append(self.splitStringIntoListOfFloats(line))
+        # Fill in the data
+        newmat = {}
+
+        matrixA = [
+            listOfListOfFloat[0],
+            listOfListOfFloat[1],
+            listOfListOfFloat[2],
+        ]
+        newmat['matrixA'] = matrixA
+        newmat['missettingsAngles'] = listOfListOfFloat[3]
+        newmat['matrixU'] = [
+            listOfListOfFloat[4],
+            listOfListOfFloat[5],
+            listOfListOfFloat[6],
+        ]
+        cell = {
+            'a': listOfListOfFloat[7][0],
+            'b': listOfListOfFloat[7][1],
+            'c': listOfListOfFloat[7][2],
+            'alpha': listOfListOfFloat[7][3],
+            'beta': listOfListOfFloat[7][4],
+            'gamma': listOfListOfFloat[7][5]
+        }
+        newmat['cell'] = cell
+        return newmat
+    #
+    # def writeDataMOSFLMNewmat(self, _xsDataMOSFLNNewmat, _strNewmatFileName=None):
+    #     self.DEBUG("EDPluginMOSFLMv10.writeDataMOSFLMNewmat")
+    #     strNewmatFileName = None
+    #     if (_strNewmatFileName is None):
+    #         strNewmatFileName = self.getNewmatFileName()
+    #     else:
+    #         strNewmatFileName = _strNewmatFileName
+    #     matrixA = _xsDataMOSFLNNewmat.getAMatrix()
+    #     strNewmat = " %11.8f %11.8f %11.8f\n" % (
+    #     matrixA.getM11(), matrixA.getM12(), matrixA.getM13())
+    #     strNewmat += " %11.8f %11.8f %11.8f\n" % (
+    #     matrixA.getM21(), matrixA.getM22(), matrixA.getM23())
+    #     strNewmat += " %11.8f %11.8f %11.8f\n" % (
+    #     matrixA.getM31(), matrixA.getM32(), matrixA.getM33())
+    #     xsDataMOSFLMMissettingAngles = _xsDataMOSFLNNewmat.getMissettingAngles()
+    #     strNewmat += " %11.3f %11.3f %11.3f\n" % (xsDataMOSFLMMissettingAngles.getPhix().getValue(),
+    #                                               xsDataMOSFLMMissettingAngles.getPhiy().getValue(),
+    #                                               xsDataMOSFLMMissettingAngles.getPhiz().getValue())
+    #     XSDataMatrixDoubleU = _xsDataMOSFLNNewmat.getUMatrix()
+    #     strNewmat += " %11.7f %11.7f %11.7f\n" % (
+    #     XSDataMatrixDoubleU.getM11(), XSDataMatrixDoubleU.getM12(), XSDataMatrixDoubleU.getM13())
+    #     strNewmat += " %11.7f %11.7f %11.7f\n" % (
+    #     XSDataMatrixDoubleU.getM21(), XSDataMatrixDoubleU.getM22(), XSDataMatrixDoubleU.getM23())
+    #     strNewmat += " %11.7f %11.7f %11.7f\n" % (
+    #     XSDataMatrixDoubleU.getM31(), XSDataMatrixDoubleU.getM32(), XSDataMatrixDoubleU.getM33())
+    #
+    #     xsDataCellRefined = _xsDataMOSFLNNewmat.getRefinedCell()
+    #     strNewmat += " %11.4f %11.4f %11.4f" % (xsDataCellRefined.getLength_a().getValue(),
+    #                                             xsDataCellRefined.getLength_b().getValue(),
+    #                                             xsDataCellRefined.getLength_c().getValue())
+    #     strNewmat += " %11.4f %11.4f %11.4f\n" % (xsDataCellRefined.getAngle_alpha().getValue(),
+    #                                               xsDataCellRefined.getAngle_beta().getValue(),
+    #                                               xsDataCellRefined.getAngle_gamma().getValue())
+    #     strNewmat += " %11.3f %11.3f %11.3f\n" % (xsDataMOSFLMMissettingAngles.getPhix().getValue(),
+    #                                               xsDataMOSFLMMissettingAngles.getPhiy().getValue(),
+    #                                               xsDataMOSFLMMissettingAngles.getPhiz().getValue())
+    #
+    #     self.writeProcessFile(strNewmatFileName, strNewmat)
+    #
+    # def generateExecutiveSummary(self, _edPlugin):
+    #     """
+    #     Generates a summary of the execution of the plugin.
+    #     This method is common to all MOSFLM plugins.
+    #     """
+    #     self.DEBUG("EDPluginMOSFLMv10.generateExecutiveSummary")
+    #     if (self.getStringVersion() is not None):
+    #         self.addExecutiveSummaryLine(self.getStringVersion())
+
+
+class MosflmIndexingTask(AbstractMosflmTask):
+
+    def generateMOSFLMCommands(self, inData):
+        """
+        This method creates a list of MOSFLM indexing commands given a valid
+        inData
+        """
+        listCommand = AbstractMosflmTask.generateMOSFLMCommands(self, inData)
+        listCommand.append('NEWMAT ' + self.getNewmatFileName())
+        listImage = inData['image']
+        for image in listImage:
+            imageNumber = image['number']
+            rotationAxisStart = image['rotationAxisStart']
+            rotationAxisEnd = image['rotationAxisEnd']
+            listCommand.append('AUTOINDEX DPS REFINE IMAGE {0} PHI {1} {2}'.format(
+                imageNumber, rotationAxisStart, rotationAxisEnd))
+        listCommand.append('GO')
+        for image in listImage:
+            listCommand.append('MOSAIC ESTIMATE {0}'.format(image['number']))
+            listCommand.append('GO')
+        return listCommand
+
+    def parseMosflmOutput(self, workingDirectory):
+        newMatFilePath = workingDirectory / self.getNewmatFileName()
+        dnaTablesFilePath = workingDirectory / 'dnaTables.xml'
+        return self.parseIndexingMosflmOutput(newMatFilePath, dnaTablesFilePath)
+
+    def parseIndexingMosflmOutput(self, newMatFilePath, dnaTablesFilePath):
+        outData = {}
+        # Read Newmat file
+        newmat = self.getNewmat(newMatFilePath)
+        if newmat is None:
+            errorMessage = "MOSFLM indexing error : No solution was obtained!"
+            logger.error(errorMessage)
+            self.setFailure()
+        else:
+            outData['newmat'] = self.getNewmat(newMatFilePath)
+            # Then read the XML file
+            dictDnaTables = UtilsDnaTables.getDict(dnaTablesFilePath)
+            # Mosaicity estimation
+            listTablesMosaicity = UtilsDnaTables.getTables(
+                dictDnaTables, 'mosaicity_estimation')
+            mosaicityValueSum = 0.0
+            nValues = 0
+            for table in listTablesMosaicity:
+                listParam = UtilsDnaTables.getListParam(table)
+                mosaicityValue = UtilsDnaTables.getListValue(
+                    listParam, 'mosaicity', 'value')
+                mosaicityValueSum += mosaicityValue
+                nValues += 1
+            outData['mosaicityEstimation'] = mosaicityValueSum / nValues
+            # Refinement
+            listTablesRefinement = UtilsDnaTables.getTables(
+                dictDnaTables, 'refinement')
+            tableRefinement = listTablesRefinement[0]
+            listParamRefinement = UtilsDnaTables.getListParam(tableRefinement)
+            outData['deviationAngular'] = UtilsDnaTables.getListValue(
+                listParamRefinement, 'deviations', 'angular')
+            outData['refinedDistance'] = UtilsDnaTables.getListValue(
+                listParamRefinement, 'results', 'detector_distance')
+            outData['spotsUsed'] = UtilsDnaTables.getListValue(
+                listParamRefinement, 'parameters', 'used')
+            outData['spotsTotal'] = UtilsDnaTables.getListValue(
+                listParamRefinement, 'parameters', 'out_of')
+            # Solution refinement
+            listTablesSolutionRefinement = UtilsDnaTables.getTables(
+                dictDnaTables, 'solution_refinement')
+            tableSolutionRefinement = listTablesSolutionRefinement[0]
+            listSolutionRefinement = UtilsDnaTables.getListParam(tableSolutionRefinement)
+            outData['selectedSolutionNumber'] = UtilsDnaTables.getListValue(
+                listSolutionRefinement, 'selection', 'number')
+            outData['selectedSolutionSpaceGroup'] = UtilsDnaTables.getListValue(
+                listSolutionRefinement, 'selection', 'spacegroup')
+            outData['selectedSolutionSpaceGroupNumber'] = UtilsDnaTables.getListValue(
+                listSolutionRefinement, 'selection', 'spacegroup_number')
+            # Autoindex solutions
+            listTablesAutoIndexSolution = UtilsDnaTables.getTables(
+                dictDnaTables, 'autoindex_solutions')
+            listIndexingSolution = []
+            tablesAutoIndexSolution = listTablesAutoIndexSolution[0]
+            listAutoindexSolutions = UtilsDnaTables.getListParam(tablesAutoIndexSolution)
+            for autoIndexSolution in listAutoindexSolutions:
+                indexingSolution = {
+                    'index': UtilsDnaTables.getItemValue(
+                        autoIndexSolution, 'index'),
+                    'penalty': UtilsDnaTables.getItemValue(
+                        autoIndexSolution, 'penalty'),
+                    'lattice': UtilsDnaTables.getItemValue(
+                        autoIndexSolution, 'lattice'),
+                    'a': UtilsDnaTables.getItemValue(
+                        autoIndexSolution, 'a'),
+                    'b': UtilsDnaTables.getItemValue(
+                        autoIndexSolution, 'b'),
+                    'c': UtilsDnaTables.getItemValue(
+                        autoIndexSolution, 'c'),
+                    'alpha': UtilsDnaTables.getItemValue(
+                        autoIndexSolution, 'alpha'),
+                    'beta': UtilsDnaTables.getItemValue(
+                        autoIndexSolution, 'beta'),
+                    'gamma': UtilsDnaTables.getItemValue(
+                        autoIndexSolution, 'gamma')
+                }
+                listIndexingSolution.append(indexingSolution)
+            outData['indexingSolution'] = listIndexingSolution
+            #  Beam refinement
+            listTablesBeamRefinement = UtilsDnaTables.getTables(
+                dictDnaTables, 'beam_refinement')
+            tableBeamRefinement = listTablesBeamRefinement[0]
+            listRefinedBeam = UtilsDnaTables.getListParam(tableBeamRefinement)
+            initialBeamPositionX = UtilsDnaTables.getListValue(
+                listRefinedBeam, 'initial_beam', 'x')
+            initialBeamPositionY = UtilsDnaTables.getListValue(
+                listRefinedBeam, 'initial_beam', 'y')
+            refinedBeamPositionX = UtilsDnaTables.getListValue(
+                listRefinedBeam, 'refined_beam', 'x')
+            refinedBeamPositionY = UtilsDnaTables.getListValue(
+                listRefinedBeam, 'refined_beam', 'y')
+            beamPositionRefined = {
+                'x': refinedBeamPositionX,
+                'y': refinedBeamPositionY
+            }
+            outData['refinedBeam'] = beamPositionRefined
+            beamPositionShift = {
+                'x': initialBeamPositionX - refinedBeamPositionX,
+                'y': initialBeamPositionY - refinedBeamPositionY,
+            }
+            outData['beamShift'] = beamPositionShift
+        return outData
+    #
+    #
+    # def generateExecutiveSummary(self, _edPlugin):
+    #     """
+    #     Generates a summary of the execution of the plugin.
+    #     """
+    #     EDPluginMOSFLMv10.generateExecutiveSummary(self, _edPlugin)
+    #     self.DEBUG("EDPluginMOSFLMIndexingv10.createDataMOSFLMOutputIndexing")
+    #     xsDataMOSFLMInputIndexing = self.getDataInput()
+    #     xsDataMOSFLMOutputIndexing = self.getDataOutput()
+    #     if not self.isFailure():
+    #         self.addExecutiveSummaryLine("Execution of MOSFLM indexing successful.")
+    #     self.addExecutiveSummaryLine("Image directory         : %s" % xsDataMOSFLMInputIndexing.getDirectory().getValue())
+    #     self.addExecutiveSummaryLine("Image template          : %s" % xsDataMOSFLMInputIndexing.getTemplate().getValue())
+    #     strImagesUsed = "Images used in indexing : "
+    #     for xsDataMOSFLMImage in xsDataMOSFLMInputIndexing.getImage():
+    #         strImagesUsed += "%5d" % xsDataMOSFLMImage.getNumber().getValue()
+    #     self.addExecutiveSummaryLine(strImagesUsed)
+    #     if (xsDataMOSFLMInputIndexing.getSymmetry() is not None):
+    #         self.addExecutiveSummaryLine("Target symmetry     : %s" % xsDataMOSFLMInputIndexing.getSymmetry().getValue())
+    #         self.addExecutiveSummaryLine("")
+    #     if (xsDataMOSFLMOutputIndexing is not None):
+    #         self.addExecutiveSummaryLine("")
+    #         self.addExecutiveSummaryLine("List of possible solutions (index, penalty, lattice and cell):")
+    #         iSelectedSolutionNumber = xsDataMOSFLMOutputIndexing.getSelectedSolutionNumber().getValue()
+    #         # Add all solutions with penalty < 100 + 1 solution with penalty > 100
+    #         bAddSolution = False
+    #         listMOSFLMOutputIndexing = xsDataMOSFLMOutputIndexing.getPossibleSolutions()
+    #         iNumberOfSolutions = len(listMOSFLMOutputIndexing)
+    #         for i in range(iNumberOfSolutions):
+    #
+    #             iPenalty = listMOSFLMOutputIndexing[i].getPenalty().getValue()
+    #             if (i < (iNumberOfSolutions - 1)):
+    #                 iPenaltyNext = listMOSFLMOutputIndexing[i + 1].getPenalty().getValue()
+    #                 if ((iPenalty >= 100) and (iPenaltyNext <= 100)):
+    #                     bAddSolution = True
+    #             if (bAddSolution):
+    #                 iIndex = listMOSFLMOutputIndexing[i].getIndex().getValue()
+    #                 xsDataCell = listMOSFLMOutputIndexing[i].getCell()
+    #                 strLattice = listMOSFLMOutputIndexing[i].getLattice().getValue()
+    #                 strPossibleSolution = "%3d %4d %2s %6.2f %6.2f %6.2f %6.2f %6.2f %6.2f" % \
+    #                                             (iIndex, iPenalty, strLattice, \
+    #                                               xsDataCell.getLength_a().getValue(),
+    #                                               xsDataCell.getLength_b().getValue(),
+    #                                               xsDataCell.getLength_c().getValue(),
+    #                                               xsDataCell.getAngle_alpha().getValue(),
+    #                                               xsDataCell.getAngle_beta().getValue(),
+    #                                               xsDataCell.getAngle_gamma().getValue(),
+    #                                              )
+    #                 self.addExecutiveSummaryLine(strPossibleSolution)
+    #             iPenaltyOld = iPenalty
+    #         self.addExecutiveSummaryLine("")
+    #         self.addExecutiveSummaryLine("Choosen solution number   : %14d" % iSelectedSolutionNumber)
+    #         strSelectedSpaceGroup = xsDataMOSFLMOutputIndexing.getSelectedSolutionSpaceGroup().getValue()
+    #         self.addExecutiveSummaryLine("Selected space group      : %14s" % (strSelectedSpaceGroup))
+    #         xsDataCellRefined = xsDataMOSFLMOutputIndexing.getRefinedNewmat().getRefinedCell()
+    #         self.addExecutiveSummaryLine("Refined cell              : %6.2f %7.2f %7.2f %5.1f %5.1f %5.1f" % (\
+    #                                       xsDataCellRefined.getLength_a().getValue(),
+    #                                       xsDataCellRefined.getLength_b().getValue(),
+    #                                       xsDataCellRefined.getLength_c().getValue(),
+    #                                       xsDataCellRefined.getAngle_alpha().getValue(),
+    #                                       xsDataCellRefined.getAngle_beta().getValue(),
+    #                                       xsDataCellRefined.getAngle_gamma().getValue()
+    #                                       ))
+    #         iSpotsTotal = xsDataMOSFLMOutputIndexing.getSpotsTotal().getValue()
+    #         iSpotsUsed = xsDataMOSFLMOutputIndexing.getSpotsUsed().getValue()
+    #         self.addExecutiveSummaryLine("Number of spots used      : %14d " % (iSpotsUsed))
+    #         self.addExecutiveSummaryLine("Number of spots total     : %14d " % (iSpotsTotal))
+    #         fDeviationPositional = xsDataMOSFLMOutputIndexing.getDeviationPositional().getValue()
+    #         fDeviationAngular = xsDataMOSFLMOutputIndexing.getDeviationAngular().getValue()
+    #         self.addExecutiveSummaryLine("Spot deviation positional : %14.2f [mm]" % (fDeviationPositional))
+    #         self.addExecutiveSummaryLine("Spot deviation angular    : %14.2f [degrees]" % (fDeviationAngular))
+    #         fBeamshiftX = xsDataMOSFLMOutputIndexing.getBeamShift().getX().getValue()
+    #         fBeamshiftY = xsDataMOSFLMOutputIndexing.getBeamShift().getY().getValue()
+    #         self.addExecutiveSummaryLine("Beam shift (X, Y)         : %6.3f, %6.3f [mm]" % \
+    #                                       (fBeamshiftX, fBeamshiftY))
+    #         fMosaicityEstimated = xsDataMOSFLMOutputIndexing.getMosaicityEstimation().getValue()
+    #         self.addExecutiveSummaryLine("Estimated mosaicity       : %14.2f [degrees]" % fMosaicityEstimated)

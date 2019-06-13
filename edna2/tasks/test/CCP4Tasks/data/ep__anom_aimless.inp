@@ -1,0 +1,9 @@
+bins 15
+run 1 batch 1 to 100
+name run 1 project 2179462 crystal DEFAULT dataset NATIVE
+scales constant
+resolution 50 1.75
+cycles 100
+anomalous ON
+output MERGED UNMERGED
+END

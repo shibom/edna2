@@ -1,0 +1,30 @@
+{
+	"beam": {
+		"x": 1.425777e+02,
+		"y": 1.299391e+02
+	},
+	"detector": {
+		"numberPixelX": 1475,
+		"numberPixelY": 1679,
+		"pixelSizeX": 1.720000e-01,
+		"pixelSizeY": 1.720000e-01,
+		"type": "PILATUS"
+	},
+	"directory": "/data/id30a2/inhouse/opid30a2/20190401/RAW_DATA/t3",
+	"distance": 4.116000e+02,
+	"template": "ef-t3_1_####.cbf",
+	"wavelength": 8.731270e-01,
+	"image": [
+		{
+			"number": 1,
+			"rotationAxisStart": 0.0,
+			"rotationAxisEnd": 1.0
+		},
+		{
+			"number": 2,
+			"rotationAxisStart": 90.0,
+			"rotationAxisEnd": 91.0
+		}
+	],
+	"symmetry": "P1"
+}

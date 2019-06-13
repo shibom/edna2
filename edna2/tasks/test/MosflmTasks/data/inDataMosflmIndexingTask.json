@@ -1,0 +1,29 @@
+{
+	"beam": {
+		"x": 1.135544e+02,
+		"y": 1.122936e+02
+	},
+	"detector": {
+		"numberPixelX": 1475,
+		"numberPixelY": 1679,
+		"pixelSizeX": 1.720000e-01,
+		"pixelSizeY": 1.720000e-01,
+		"type": "PILATUS"
+	},
+	"directory": "$EDNA2_TESTDATA_IMAGES",
+	"distance": 3.052220e+02,
+	"template": "ref-2m_RNASE_1_####.cbf",
+	"wavelength": 8.729000e-01,
+	"image": [
+		{
+			"number": 1,
+			"rotationAxisStart": 54.5,
+			"rotationAxisEnd": 55.5
+		},
+		{
+			"number": 2,
+			"rotationAxisStart": 144.5,
+			"rotationAxisEnd": 145.5
+		}
+	]
+}

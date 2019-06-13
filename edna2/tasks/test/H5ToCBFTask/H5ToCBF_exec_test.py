@@ -1,0 +1,64 @@
+#
+# Copyright (c) European Synchrotron Radiation Facility (ESRF)
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+
+__authors__ = ["O. Svensson"]
+__license__ = "MIT"
+__date__ = "21/04/2019"
+
+import os
+import unittest
+
+from tasks import H5ToCBFTask
+
+from utils import UtilsTest
+
+
+class H5ToCBFExecTest(unittest.TestCase):
+
+    def setUp(self):
+        self.dataPath = UtilsTest.prepareTestDataPath(__file__)
+        UtilsTest.loadTestImage('Trx6_19_1_1_master.h5')
+        UtilsTest.loadTestImage('Trx6_19_1_1_data_000001.h5')
+
+    @unittest.skipIf(os.name == 'nt', "Don't run on Windows")
+    def test_execute_withImageNumber(self):
+        referenceDataPath = self.dataPath / 'H5ToCBF_withImageNumber.json'
+        inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath,
+                                                    loadTestImages=False)
+        h5ToCBF = H5ToCBFTask(inData=inData)
+        h5ToCBF.execute()
+        assert h5ToCBF.isSuccess()
+        outData = h5ToCBF.outData
+        self.assertTrue(os.path.exists(outData['outputCBFFile']))
+
+    @unittest.skipIf(os.name == 'nt', "Don't run on Windows")
+    def test_execute_withImageRange(self):
+        referenceDataPath = self.dataPath / 'H5ToCBF_withImageRange.json'
+        inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath,
+                                                    loadTestImages=False)
+        h5ToCBF = H5ToCBFTask(inData=inData)
+        h5ToCBF.execute()
+        assert h5ToCBF.isSuccess()
+        outData = h5ToCBF.outData
+        for index in range(1,11):
+            template = outData['outputCBFFileTemplate']
+            filePath = template.replace('######', '{0:06d}').format(index)
+            self.assertTrue(os.path.exists(filePath))

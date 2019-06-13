@@ -1,0 +1,4 @@
+{
+    "input_file": "$EDNA2_TESTDATA_IMAGES/POINTLESS_XDS_ANOM.HKL",
+    "output_file": "ep__unmerged_anom_pointless_multirecord.mtz"
+}
