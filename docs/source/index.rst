@@ -30,8 +30,6 @@ Wherever possible a link is provided in the EDNA2 source code to the
 corresponding EDNA code.
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
 
    overview
    install
