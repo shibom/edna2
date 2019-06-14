@@ -5,5 +5,4 @@ python:
 cache: pip
 install:
   - pip install -r requirements.txt
-script:
-  - py.test --cov-report term-missing --cov app -v
+script: pytest
