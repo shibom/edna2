@@ -248,8 +248,9 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
                             self.parseDouble(listLine[11])
                         imageDozor['visibleResolution'] = \
                             self.parseDouble(listLine[12])
-                except:
-                    pass
+                except Exception as e:
+                    logger.warning('Exception caught when parsing Dozor log!')
+                    logger.warning(e)
                 # ExecDozor spot file
                 if workingDir is not None:
                     spotFile = os.path.join(str(workingDir), 
@@ -725,10 +726,11 @@ plot '{dozorCsvFileName}' using 1:3 title 'Number of spots' axes x1y1 with point
             dozorCsvResultPath = resultsDirectory / dozorCsvPath.name
             shutil.copy(dozorPlotPath, dozorPlotResultPath)
             shutil.copy(dozorCsvPath, dozorCsvResultPath)
-        except:
+        except Exception as e:
             logger.warning(
                 "Couldn't copy files to results directory: {0}".format(
                     resultsDirectory))
+            logger.warning(e)
         try:
             # Create paths on pyarch
             dozorPlotPyarchPath = UtilsPath.createPyarchFilePath(dozorPlotResultPath)
@@ -745,7 +747,7 @@ plot '{dozorCsvFileName}' using 1:3 title 'Number of spots' axes x1y1 with point
     #         EDPluginISPyBSetImageQualityIndicatorsPlot = self.loadPlugin("EDPluginISPyBSetImageQualityIndicatorsPlotv1_4")
     #         EDPluginISPyBSetImageQualityIndicatorsPlot.dataInput = xsDataInputISPyBSetImageQualityIndicatorsPlot
     #         EDPluginISPyBSetImageQualityIndicatorsPlot.executeSynchronous()
-        except:
+
             logger.warning("Couldn't copy files to pyarch: {0}".format(dozorPlotPyarchPath))
     #
     # self.sendMessageToMXCuBE("Processing finished", "info")

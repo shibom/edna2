@@ -76,13 +76,10 @@ def getItemValue(dictParameter, key):
 
 def _convertFromString(value):
     if value is not None:
-        try:
-            if '.' in value:
-                value = float(value)
-            else:
-                value = int(value)
-        except:
-            pass
+        if '.' in value:
+            value = float(value)
+        else:
+            value = int(value)
     return value
 
 

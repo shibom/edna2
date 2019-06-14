@@ -64,7 +64,7 @@ class AbstractTask(object):
     """
     Parent task to all EDNA2 tasks.
     """
-    def __init__(self, inData={}):
+    def __init__(self, inData):
         self._dictInOut = multiprocessing.Manager().dict()
         self._dictInOut['inData'] = json.dumps(inData, default=str)
         self._dictInOut['outData'] = json.dumps({})

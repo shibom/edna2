@@ -123,7 +123,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
             },
         }
 
-    def run(self, inData={}):
+    def run(self, inData):
         batchSize = inData.get('batchSize', 1)
         doDistlSignalStrength = inData.get('doDistlSignalStrength', False)
         doIndexing = inData.get('doIndexing', False)
