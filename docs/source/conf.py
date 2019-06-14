@@ -45,6 +45,8 @@ author = 'Olof Svensson'
 release = '0.1'
 version = release
 
+# The master toctree document.
+master_doc = 'index'
 
 # -- General configuration ---------------------------------------------------
 
