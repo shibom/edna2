@@ -50,7 +50,7 @@ class ControlDozorUnitTest(unittest.TestCase):
 
     def testCreateDict(self):
         dictImage = self.controlDozor.createImageDict(self.inData)
-        self.assertEqual(True, isinstance(dictImage, dict)
+        self.assertEqual(True, isinstance(dictImage, dict))
 
     def testCreateListOfBatches(self):
         self.assertEqual(

@@ -260,7 +260,7 @@ class MosflmIndexingTask(AbstractMosflmTask):
         This method creates a list of MOSFLM indexing commands given a valid
         inData
         """
-        listCommand = AbstractMosflmTask.generateMOSFLMCommands(self, inData)
+        listCommand = AbstractMosflmTask.generateMOSFLMCommands(inData)
         listCommand.append('NEWMAT ' + self.getNewmatFileName())
         listImage = inData['image']
         for image in listImage:

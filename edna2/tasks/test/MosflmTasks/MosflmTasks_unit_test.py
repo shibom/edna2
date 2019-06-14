@@ -80,7 +80,8 @@ class MosflmTasksUnitTest(unittest.TestCase):
     def test_generateMOSFLMCommands_indexing(self):
         referenceDataPath = self.dataPath / 'inDataAbstractMosflmTask.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
-        listCommands = MosflmIndexingTask.generateMOSFLMCommands(inData)
+        task = MosflmIndexingTask(inData)
+        listCommands = task.generateMOSFLMCommands(inData)
         for requiredItem in ['BEAM', 'DETECTOR', 'OMEGA', 'REVERSEPHI',
                              'DIRECTORY', 'TEMPLATE', 'LIMITS EXCLUDE',
                              'RASTER', 'POLARIZATION']:
