@@ -49,9 +49,9 @@ class ControlDozorExecTest(unittest.TestCase):
         self.inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         controlDozor = ControlDozor(inData=self.inData)
         controlDozor.execute()
-        assert controlDozor.isSuccess()
+        self.assertTrue(controlDozor.isSuccess())
         outData = controlDozor.outData
-        assert len(outData['imageDozor']) == 5
+        self.assertEqual(len(outData['imageDozor']), 5)
 
     @unittest.skipIf(os.name == 'nt', "Don't run on Windows")
     def test_execute_ControlDozor_batchSize_2(self):
@@ -59,9 +59,9 @@ class ControlDozorExecTest(unittest.TestCase):
         self.inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         controlDozor = ControlDozor(inData=self.inData)
         controlDozor.execute()
-        assert controlDozor.isSuccess()
+        self.assertTrue(controlDozor.isSuccess())
         outData = controlDozor.outData
-        assert len(outData['imageDozor']) == 5
+        self.assertEqual(len(outData['imageDozor']), 5)
 
     @unittest.skipIf(os.name == 'nt', "Don't run on Windows")
     def test_execute_ControlDozor_batchSize_2a(self):
@@ -69,9 +69,9 @@ class ControlDozorExecTest(unittest.TestCase):
         self.inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         controlDozor = ControlDozor(inData=self.inData)
         controlDozor.execute()
-        assert controlDozor.isSuccess()
+        self.assertTrue(controlDozor.isSuccess())
         outData = controlDozor.outData
-        assert len(outData['imageDozor']) == 4
+        self.assertEqual(len(outData['imageDozor']), 4)
 
     @unittest.skipIf(os.name == 'nt', "Don't run on Windows")
     @unittest.skipIf(not os.path.exists('/data/visitor/mx415/id30a2/20160315/' +
@@ -83,9 +83,9 @@ class ControlDozorExecTest(unittest.TestCase):
         self.inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         controlDozor = ControlDozor(inData=self.inData)
         controlDozor.execute()
-        assert controlDozor.isSuccess()
+        self.assertTrue(controlDozor.isSuccess())
         outData = controlDozor.outData
-        assert len(outData['imageDozor']) == 740
+        self.assertEqual(len(outData['imageDozor']), 740)
 
     @unittest.skipIf(not os.path.exists('/data/visitor/mx415/id30a2/20180502/' +
                                         'RAW_DATA/t1/t1_1_0001.cbf'),
@@ -98,11 +98,11 @@ class ControlDozorExecTest(unittest.TestCase):
         self.inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         controlDozor = ControlDozor(inData=self.inData)
         controlDozor.execute()
-        assert controlDozor.isSuccess()
+        self.assertTrue(controlDozor.isSuccess())
         UtilsConfig.setSite(currentSite)
         outData = controlDozor.outData
-        assert len(outData['imageDozor']) == 640
-        
+        self.assertEqual(len(outData['imageDozor']), 640)
+
     @unittest.skipIf(not os.path.exists('/data/visitor/mx415/id30a3/20171127/' +
                                         'RAW_DATA/mx415/1-2-2/MXPressF_01/' +
                                         'mesh-mx415_1_1_master.h5'),
@@ -116,6 +116,6 @@ class ControlDozorExecTest(unittest.TestCase):
         controlDozor = ControlDozor(inData=self.inData)
         controlDozor.execute()
         UtilsConfig.setSite(currentSite)
-        assert controlDozor.isSuccess()
+        self.assertTrue(controlDozor.isSuccess())
         outData = controlDozor.outData
-        assert len(outData['imageDozor']) == 51
+        self.assertEqual(len(outData['imageDozor']), 51)

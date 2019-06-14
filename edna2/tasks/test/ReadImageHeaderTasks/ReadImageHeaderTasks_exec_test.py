@@ -44,8 +44,8 @@ class ReadImageHeaderTasksExecTest(unittest.TestCase):
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         readImageHeader = ReadImageHeader(inData=inData)
         readImageHeader.execute()
-        assert readImageHeader.isSuccess()
+        self.assertTrue(readImageHeader.isSuccess())
         outData = readImageHeader.outData
-        assert outData is not None
+        self.assertIsNotNone(outData)
 
 

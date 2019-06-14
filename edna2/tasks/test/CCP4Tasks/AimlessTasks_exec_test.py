@@ -52,6 +52,6 @@ class AimlessTasksExecTest(unittest.TestCase):
                                                     tmpDir=tmpDir)
         aimlessTask = AimlessTask(inData=inData)
         aimlessTask.execute()
-        assert not aimlessTask.isFailure()
+        self.assertTrue(aimlessTask.isSuccess())
         outData = aimlessTask.outData
-        assert outData['isSuccess']
+        self.assertTrue(outData['isSuccess'])

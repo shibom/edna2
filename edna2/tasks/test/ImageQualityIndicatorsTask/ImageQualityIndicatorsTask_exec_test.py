@@ -45,15 +45,15 @@ class ImageQualityIndicatorsExecTest(unittest.TestCase):
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         task = ImageQualityIndicatorsTask(inData=inData)
         task.execute()
-        assert not task.isFailure()
+        self.assertFalse(task.isFailure())
         outData = task.outData
-        assert 'imageQualityIndicators' in outData
+        self.assertTrue('imageQualityIndicators' in outData)
 
     def test_execute_startEnd(self):
         referenceDataPath = self.dataPath / 'inData_startEnd.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         task = ImageQualityIndicatorsTask(inData=inData)
         task.execute()
-        assert not task.isFailure()
+        self.assertFalse(task.isFailure())
         outData = task.outData
-        assert 'imageQualityIndicators' in outData
+        self.assertTrue('imageQualityIndicators' in outData)

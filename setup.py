@@ -26,7 +26,7 @@ __date__ = "21/04/2019"
 from setuptools import setup, find_packages
 
 setup(name="edna2",
-      version='0.0.1',
+      version='0.1',
       packages=['edna2'],
       install_requires=['matplotlib', 'suds-jurko', 'xmltodict', 'jsonschema'],
       )

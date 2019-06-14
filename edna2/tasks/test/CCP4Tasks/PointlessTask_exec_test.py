@@ -50,6 +50,6 @@ class PointlessTasksExecTest(unittest.TestCase):
                                                     tmpDir=tmpDir)
         task = PointlessTask(inData=inData)
         task.execute()
-        assert not task.isFailure()
+        self.assertTrue(task.isSuccess())
         outData = task.outData
-        assert outData['isSuccess']
+        self.assertTrue(outData['isSuccess'])

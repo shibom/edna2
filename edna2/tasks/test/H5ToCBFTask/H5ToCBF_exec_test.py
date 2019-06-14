@@ -45,7 +45,7 @@ class H5ToCBFExecTest(unittest.TestCase):
                                                     loadTestImages=False)
         h5ToCBF = H5ToCBFTask(inData=inData)
         h5ToCBF.execute()
-        assert h5ToCBF.isSuccess()
+        self.assertTrue(h5ToCBF.isSuccess())
         outData = h5ToCBF.outData
         self.assertTrue(os.path.exists(outData['outputCBFFile']))
 
@@ -56,7 +56,7 @@ class H5ToCBFExecTest(unittest.TestCase):
                                                     loadTestImages=False)
         h5ToCBF = H5ToCBFTask(inData=inData)
         h5ToCBF.execute()
-        assert h5ToCBF.isSuccess()
+        self.assertTrue(h5ToCBF.isSuccess())
         outData = h5ToCBF.outData
         for index in range(1,11):
             template = outData['outputCBFFileTemplate']

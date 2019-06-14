@@ -51,4 +51,4 @@ class MosflmTasksExecTest(unittest.TestCase):
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         mosflmIndexingTask = MosflmIndexingTask(inData=inData)
         mosflmIndexingTask.execute()
-        assert mosflmIndexingTask.isSuccess()
+        self.assertTrue(mosflmIndexingTask.isSuccess())

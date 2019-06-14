@@ -45,8 +45,8 @@ class HelloWorldTaskExecTest(unittest.TestCase):
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         helloWorldTask = HelloWorldTask(inData=inData)
         helloWorldTask.execute()
-        assert not helloWorldTask.isFailure()
+        self.assertTrue(helloWorldTask.isSuccess())
         outData = helloWorldTask.outData
-        assert 'results' in outData
-        assert 'Hello world' in outData['results']
+        self.assertTrue('results' in outData)
+        self.assertTrue('Hello world' in outData['results'])
         logger.info('Results from HelloWorldTask: {0}'.format(outData['results']))

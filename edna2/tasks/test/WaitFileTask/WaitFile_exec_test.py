@@ -46,5 +46,5 @@ class MXWaitFileExecTest(unittest.TestCase):
         waitFile.execute()
         outData = waitFile.outData
         logger.info(outData)
-        assert not outData['timedOut']
-        assert outData['finalSize'] == 8389120
+        self.assertFalse(outData['timedOut'])
+        self.assertEqual(outData['finalSize'], 8389120)
