@@ -29,6 +29,11 @@ Installation
 
 The EDNA2 project provides a setup.py file for installation.
 
+Documentation
+-------------
+
+The documentation can be found at https://edna2.readthedocs.io.
+
 Contribute
 ----------
 
