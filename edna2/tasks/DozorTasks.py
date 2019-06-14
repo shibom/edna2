@@ -21,6 +21,7 @@
 import os
 import json
 import shlex
+import shutil
 import logging
 import pathlib
 import tempfile
@@ -747,8 +748,9 @@ plot '{dozorCsvFileName}' using 1:3 title 'Number of spots' axes x1y1 with point
     #         EDPluginISPyBSetImageQualityIndicatorsPlot = self.loadPlugin("EDPluginISPyBSetImageQualityIndicatorsPlotv1_4")
     #         EDPluginISPyBSetImageQualityIndicatorsPlot.dataInput = xsDataInputISPyBSetImageQualityIndicatorsPlot
     #         EDPluginISPyBSetImageQualityIndicatorsPlot.executeSynchronous()
-
+        except Exception as e:
             logger.warning("Couldn't copy files to pyarch: {0}".format(dozorPlotPyarchPath))
+            logger.warning(e)
     #
     # self.sendMessageToMXCuBE("Processing finished", "info")
     # self.setStatusToMXCuBE("Success")
