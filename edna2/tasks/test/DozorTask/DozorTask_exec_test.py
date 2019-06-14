@@ -29,6 +29,7 @@ import unittest
 from tasks.DozorTasks import ExecDozor
 
 from utils import UtilsTest
+from utils import UtilsConfig
 
 
 class ExecDozorTest(unittest.TestCase):
@@ -36,7 +37,8 @@ class ExecDozorTest(unittest.TestCase):
     def setUp(self):
         self.dataPath = UtilsTest.prepareTestDataPath(__file__)
 
-    @unittest.skipIf(os.name == 'nt', "Don't run on Windows")
+    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
+                     'Cannot run dozor test with default config')
     def test_execute_Dozor(self):
         referenceDataPath = self.dataPath / 'inDataDozor.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)

@@ -27,6 +27,7 @@ import logging
 import unittest
 
 from utils import UtilsTest
+from utils import UtilsConfig
 
 from tasks.ImageQualityIndicatorsTask import ImageQualityIndicatorsTask
 
@@ -40,6 +41,9 @@ class ImageQualityIndicatorsExecTest(unittest.TestCase):
     def setUp(self):
         self.dataPath = UtilsTest.prepareTestDataPath(__file__)
 
+    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
+                     'Cannot run ImageQualityIndicatorsExecTest ' +
+                     'test with default config')
     def tes_execute_listOfImages(self):
         referenceDataPath = self.dataPath / 'inData_listOfImages.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
@@ -49,6 +53,9 @@ class ImageQualityIndicatorsExecTest(unittest.TestCase):
         outData = task.outData
         self.assertTrue('imageQualityIndicators' in outData)
 
+    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
+                     'Cannot run ImageQualityIndicatorsExecTest ' +
+                     'test with default config')
     def test_execute_startEnd(self):
         referenceDataPath = self.dataPath / 'inData_startEnd.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)

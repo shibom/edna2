@@ -21,6 +21,7 @@ import os
 import unittest
 
 from utils import UtilsTest
+from utils import UtilsConfig
 
 from tasks.ISPyBTasks import ISPyBRetrieveDataCollection
 
@@ -31,6 +32,8 @@ class ISPyBRetrieveDataCollectionExecTest(unittest.TestCase):
         os.environ['EDNA2_SITE'] = 'esrf_id30a2'
         self.dataPath = UtilsTest.prepareTestDataPath(__file__)
 
+    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
+                     'Cannot run ispyb test with default config')
     def test_execute_ISPyBRetrieveDataCollection_image(self):
         referenceDataPath = self.dataPath / \
             "ISPyBRetrieveDataCollection_image.json"
@@ -40,6 +43,8 @@ class ISPyBRetrieveDataCollectionExecTest(unittest.TestCase):
         outData = iSPyBRetrieveDataCollection.outData
         self.assertEqual(outData['imagePrefix'], 'ref-ednatest')
 
+    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
+                     'Cannot run ispyb test with default config')
     def test_execute_ISPyBRetrieveDataCollection_dataCollectionId(self):
         referenceDataPath = self.dataPath / \
             "ISPyBRetrieveDataCollection_dataCollectionId.json"

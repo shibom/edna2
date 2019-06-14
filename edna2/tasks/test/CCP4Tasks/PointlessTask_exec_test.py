@@ -28,6 +28,7 @@ import logging
 import unittest
 
 from utils import UtilsTest
+from utils import UtilsConfig
 
 from tasks.CCP4Tasks import PointlessTask
 
@@ -41,7 +42,8 @@ class PointlessTasksExecTest(unittest.TestCase):
     def setUp(self):
         self.dataPath = UtilsTest.prepareTestDataPath(__file__)
 
-    @unittest.skipIf(os.name == 'nt', "Don't run on Windows")
+    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
+                     'Cannot run pointless test with default config')
     def test_execute_PointlessTask(self):
         referenceDataPath = self.dataPath / 'inDataPointlessTask.json'
         tmpDir = UtilsTest.createTestTmpDirectory('PointlessTask')

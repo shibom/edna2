@@ -28,6 +28,7 @@ import logging
 import unittest
 
 from utils import UtilsTest
+from utils import UtilsConfig
 
 from tasks.MosflmTasks import MosflmIndexingTask
 
@@ -41,7 +42,8 @@ class MosflmTasksExecTest(unittest.TestCase):
     def setUp(self):
         self.dataPath = UtilsTest.prepareTestDataPath(__file__)
 
-    @unittest.skipIf(os.name == 'nt', "Don't run on Windows")
+    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
+                     'Cannot run mosflm test with default config')
     def test_execute_MosflmIndexingTask(self):
         UtilsTest.loadTestImage('ref-2m_RNASE_1_0001.cbf')
         UtilsTest.loadTestImage('ref-2m_RNASE_1_0002.cbf')

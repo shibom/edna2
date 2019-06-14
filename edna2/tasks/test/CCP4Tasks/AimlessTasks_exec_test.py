@@ -42,10 +42,9 @@ class AimlessTasksExecTest(unittest.TestCase):
     def setUp(self):
         self.dataPath = UtilsTest.prepareTestDataPath(__file__)
 
-    @unittest.skipIf(os.name == 'nt', "Don't run on Windows")
+    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
+                     'Cannot run aimless test with default config')
     def test_execute_AimlessTask(self):
-        if UtilsConfig.getSite() == 'Default':
-            UtilsConfig.setSite('esrf')
         referenceDataPath = self.dataPath / 'inDataAimlessTask.json'
         tmpDir = UtilsTest.createTestTmpDirectory('AimlessTask')
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath,
