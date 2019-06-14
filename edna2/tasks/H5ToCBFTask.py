@@ -57,7 +57,8 @@ class H5ToCBFTask(AbstractTask):
         self.runCommandLine('eiger2cbf ' + commandLine)
         return outData
 
-    def generateCommandsWithImageNumber(self, inData, directory, prefix,
+    @classmethod
+    def generateCommandsWithImageNumber(cls, inData, directory, prefix,
                                         hdf5File):
         """
         This method creates a list of commands for the converter
@@ -95,7 +96,8 @@ class H5ToCBFTask(AbstractTask):
         )
         return commandLine, cbfFile
 
-    def generateCommandsWithImageRange(self, inData, directory, prefix, hdf5File):
+    @classmethod
+    def generateCommandsWithImageRange(cls, inData, directory, prefix, hdf5File):
         startImageNumber = inData['startImageNumber']
         endImageNumber = inData['endImageNumber']
         if 'hdf5ImageNumber' in inData:

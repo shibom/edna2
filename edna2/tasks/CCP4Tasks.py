@@ -103,11 +103,10 @@ class PointlessTask(AbstractTask):
         outData = self.parsePointlessOutput(self.getLogPath())
         return outData
 
-    def parsePointlessOutput(self, logPath):
+    @classmethod
+    def parsePointlessOutput(cls, logPath):
         sgre = re.compile(""" \* Space group = '(?P<sgstr>.*)' \(number\s+(?P<sgnumber>\d+)\)""")
-        sgnumber = sgstr = None
-        outData = {}
-        outData['isSuccess'] = False
+        outData = {'isSuccess': False}
         if logPath.exists():
             with open(str(logPath)) as f:
                 log = f.read()

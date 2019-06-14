@@ -145,7 +145,9 @@ class AbstractMosflmTask(AbstractTask):
     # def setMatrixFileName(self, _strMOSFLMMatrixFileName):
     #     self.strMOSFLMMatrixFileName = _strMOSFLMMatrixFileName
     #
-    def splitStringIntoListOfFloats(self, input):
+
+    @classmethod
+    def splitStringIntoListOfFloats(cls, input):
         listFloats = []
         listString = input.split()
         for element in listString:
@@ -165,15 +167,16 @@ class AbstractMosflmTask(AbstractTask):
     #     return xsDataMOSFLMNewmatMatrix
     #
 
-    def getNewmat(self, newMatFilePath):
-        mosflmNewmat = None
+    @classmethod
+    def getNewmat(cls, newMatFilePath):
         listOfListOfFloat = []
         with open(str(newMatFilePath)) as f:
             listLine = f.readlines()
         # Convert into list of lists of float
         for line in listLine:
             if not line.startswith("SYMM"):
-                listOfListOfFloat.append(self.splitStringIntoListOfFloats(line))
+                listOfListOfFloat.append(
+                    AbstractMosflmTask.splitStringIntoListOfFloats(line))
         # Fill in the data
         newmat = {}
 

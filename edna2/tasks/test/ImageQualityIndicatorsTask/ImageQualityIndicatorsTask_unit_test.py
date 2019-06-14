@@ -37,12 +37,11 @@ logger.setLevel(logging.DEBUG)
 class ImageQualityIndicatorsUnitTest(unittest.TestCase):
 
     def testGetH5FilePath(self):
-        task = ImageQualityIndicatorsTask(inData={})
         filePath1 = pathlib.Path(
             "/data/id30a3/inhouse/opid30a3/20160204/RAW_DATA/" +
             "meshtest/XrayCentering_01/mesh-meshtest_1_0001.cbf")
         h5MasterFilePath1, h5DataFilePath1, h5FileNumber = \
-            task.getH5FilePath(filePath1, 9)
+            ImageQualityIndicatorsTask.getH5FilePath(filePath1, 9)
         h5MasterFilePath1Reference = pathlib.Path(
             "/data/id30a3/inhouse/opid30a3/20160204/RAW_DATA/" +
             "meshtest/XrayCentering_01/mesh-meshtest_1_1_master.h5")
@@ -62,7 +61,8 @@ class ImageQualityIndicatorsUnitTest(unittest.TestCase):
             "/data/id30a3/inhouse/opid30a3/20171017/RAW_DATA/" +
             "mesh2/MeshScan_02/mesh-opid30a3_2_0021.cbf")
         h5MasterFilePath2, h5DataFilePath2, h5FileNumber2 = \
-            task.getH5FilePath(filePath2, batchSize=20, isFastMesh=True)
+            ImageQualityIndicatorsTask.getH5FilePath(
+                filePath2, batchSize=20, isFastMesh=True)
         h5MasterFilePath2Reference = pathlib.Path(
             "/data/id30a3/inhouse/opid30a3/20171017/RAW_DATA/" +
             "mesh2/MeshScan_02/mesh-opid30a3_2_1_master.h5")
@@ -82,7 +82,8 @@ class ImageQualityIndicatorsUnitTest(unittest.TestCase):
             "/data/id30a3/inhouse/opid30a3/20171017/RAW_DATA/mesh2" +
             "/MeshScan_02/mesh-opid30a3_2_0321.cbf")
         h5MasterFilePath2, h5DataFilePath2, h5FileNumber2 = \
-            task.getH5FilePath(filePath2, batchSize=20, isFastMesh=True)
+            ImageQualityIndicatorsTask.getH5FilePath(
+                filePath2, batchSize=20, isFastMesh=True)
         h5MasterFilePath2Reference = pathlib.Path(
             "/data/id30a3/inhouse/opid30a3/20171017/RAW_DATA/mesh2/" +
             "MeshScan_02/mesh-opid30a3_2_1_master.h5")

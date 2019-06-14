@@ -41,11 +41,8 @@ class CCP4Tasks(unittest.TestCase):
         self.dataPath = UtilsTest.prepareTestDataPath(__file__)
 
     def test_unit_PointlessTask(self):
-        referenceDataPath = self.dataPath / 'inDataPointlessTask.json'
-        inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
-        task = PointlessTask(inData=inData)
         pathToLogFile = self.dataPath / 'pointless.log'
-        outData = task.parsePointlessOutput(pathToLogFile)
+        outData = PointlessTask.parsePointlessOutput(pathToLogFile)
         self.assertEqual("C 2 2 2", outData['sgstr'], "Space group name")
         self.assertEqual(21, outData['sgnumber'], "Space group number")
         self.assertEqual(52.55, outData['cell']['length_a'], "Cell length a")
@@ -55,7 +52,7 @@ class CCP4Tasks(unittest.TestCase):
         self.assertEqual(92.00, outData['cell']['angle_beta'], "Cell angle beta")
         self.assertEqual(93.00, outData['cell']['angle_gamma'], "Cell angle gamma")
         pathToLogFile2 = self.dataPath / 'pointless2.log'
-        outData = task.parsePointlessOutput(pathToLogFile2)
+        outData = PointlessTask.parsePointlessOutput(pathToLogFile2)
         self.assertEqual("P 3 2 1", outData['sgstr'], "Space group name")
         self.assertEqual(150, outData['sgnumber'], "Space group number")
         self.assertEqual(110.9918, outData['cell']['length_a'], "Cell length a")

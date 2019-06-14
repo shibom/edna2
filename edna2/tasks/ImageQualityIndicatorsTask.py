@@ -415,7 +415,8 @@ class ImageQualityIndicatorsTask(AbstractTask):
         outData = {'imageQualityIndicators': listImageQualityIndicators}
         return outData
 
-    def getH5FilePath(self, filePath, batchSize=1, isFastMesh=False):
+    @classmethod
+    def getH5FilePath(cls, filePath, batchSize=1, isFastMesh=False):
         imageNumber = UtilsImage.getImageNumber(filePath)
         prefix = UtilsImage.getPrefix(filePath)
         if isFastMesh:
