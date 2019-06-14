@@ -1,0 +1,7 @@
+# List all python dependencies of EDNA2
+
+# Required dependencies (from setup.py install_requires)
+matplolib
+suds-jurko
+xmltodict
+jsonschema
