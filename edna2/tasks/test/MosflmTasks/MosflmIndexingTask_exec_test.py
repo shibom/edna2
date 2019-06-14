@@ -18,7 +18,6 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
-from _json import make_encoder
 
 __authors__ = ["O. Svensson"]
 __license__ = "MIT"

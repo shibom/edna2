@@ -53,7 +53,7 @@ def createPyarchFilePath(filePath):
     /data/visitor/mx415/id14eh1/20100209 -> /data/pyarch/2010/id14eh1/mx415/20100209
     """
     pyarchFilePath = None
-    if type(filePath) == str:
+    if isinstance(filePath, str):
         filePath = pathlib.Path(filePath)
     listOfDirectories = filePath.parts
     if UtilsConfig.isEMBL():

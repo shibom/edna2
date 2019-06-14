@@ -55,7 +55,7 @@ def getTables(dictDnaTables, tableName):
 
 
 def getListParam(table):
-    if type(table['list']) == list:
+    if isinstance(table['list'], list):
         listParam = table['list']
     else:
         listParam = [table['list']]
@@ -91,7 +91,7 @@ def getListValue(listParameter, key1, key2):
     value = None
     for dictParameter in listParameter:
         if dictParameter['@name'] == key1:
-            if type(dictParameter['item']) == list:
+            if isinstance(dictParameter['item'], list):
                 for item in dictParameter['item']:
                     if item['@name'] == key2:
                         value = item['#text']

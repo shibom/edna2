@@ -35,7 +35,6 @@ from suds.transport.http import HttpAuthenticated
 import logging
 import pathlib
 
-from utils import UtilsPath
 from utils import UtilsConfig
 
 from tasks.AbstractTask import AbstractTask

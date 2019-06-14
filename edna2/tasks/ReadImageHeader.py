@@ -34,7 +34,6 @@ import logging
 from tasks.AbstractTask import AbstractTask
 from tasks.WaitFileTask import WaitFileTask
 
-from utils import UtilsPath
 from utils import UtilsImage
 
 logger = logging.getLogger('edna2')

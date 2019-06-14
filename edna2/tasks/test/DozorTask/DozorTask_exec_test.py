@@ -24,7 +24,6 @@ __license__ = 'MIT'
 __date__ = '21/04/2019'
 
 import os
-import json
 import unittest
 
 from tasks.DozorTasks import ExecDozor

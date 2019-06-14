@@ -25,11 +25,10 @@ __date__ = '21/04/2019'
 
 import os
 import json
-import pprint
 import shutil
 import unittest
 import tempfile
-        
+
 from tasks.DozorTasks import ExecDozor
 
 from utils import UtilsTest
@@ -65,25 +64,23 @@ class ExecDozorUnitTest(unittest.TestCase):
         }
         result = self.dozor.parseOutput(inData, output)
         self.assertEqual(10,
-                         len(result['imageDozor']), 
+                         len(result['imageDozor']),
                          "Result from 10 images")
-        # pprint.pprint(result)
         # Log file with 'no results'
         logFileName2 = self.dataPath / 'Dozor_v2.0.2_no_results.log'
         with open(str(logFileName2)) as f:
             output2 = f.read()
         result2 = self.dozor.parseOutput(inData, output2)
-        # pprint.pprint(result2)
         self.assertEqual(51,
                          len(result2['imageDozor']),
                          "Result from 51 images")
 
     def test_parseDouble(self):
-        self.assertEqual(1.0, 
-                         self.dozor.parseDouble('1.0'), 
+        self.assertEqual(1.0,
+                         self.dozor.parseDouble('1.0'),
                          "Parsing '1.0'")
-        self.assertEqual(None, 
-                         self.dozor.parseDouble('****'), 
+        self.assertEqual(None,
+                         self.dozor.parseDouble('****'),
                          "Parsing '****'")
 
     def test_generatePngPlots(self):

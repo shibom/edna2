@@ -33,7 +33,7 @@ import pathlib
 
 def __compileAndMatchRegexpTemplate(pathToImage):
     listResult = []
-    if type(pathToImage) != type(pathlib.Path()):
+    if not isinstance(pathToImage, pathlib.Path):
         pathToImage = pathlib.Path(str(pathToImage))
     baseImageName = pathToImage.name
     regexp = re.compile(r'(.*)([^0^1^2^3^4^5^6^7^8^9])([0-9]*)\.(.*)')

@@ -90,7 +90,7 @@ class AbstractMosflmTask(AbstractTask):
         # Add exclude regions if Pilatus
         if detectorType == 'PILATUS':
             if detector['numberPixelX'] == 1475 and \
-               detector['numberPixelY'] == 1679:                
+               detector['numberPixelY'] == 1679:
                 # Pilatus 2M
                 listCommand.append("LIMITS EXCLUDE    0.0  83.76  288.96   85.14")
                 listCommand.append("LIMITS EXCLUDE    0.0 168.73  288.96  170.10")

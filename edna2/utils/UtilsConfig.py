@@ -94,7 +94,7 @@ def isEMBL():
     """
     return getSite().lower().startswith('embl')
 
-    
+
 def isESRF():
     """
     Returns true if ESRF config
@@ -103,7 +103,7 @@ def isESRF():
 
 
 def get(task, parameterName, defaultValue=None):
-    if type(task) == str:
+    if isinstance(task, str):
         taskConfig = getTaskConfig(task)
     else:
         taskConfig = getTaskConfig(task.__class__.__name__)

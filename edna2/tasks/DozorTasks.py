@@ -27,7 +27,6 @@ import pathlib
 import tempfile
 
 import matplotlib
-from tasks.AbstractTask import AbstractTask
 import matplotlib.pyplot as plt
 
 from tasks.AbstractTask import AbstractTask
@@ -254,7 +253,7 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
                     logger.warning(e)
                 # ExecDozor spot file
                 if workingDir is not None:
-                    spotFile = os.path.join(str(workingDir), 
+                    spotFile = os.path.join(str(workingDir),
                                             '%05d.spot' % imageDozor['number'])
                     if os.path.exists(spotFile):
                         imageDozor['spotFile'] = spotFile
@@ -287,8 +286,6 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
         # Create plot dictionary
         with open(str(plotmtvFile)) as f:
             listLines = f.readlines()
-        dictPlot = None
-        plotData = None
         listPlots = []
         dictPlotList = []
         dictSubPlot = {}
@@ -303,42 +300,32 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
                 index += 1
                 dictPlot['name'] = listLines[index].split('\'')[1]
                 index += 1
-                # print(listLines[index])
                 while listLines[index].startswith('%'):
                     listLine = listLines[index].split('=')
-                    # print(listLine)
                     label = listLine[0][1:].strip()
-                    # print('label: ' + str([label]))
                     if '\'' in listLine[1]:
                         value = listLine[1].split('\'')[1]
                     else:
                         value = listLine[1]
                     value = value.replace('\n', '').strip()
-                    # print('value: ' + str([value]))
                     dictPlot[label] = value
                     index += 1
-                    # print(listLines[index])
             elif listLines[index].startswith('#'):
                 dictSubPlot = {}
                 dictPlotList.append(dictSubPlot)
                 plotName = listLines[index].split('#')[1]
                 dictSubPlot['name'] = plotName.replace('\n', '').strip()
                 index += 1
-                # print('1' + listLines[index])
                 while listLines[index].startswith('%'):
                     listLine = listLines[index].split('=')
-                    # print(listLine)
                     label = listLine[0][1:].strip()
-                    # print('label: ' + str([label]))
                     if '\'' in listLine[1]:
                         value = listLine[1].split('\'')[1]
                     else:
                         value = listLine[1]
                     value = value.replace('\n', '').strip()
-                    # print('value: ' + str([value]))
                     dictSubPlot[label] = value
                     index += 1
-                    # print(listLines[index])
                 dictSubPlot['xValues'] = []
                 dictSubPlot['yValues'] = []
             else:
@@ -346,7 +333,6 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
                 dictSubPlot['xValues'].append(float(listData[0]))
                 dictSubPlot['yValues'].append(float(listData[1]))
                 index += 1
-        # pprint.pprint(listPlots)
         # Generate the plots
         for mtvplot in listPlots:
             listLegend = []
