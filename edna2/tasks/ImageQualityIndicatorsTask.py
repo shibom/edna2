@@ -33,7 +33,6 @@ import pathlib
 
 from tasks.AbstractTask import AbstractTask
 from tasks.WaitFileTask import WaitFileTask
-from tasks.DozorTasks import ControlDozor
 
 from utils import UtilsImage
 from utils import UtilsConfig

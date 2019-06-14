@@ -32,7 +32,6 @@ import logging
 
 from tasks.AbstractTask import AbstractTask
 
-from utils import UtilsPath
 from utils import UtilsImage
 from utils import UtilsConfig
 
@@ -72,9 +71,9 @@ class H5ToCBFTask(AbstractTask):
             masterFile = hdf5File
         else:
             if UtilsConfig.isEMBL():
-                fileName = prefix + "_master.h5".format(hdf5ImageNumber)
+                fileName = '{0}_master.h5'.format(prefix)
             else:
-                fileName = prefix + "_{0}_master.h5".format(hdf5ImageNumber)
+                fileName = '{0}_{1}_master.h5'.format(prefix, hdf5ImageNumber)
             masterFile = directory / fileName
         if 'forcedOutputImageNumber' in inData:
             cbfFileName = prefix + \

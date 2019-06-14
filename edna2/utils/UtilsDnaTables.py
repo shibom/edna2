@@ -81,7 +81,7 @@ def _convertFromString(value):
                 value = float(value)
             else:
                 value = int(value)
-        except ValueError as e:
+        except ValueError:
             # The value is returned as a string...
             pass
     return value

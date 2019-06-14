@@ -28,7 +28,6 @@ import logging
 import unittest
 
 from utils import UtilsTest
-from utils import UtilsConfig
 
 from tasks.CCP4Tasks import PointlessTask
 

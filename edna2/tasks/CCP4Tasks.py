@@ -34,7 +34,6 @@ import logging
 
 from tasks.AbstractTask import AbstractTask
 
-from utils import UtilsPath
 from utils import UtilsConfig
 
 logger = logging.getLogger('edna2')

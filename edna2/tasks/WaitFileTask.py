@@ -29,13 +29,11 @@ __date__ = "21/04/2019"
 
 import os
 import time
-import pprint
 import logging
 import pathlib
 
 from tasks.AbstractTask import AbstractTask
 
-from utils import UtilsPath
 from utils import UtilsConfig
 
 logger = logging.getLogger('edna2')

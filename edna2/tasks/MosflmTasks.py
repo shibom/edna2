@@ -28,14 +28,10 @@ __date__ = "10/05/2019"
 # mxPluginExec/plugins/EDPluginGroupMOSFLM-v1.0/plugins/EDPluginMOSFLMv10.py
 # mxPluginExec/plugins/EDPluginGroupMOSFLM-v1.0/plugins/EDPluginMOSFLMIndexingv10.py
 
-import abc
-import pprint
 import logging
-import xmltodict
 
 from tasks.AbstractTask import AbstractTask
 
-from utils import UtilsPath
 from utils import UtilsConfig
 from utils import UtilsDnaTables
 

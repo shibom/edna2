@@ -29,8 +29,6 @@ __date__ = "21/04/2019"
 #      EDPluginControlReadImageHeaderv10.py
 
 import os
-import sys
-import json
 import logging
 
 from tasks.AbstractTask import AbstractTask

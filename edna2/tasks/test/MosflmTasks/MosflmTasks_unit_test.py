@@ -82,10 +82,10 @@ class MosflmTasksUnitTest(unittest.TestCase):
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         mosflmIndexingTask = MosflmIndexingTask(inData=inData)
         listCommands = mosflmIndexingTask.generateMOSFLMCommands(inData)
-        # for requiredItem in ['BEAM', 'DETECTOR', 'OMEGA', 'REVERSEPHI',
-        #                      'DIRECTORY', 'TEMPLATE', 'LIMITS EXCLUDE',
-        #                      'RASTER', 'POLARIZATION']:
-        #     self.assertTrue(requiredItem in ' '.join(listCommands))
+        for requiredItem in ['BEAM', 'DETECTOR', 'OMEGA', 'REVERSEPHI',
+                             'DIRECTORY', 'TEMPLATE', 'LIMITS EXCLUDE',
+                             'RASTER', 'POLARIZATION']:
+            self.assertTrue(requiredItem in ' '.join(listCommands))
 
     def test_parseIndexingMosflmOutput(self):
         newMatFilePath = self.dataPath / 'newmat.txt'

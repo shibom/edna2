@@ -25,7 +25,6 @@ __license__ = "MIT"
 __date__ = "14/05/2019"
 
 import os
-import pprint
 import logging
 import unittest
 
