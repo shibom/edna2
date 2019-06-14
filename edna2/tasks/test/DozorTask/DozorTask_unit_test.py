@@ -77,16 +77,16 @@ class ExecDozorUnitTest(unittest.TestCase):
 
     def test_parseDouble(self):
         self.assertEqual(1.0,
-                         self.dozor.parseDouble('1.0'),
+                         ExecDozor.parseDouble('1.0'),
                          "Parsing '1.0'")
         self.assertEqual(None,
-                         self.dozor.parseDouble('****'),
+                         ExecDozor.parseDouble('****'),
                          "Parsing '****'")
 
     def test_generatePngPlots(self):
         plotmtvFile = self.dataPath / 'dozor_rd.mtv'
         tmpDir = tempfile.mkdtemp(suffix='EDTestCasePluginUnitDozor_')
-        listFile = self.dozor.generatePngPlots(plotmtvFile, tmpDir)
+        listFile = ExecDozor.generatePngPlots(plotmtvFile, tmpDir)
         for plotFile in listFile:
             self.assertTrue(os.path.exists(plotFile))
         shutil.rmtree(tmpDir)

@@ -59,7 +59,7 @@ def setSite(site):
     Sets the EDNA2_SITE variable.
     """
     os.environ["EDNA2_SITE"] = site
-    
+
 
 def getConfig(site=None):
     config = configparser.ConfigParser()

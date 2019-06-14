@@ -112,7 +112,8 @@ class ReadImageHeader(AbstractTask):
                                            detectorName, detectorType)
         return outData
 
-    def readCBFHeader(self, filePath):
+    @classmethod
+    def readCBFHeader(cls, filePath):
         """
         Returns an dictionary with the contents of a CBF image header.
         """
@@ -141,7 +142,8 @@ class ReadImageHeader(AbstractTask):
                         dictHeader[strKey] = strValue
         return dictHeader
 
-    def createCBFHeaderData(self, imagePath, dictHeader,
+    @classmethod
+    def createCBFHeaderData(cls, imagePath, dictHeader,
                             numberPixelX, numberPixelY,
                             detectorName, detectorType):
         experimentalCondition = {}

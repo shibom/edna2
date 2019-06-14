@@ -272,7 +272,8 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
                                                                 workingDir)
         return resultDozor
 
-    def parseDouble(self, value):
+    @classmethod
+    def parseDouble(cls, value):
         returnValue = None
         try:
             returnValue = float(value)
@@ -281,7 +282,8 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
             logger.error(errorMessage)
         return returnValue
 
-    def generatePngPlots(self, plotmtvFile, workingDir):
+    @classmethod
+    def generatePngPlots(cls, plotmtvFile, workingDir):
         listXSFile = []
         # Create plot dictionary
         with open(str(plotmtvFile)) as f:
@@ -700,7 +702,8 @@ plot '{dozorCsvFileName}' using 1:3 title 'Number of spots' axes x1y1 with point
         dozorCsvPath = workingDirectory / csvFileName
         return dozorPlotPath, dozorCsvPath
 
-    def storeDataOnPyarch(self, dozorPlotPath, dozorCsvPath,
+    @classmethod
+    def storeDataOnPyarch(cls, dozorPlotPath, dozorCsvPath,
                           directory, processDirectory=None):
         if processDirectory is None:
             processDirectory = pathlib.Path(
@@ -786,7 +789,8 @@ plot '{dozorCsvFileName}' using 1:3 title 'Number of spots' axes x1y1 with point
             dictImage[imageNo] = image
         return dictImage
 
-    def createListOfBatches(self, listImage, batchSize):
+    @classmethod
+    def createListOfBatches(cls, listImage, batchSize):
         # Create the list of batches containing the image no
         listAllBatches = []
         listImagesInBatch = []
@@ -818,7 +822,8 @@ plot '{dozorCsvFileName}' using 1:3 title 'Number of spots' axes x1y1 with point
             listAllBatches.append(listImagesInBatch)
         return listAllBatches
 
-    def convertToCBF(self, dictImage, listAllBatches,
+    @classmethod
+    def convertToCBF(cls, dictImage, listAllBatches,
                      doRadiationDamage=False, hasOverlap=False,
                      cbfTempDir=None):
         # Find start and end image number

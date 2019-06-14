@@ -64,7 +64,7 @@ def getListParam(table):
 
 def getItemValue(dictParameter, key):
     value = None
-    if type(dictParameter['item']) == list:
+    if isinstance(dictParameter['item'], list):
         listItem = dictParameter['item']
     else:
         listItem = [dictParameter['item']]

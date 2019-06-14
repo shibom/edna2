@@ -50,37 +50,37 @@ class ControlDozorUnitTest(unittest.TestCase):
 
     def testCreateDict(self):
         dictImage = self.controlDozor.createImageDict(self.inData)
-        self.assertEqual(True, type(dictImage) == dict)
+        self.assertEqual(True, isinstance(dictImage, dict)
 
     def testCreateListOfBatches(self):
         self.assertEqual(
             [[1], [2], [3], [4], [5]],
-            self.controlDozor.createListOfBatches(range(1, 6), 1)
+            ControlDozor.createListOfBatches(range(1, 6), 1)
         )
 
         self.assertEqual(
             [[1, 2], [3, 4], [5]],
-            self.controlDozor.createListOfBatches(range(1, 6), 2)
+            ControlDozor.createListOfBatches(range(1, 6), 2)
         )
 
         self.assertEqual(
             [[1, 2, 3], [4, 5]],
-            self.controlDozor.createListOfBatches(range(1, 6), 3)
+            ControlDozor.createListOfBatches(range(1, 6), 3)
         )
 
         self.assertEqual(
             [[1, 2, 3, 4], [5]],
-            self.controlDozor.createListOfBatches(range(1, 6), 4)
+            ControlDozor.createListOfBatches(range(1, 6), 4)
         )
 
         self.assertEqual(
             [[1, 2, 3, 4, 5]],
-            self.controlDozor.createListOfBatches(range(1, 6), 5)
+            ControlDozor.createListOfBatches(range(1, 6), 5)
         )
 
         self.assertEqual(
             [[1], [2], [4], [5], [6]],
-            self.controlDozor.createListOfBatches(
+            ControlDozor.createListOfBatches(
                 list(range(4, 7)) + list(range(1, 3)),
                 1
             )
@@ -88,7 +88,7 @@ class ControlDozorUnitTest(unittest.TestCase):
 
         self.assertEqual(
             [[1, 2], [4, 5], [6]],
-            self.controlDozor.createListOfBatches(
+            ControlDozor.createListOfBatches(
                 list(range(4, 7)) + list(range(1, 3)),
                 2
             )
@@ -96,7 +96,7 @@ class ControlDozorUnitTest(unittest.TestCase):
 
         self.assertEqual(
             [[1, 2], [4, 5, 6]],
-            self.controlDozor.createListOfBatches(
+            ControlDozor.createListOfBatches(
                 list(range(4, 7)) + list(range(1, 3)),
                 3
             )

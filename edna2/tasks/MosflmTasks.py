@@ -52,7 +52,8 @@ class AbstractMosflmTask(AbstractTask):
         outData = self.parseMosflmOutput(self.getWorkingDirectory())
         return outData
 
-    def generateMOSFLMCommands(self, inData):
+    @classmethod
+    def generateMOSFLMCommands(cls, inData):
         """
         This method creates a list of MOSFLM indexing commands given a valid
         XSDataMOSFLMInput as self.getDataInput()
@@ -147,9 +148,9 @@ class AbstractMosflmTask(AbstractTask):
     #
 
     @classmethod
-    def splitStringIntoListOfFloats(cls, input):
+    def splitStringIntoListOfFloats(cls, inputString):
         listFloats = []
-        listString = input.split()
+        listString = inputString.split()
         for element in listString:
             if element != "":
                 listFloats.append(float(element))

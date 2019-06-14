@@ -32,8 +32,7 @@ class ReadImageHeaderTasksExecTest(unittest.TestCase):
     def test_readCBFHeader(self):
         referenceDataPath = self.dataPath / 'ControlReadImageHeader.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
-        readImageHeader = ReadImageHeader(inData=inData)
-        dictHeader = readImageHeader.readCBFHeader(inData['image'])
+        dictHeader = ReadImageHeader.readCBFHeader(inData['image'])
         self.assertEqual(
             dictHeader['Detector:'],
             'PILATUS2 3M, S/N 24-0118, ESRF ID23'
