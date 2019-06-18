@@ -43,17 +43,21 @@ class AbstractMosflmTask(AbstractTask):
     Common base class for all MOSLFM tasks
     """
 
+    def __init__(self, inData):
+        AbstractTask.__init__(self, inData)
+        self.matrixFileName = None
+
     def run(self, inData):
         commandLine = 'mosflm DNA dnaTables.xml'
-        listCommand = self.generateMOSFLMCommands(inData)
+        listCommand = self.generateMOSFLMCommands(inData,
+                                                  self.getWorkingDirectory())
         self.setLogFileName('mosflm.log')
         self.runCommandLine(commandLine, listCommand=listCommand)
         # Work in progress!
         outData = self.parseMosflmOutput(self.getWorkingDirectory())
         return outData
 
-    @classmethod
-    def generateMOSFLMCommands(cls, inData):
+    def generateMOSFLMCommands(self, inData, workingDirectory):
         """
         This method creates a list of MOSFLM indexing commands given a valid
         XSDataMOSFLMInput as self.getDataInput()
@@ -64,109 +68,105 @@ class AbstractMosflmTask(AbstractTask):
         # Check if reversephi and omega are configured
         omega = UtilsConfig.get('MOSFLM', 'omega')
         if omega is not None:
-            detectorCommand += " OMEGA {0}".format(omega)
+            detectorCommand += ' OMEGA {0}'.format(omega)
         reversePhi = UtilsConfig.get('MOSFLM', 'reversePhi')
         if reversePhi is not None:
-            detectorCommand += " REVERSEPHI"
+            detectorCommand += ' REVERSEPHI'
         listCommand = [
-            "WAVELENGTH {0}".format(inData['wavelength']),
-            "DISTANCE {0}".format(inData['distance']),
-            "BEAM {0} {1}".format(inData['beam']['x'], inData['beam']['y']),
-            "DETECTOR {0}".format(detectorCommand),
-            "DIRECTORY {0}".format(inData['directory']),
-            "TEMPLATE {0}".format(inData['template'])
+            'WAVELENGTH {0}'.format(inData['wavelength']),
+            'DISTANCE {0}'.format(inData['distance']),
+            'BEAM {0} {1}'.format(inData['beam']['x'], inData['beam']['y']),
+            'DETECTOR {0}'.format(detectorCommand),
+            'DIRECTORY {0}'.format(inData['directory']),
+            'TEMPLATE {0}'.format(inData['template'])
         ]
         if 'symmetry' in inData:
-            listCommand.append("SYMMETRY {0}".format(inData['symmetry']))
+            listCommand.append('SYMMETRY {0}'.format(inData['symmetry']))
         if 'mosaicity' in inData:
-            listCommand.append("MOSAIC {0}".format(inData['mosaicity']))
+            listCommand.append('MOSAIC {0}'.format(inData['mosaicity']))
 
-        #     strNewmatFileName = self.getNewmatFileName()
-        #
-        #     xsDataNewmatMatrix = xsDataMOSFLMInput.getMatrix()
-        #     if (xsDataNewmatMatrix is not None):
-        #         self.writeDataMOSFLMNewmat(xsDataNewmatMatrix, self.getMatrixFileName())
-        #         listCommand.append("MATRIX " + self.getMatrixFileName())
-        #
+        newmatFileName = self.getNewmatFileName()
+        newmatMatrix = inData.get('matrix', None)
+        if newmatMatrix is not None:
+            matrixFileName = self.getMatrixFileName()
+            newmatPath = workingDirectory / matrixFileName
+            self.writeNewmat(newmatMatrix, newmatPath)
+            listCommand.append('MATRIX ' + matrixFileName)
+
         # Add exclude regions if Pilatus
         if detectorType == 'PILATUS':
             if detector['numberPixelX'] == 1475 and \
                detector['numberPixelY'] == 1679:
                 # Pilatus 2M
-                listCommand.append("LIMITS EXCLUDE    0.0  83.76  288.96   85.14")
-                listCommand.append("LIMITS EXCLUDE    0.0 168.73  288.96  170.10")
-                listCommand.append("LIMITS EXCLUDE   33.54   0.0   36.63  253.87")
-                listCommand.append("LIMITS EXCLUDE   70.00   0.0   73.1   253.87")
-                listCommand.append("LIMITS EXCLUDE  106.46   0.0  109.56  253.87")
-                listCommand.append("LIMITS EXCLUDE  142.93   0.0  146.02  253.87")
-                listCommand.append("LIMITS EXCLUDE  179.39   0.0  182.49  253.87")
-                listCommand.append("LIMITS EXCLUDE  215.86   0.0  218.95  253.87")
-                listCommand.append("LIMITS EXCLUDE  252.32   0.0  255.42  253.87")
+                listCommand.append('LIMITS EXCLUDE    0.0  83.76  288.96   85.14')
+                listCommand.append('LIMITS EXCLUDE    0.0 168.73  288.96  170.10')
+                listCommand.append('LIMITS EXCLUDE   33.54   0.0   36.63  253.87')
+                listCommand.append('LIMITS EXCLUDE   70.00   0.0   73.1   253.87')
+                listCommand.append('LIMITS EXCLUDE  106.46   0.0  109.56  253.87')
+                listCommand.append('LIMITS EXCLUDE  142.93   0.0  146.02  253.87')
+                listCommand.append('LIMITS EXCLUDE  179.39   0.0  182.49  253.87')
+                listCommand.append('LIMITS EXCLUDE  215.86   0.0  218.95  253.87')
+                listCommand.append('LIMITS EXCLUDE  252.32   0.0  255.42  253.87')
             elif detector['numberPixelX'] == 2463 and \
                detector['numberPixelY'] == 2527:
                 # Pilatus 6M
-                listCommand.append("LIMITS EXCLUDE  0.0 338.77 434.6 340.24")
-                listCommand.append("LIMITS EXCLUDE  0.0 253.80 434.6 255.28")
-                listCommand.append("LIMITS EXCLUDE  0.0 168.83 434.6 170.21")
-                listCommand.append("LIMITS EXCLUDE  0.0  83.86 434.6  85.24")
-                listCommand.append("LIMITS EXCLUDE 398.18  0.0 401.28 423.6")
-                listCommand.append("LIMITS EXCLUDE 361.72  0.0 364.81 423.6")
-                listCommand.append("LIMITS EXCLUDE 325.25  0.0 328.35 423.6")
-                listCommand.append("LIMITS EXCLUDE 288.79  0.0 291.88 423.6")
-                listCommand.append("LIMITS EXCLUDE 252.32  0.0 255.42 423.6")
-                listCommand.append("LIMITS EXCLUDE 215.86  0.0 218.96 423.6")
-                listCommand.append("LIMITS EXCLUDE 179.40  0.0 182.49 423.6")
-                listCommand.append("LIMITS EXCLUDE 142.93  0.0 145.86 423.6")
-                listCommand.append("LIMITS EXCLUDE 106.47  0.0 109.56 423.6")
-                listCommand.append("LIMITS EXCLUDE  70.00  0.0 73.10  423.6")
-                listCommand.append("LIMITS EXCLUDE  33.54  0.0 36.64  423.6")
+                listCommand.append('LIMITS EXCLUDE  0.0 338.77 434.6 340.24')
+                listCommand.append('LIMITS EXCLUDE  0.0 253.80 434.6 255.28')
+                listCommand.append('LIMITS EXCLUDE  0.0 168.83 434.6 170.21')
+                listCommand.append('LIMITS EXCLUDE  0.0  83.86 434.6  85.24')
+                listCommand.append('LIMITS EXCLUDE 398.18  0.0 401.28 423.6')
+                listCommand.append('LIMITS EXCLUDE 361.72  0.0 364.81 423.6')
+                listCommand.append('LIMITS EXCLUDE 325.25  0.0 328.35 423.6')
+                listCommand.append('LIMITS EXCLUDE 288.79  0.0 291.88 423.6')
+                listCommand.append('LIMITS EXCLUDE 252.32  0.0 255.42 423.6')
+                listCommand.append('LIMITS EXCLUDE 215.86  0.0 218.96 423.6')
+                listCommand.append('LIMITS EXCLUDE 179.40  0.0 182.49 423.6')
+                listCommand.append('LIMITS EXCLUDE 142.93  0.0 145.86 423.6')
+                listCommand.append('LIMITS EXCLUDE 106.47  0.0 109.56 423.6')
+                listCommand.append('LIMITS EXCLUDE  70.00  0.0 73.10  423.6')
+                listCommand.append('LIMITS EXCLUDE  33.54  0.0 36.64  423.6')
 
         # Check if raster is configured
         raster = UtilsConfig.get('MOSFLM', 'raster')
         if raster is not None:
-            listCommand.append("RASTER {0}".format(raster))
+            listCommand.append('RASTER {0}'.format(raster))
         # Check if polarization is configured
         polarization = UtilsConfig.get('MOSFLM', 'polarization')
         if polarization is not None:
-            listCommand.append("POLARIZATION {0}".format(polarization))
+            listCommand.append('POLARIZATION {0}'.format(polarization))
         return listCommand
 
     def getNewmatFileName(self):
-        newmatFileName = self.__class__.__name__ + "_newmat.mat"
+        newmatFileName = self.__class__.__name__ + '_newmat.mat'
         return newmatFileName
-    #
-    # def setNewmatFileName(self, _strMOSFLMNewmatFileName):
-    #     self.strMOSFLMNewmatFileName = _strMOSFLMNewmatFileName
-    #
-    # def getMatrixFileName(self):
-    #     if (self.strMOSFLMMatrixFileName is None):
-    #         self.strMOSFLMMatrixFileName = self.getScriptBaseName() + "_matrix.mat"
-    #     return self.strMOSFLMMatrixFileName
-    #
-    # def setMatrixFileName(self, _strMOSFLMMatrixFileName):
-    #     self.strMOSFLMMatrixFileName = _strMOSFLMMatrixFileName
-    #
+
+    def setNewmatFileName(self, newmatFileName):
+        self.newmatFileName = newmatFileName
+
+    def getMatrixFileName(self):
+        if self.matrixFileName is None:
+            self.matrixFileName = self.__class__.__name__ + '_matrix.mat'
+        return self.matrixFileName
+
+    def setMatrixFileName(self, matrixFileName):
+        self.matrixFileName = matrixFileName
 
     @classmethod
     def splitStringIntoListOfFloats(cls, inputString):
         listFloats = []
         listString = inputString.split()
         for element in listString:
-            if element != "":
+            if element != '':
                 listFloats.append(float(element))
         return listFloats
 
-    #
-    # def getDataMOSFLMMatrix(self, _strMatrixFileName=None):
-    #     self.DEBUG("EDPluginMOSFLMv10.getDataMOSFLMMatrix")
-    #     strMatrixFileName = None
-    #     if (_strMatrixFileName is None):
-    #         strMatrixFileName = self.getMatrixFileName()
-    #     else:
-    #         strMatrixFileName = _strMatrixFileName
-    #     xsDataMOSFLMNewmatMatrix = self.getDataMOSFLMNewmat(strMatrixFileName)
-    #     return xsDataMOSFLMNewmatMatrix
-    #
+    def getDataMOSFLMMatrix(self, matrixFileName):
+        if matrixFileName is None:
+            strMatrixFileName = self.getMatrixFileName()
+        else:
+            strMatrixFileName = matrixFileName
+        xsDataMOSFLMNewmatMatrix = self.getNewmat(strMatrixFileName)
+        return xsDataMOSFLMNewmatMatrix
 
     @classmethod
     def getNewmat(cls, newMatFilePath):
@@ -175,7 +175,7 @@ class AbstractMosflmTask(AbstractTask):
             listLine = f.readlines()
         # Convert into list of lists of float
         for line in listLine:
-            if not line.startswith("SYMM"):
+            if not line.startswith('SYMM'):
                 listOfListOfFloat.append(
                     AbstractMosflmTask.splitStringIntoListOfFloats(line))
         # Fill in the data
@@ -203,46 +203,27 @@ class AbstractMosflmTask(AbstractTask):
         }
         newmat['cell'] = cell
         return newmat
-    #
-    # def writeDataMOSFLMNewmat(self, _xsDataMOSFLNNewmat, _strNewmatFileName=None):
-    #     self.DEBUG("EDPluginMOSFLMv10.writeDataMOSFLMNewmat")
-    #     strNewmatFileName = None
-    #     if (_strNewmatFileName is None):
-    #         strNewmatFileName = self.getNewmatFileName()
-    #     else:
-    #         strNewmatFileName = _strNewmatFileName
-    #     matrixA = _xsDataMOSFLNNewmat.getAMatrix()
-    #     strNewmat = " %11.8f %11.8f %11.8f\n" % (
-    #     matrixA.getM11(), matrixA.getM12(), matrixA.getM13())
-    #     strNewmat += " %11.8f %11.8f %11.8f\n" % (
-    #     matrixA.getM21(), matrixA.getM22(), matrixA.getM23())
-    #     strNewmat += " %11.8f %11.8f %11.8f\n" % (
-    #     matrixA.getM31(), matrixA.getM32(), matrixA.getM33())
-    #     xsDataMOSFLMMissettingAngles = _xsDataMOSFLNNewmat.getMissettingAngles()
-    #     strNewmat += " %11.3f %11.3f %11.3f\n" % (xsDataMOSFLMMissettingAngles.getPhix().getValue(),
-    #                                               xsDataMOSFLMMissettingAngles.getPhiy().getValue(),
-    #                                               xsDataMOSFLMMissettingAngles.getPhiz().getValue())
-    #     XSDataMatrixDoubleU = _xsDataMOSFLNNewmat.getUMatrix()
-    #     strNewmat += " %11.7f %11.7f %11.7f\n" % (
-    #     XSDataMatrixDoubleU.getM11(), XSDataMatrixDoubleU.getM12(), XSDataMatrixDoubleU.getM13())
-    #     strNewmat += " %11.7f %11.7f %11.7f\n" % (
-    #     XSDataMatrixDoubleU.getM21(), XSDataMatrixDoubleU.getM22(), XSDataMatrixDoubleU.getM23())
-    #     strNewmat += " %11.7f %11.7f %11.7f\n" % (
-    #     XSDataMatrixDoubleU.getM31(), XSDataMatrixDoubleU.getM32(), XSDataMatrixDoubleU.getM33())
-    #
-    #     xsDataCellRefined = _xsDataMOSFLNNewmat.getRefinedCell()
-    #     strNewmat += " %11.4f %11.4f %11.4f" % (xsDataCellRefined.getLength_a().getValue(),
-    #                                             xsDataCellRefined.getLength_b().getValue(),
-    #                                             xsDataCellRefined.getLength_c().getValue())
-    #     strNewmat += " %11.4f %11.4f %11.4f\n" % (xsDataCellRefined.getAngle_alpha().getValue(),
-    #                                               xsDataCellRefined.getAngle_beta().getValue(),
-    #                                               xsDataCellRefined.getAngle_gamma().getValue())
-    #     strNewmat += " %11.3f %11.3f %11.3f\n" % (xsDataMOSFLMMissettingAngles.getPhix().getValue(),
-    #                                               xsDataMOSFLMMissettingAngles.getPhiy().getValue(),
-    #                                               xsDataMOSFLMMissettingAngles.getPhiz().getValue())
-    #
-    #     self.writeProcessFile(strNewmatFileName, strNewmat)
-    #
+
+    @classmethod
+    def writeNewmat(cls, newmat, newmatPath):
+        matrixA = newmat['matrixA']
+        strNewmat = ''
+        strNewmat += ' {0:11.8f} {1:11.8f} {2:11.8f}\n'.format(*matrixA[0])
+        strNewmat += ' {0:11.8f} {1:11.8f} {2:11.8f}\n'.format(*matrixA[1])
+        strNewmat += ' {0:11.8f} {1:11.8f} {2:11.8f}\n'.format(*matrixA[2])
+        missettingsAngles = newmat['missettingsAngles']
+        strNewmat += ' {0:11.3f} {0:11.3f} {0:11.3f}\n'.format(*missettingsAngles)
+        matrixU = newmat['matrixU']
+        strNewmat += ' {0:11.7f} {1:11.7f} {2:11.7f}\n'.format(*matrixU[0])
+        strNewmat += ' {0:11.7f} {1:11.7f} {2:11.7f}\n'.format(*matrixU[1])
+        strNewmat += ' {0:11.7f} {1:11.7f} {2:11.7f}\n'.format(*matrixU[2])
+        cell = newmat['cell']
+        strNewmat += ' {a:11.4f} {b:11.4f} {c:11.4f}'.format(**cell)
+        strNewmat += ' {alpha:11.4f} {beta:11.4f} {gamma:11.4f}\n'.format(**cell)
+        strNewmat += ' {0:11.3f} {0:11.3f} {0:11.3f}\n'.format(*missettingsAngles)
+        with open(str(newmatPath), 'w') as f:
+            f.write(strNewmat)
+
     # def generateExecutiveSummary(self, _edPlugin):
     #     """
     #     Generates a summary of the execution of the plugin.
@@ -255,12 +236,13 @@ class AbstractMosflmTask(AbstractTask):
 
 class MosflmIndexingTask(AbstractMosflmTask):
 
-    def generateMOSFLMCommands(self, inData):
+    def generateMOSFLMCommands(self, inData, workingDirectory):
         """
         This method creates a list of MOSFLM indexing commands given a valid
         inData
         """
-        listCommand = AbstractMosflmTask.generateMOSFLMCommands(inData)
+        listCommand = AbstractMosflmTask.generateMOSFLMCommands(self,
+                            inData, workingDirectory)
         listCommand.append('NEWMAT ' + self.getNewmatFileName())
         listImage = inData['image']
         for image in listImage:
@@ -459,3 +441,73 @@ class MosflmIndexingTask(AbstractMosflmTask):
     #                                       (fBeamshiftX, fBeamshiftY))
     #         fMosaicityEstimated = xsDataMOSFLMOutputIndexing.getMosaicityEstimation().getValue()
     #         self.addExecutiveSummaryLine("Estimated mosaicity       : %14.2f [degrees]" % fMosaicityEstimated)
+
+
+class MosflmGeneratePredictionTask(AbstractMosflmTask):
+
+    def __init__(self, inData):
+        AbstractMosflmTask.__init__(self, inData)
+        self.predictionFileName = None
+
+    def generateMOSFLMCommands(self, inData, workingDirectory):
+        """
+        This method creates a list of MOSFLM generate prediction commands
+        given a valid inData
+        """
+        listCommand = AbstractMosflmTask.generateMOSFLMCommands(self,
+                                                                inData,
+                                                                workingDirectory)
+        template = inData['template']
+        imageNumber = inData['image'][0]['number']
+        self.predictionFileName = \
+            MosflmGeneratePredictionTask.getImageFileNameFromTemplate(
+                template, imageNumber)
+        if self.predictionFileName is not None:
+            self.predictionFileName += '_pred.jpg'
+        rotationAxisStart = inData['image'][0]['rotationAxisStart']
+        rotationAxisEnd = inData['image'][0]['rotationAxisEnd']
+        listCommand.append('XGUI ON')
+        listCommand.append('IMAGE %d PHI %f TO %f' % \
+                           (imageNumber, rotationAxisStart, rotationAxisEnd))
+        listCommand.append('GO')
+        listCommand.append('PREDICT_SPOTS')
+        listCommand.append(
+            'CREATE_IMAGE PREDICTION ON BINARY TRUE FILENAME %s' % \
+            self.predictionFileName)
+        listCommand.append('RETURN')
+        listCommand.append('EXIT')
+        return listCommand
+
+    @classmethod
+    def getImageFileNameFromTemplate(cls, template, imageNumber):
+        hashFound = False
+        hasFinished = False
+        firstHash = None
+        noHashes = 0
+        try:
+            for index, character in enumerate(template):
+                if (not hashFound) and (not hasFinished):
+                    if character == '#':
+                        firstHash = index
+                        hashFound = True
+                else:
+                    if (character != '#') and (not hasFinished):
+                        hasFinished = True
+                if hashFound and (not hasFinished):
+                    noHashes += 1
+            imageFileName = template[0:firstHash] + \
+                               str(imageNumber).rjust(noHashes, '0')
+        except Exception:
+            logger.warning("Couldn't transform template {}".format(template) +
+                           " to file name")
+            imageFileName = None
+        return imageFileName
+
+    def parseMosflmOutput(self, workingDirectory):
+        predictionPath = None
+        if self.predictionFileName is not None:
+            predictionPath = workingDirectory / self.predictionFileName
+        outData = {
+            'predictionImage': predictionPath
+        }
+        return outData

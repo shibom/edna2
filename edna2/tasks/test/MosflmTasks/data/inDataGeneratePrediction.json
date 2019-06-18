@@ -1,0 +1,82 @@
+{
+    "beam": {
+        "x": 113.5544,
+        "y": 112.2936
+    },
+    "detector": {
+        "numberPixelX": 1475,
+        "numberPixelY": 1679,
+        "pixelSizeX": 0.172,
+        "pixelSizeY": 0.172,
+        "type": "PILATUS"
+    },
+    "directory": "/users/svensson/git/edna2/testdata/images",
+    "distance": 305.222,
+    "template": "ref-2m_RNASE_1_####.cbf",
+    "wavelength": 0.8729,
+    "image": [
+        {
+            "number": 1,
+            "rotationAxisStart": 54.5,
+            "rotationAxisEnd": 55.5
+        },
+        {
+            "number": 2,
+            "rotationAxisStart": 144.5,
+            "rotationAxisEnd": 145.5
+        }
+    ],
+   "matrix": {
+        "matrixA": [
+            [
+                -0.00520639,
+                0.00409075,
+                0.00598777
+            ],
+            [
+                -0.00922857,
+                -0.00696139,
+                0.00233786
+            ],
+            [
+                0.00580022,
+                -0.00738658,
+                0.00518602
+            ]
+        ],
+        "missettingsAngles": [
+            0.0,
+            0.0,
+            0.0
+        ],
+        "matrixU": [
+            [
+                -0.4310086,
+                0.3741439,
+                0.8211259
+            ],
+            [
+                -0.7639828,
+                -0.6355417,
+                -0.1114313
+            ],
+            [
+                0.4801684,
+                -0.6753541,
+                0.5597635
+            ]
+        ],
+        "cell": {
+            "a": 74.4515,
+            "b": 84.8724,
+            "c": 115.476,
+            "alpha": 70.0227,
+            "beta": 76.0723,
+            "gamma": 85.3234
+        }
+    },
+    "mosaicityEstimation": 0.8500000000000001,
+    "deviationAngular": 1.906892,
+    "refinedDistance": 305.222015,
+    "symmetry": "P1"
+}
