@@ -115,12 +115,13 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
                     "type": "array",
                     "items": {
                         "type": "object",
-                        "required": ["number", "angle", "spotsNumOf",
+                        "required": ["number", "image", "angle", "spotsNumOf",
                                      "spotsIntAver", "spotsResolution",
                                      "mainScore", "spotScore",
                                      "visibleResolution"],
                         "properties": {
                             "number": {"type": "integer"},
+                            "image": {"type": "string"},
                             "angle": {"type": "number"},
                             "spotsNumOf": {"type": "number"},
                             "spotsIntAver": {"type": "number"},
@@ -255,6 +256,11 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
         resultDozor = {
             'imageDozor': []
         }
+        # Create template for image name
+        template = inData['nameTemplateImage']
+        noWildCards = template.count('?')
+        template = template.replace('?'*noWildCards,
+                                    '{0:0'+str(noWildCards) + '}')
         # Skip the four first lines
         listOutput = output.split('\n')[6:]
 
@@ -270,6 +276,7 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
                     (inData['oscillationRange'] - overlap) + \
                     inData['oscillationRange'] / 2.0
                 imageDozor['number'] = imageNumber
+                imageDozor['image'] = template.format(imageNumber)
                 imageDozor['angle'] = angle
                 imageDozor['spotsNumOf'] = None
                 imageDozor['spotsIntAver'] = None
@@ -492,7 +499,7 @@ class ControlDozor(AbstractTask):
                     "type": "array",
                     "items": {
                         "type": "object",
-                        "required": ["number", "angle", "spotsNumOf",
+                        "required": ["number", "image", "angle", "spotsNumOf",
                                      "spotsIntAver", "spotsResolution",
                                      "mainScore", "spotScore",
                                      "visibleResolution"],
