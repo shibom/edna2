@@ -77,6 +77,76 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
     The ExecDozor is responsible for executing the 'dozor' program.
     """
 
+    def getInDataSchema(self):
+        return {
+            "type": "object",
+            "required": ["detectorType", "exposureTime", "spotSize",
+                         "detectorDistance", "wavelength",
+                         "orgx", "orgy", "oscillationRange",
+                         "firstImageNumber", "numberImages",
+                         "nameTemplateImage"],
+            "properties": {
+                "detectorType": {"type": "string"},
+                "exposureTime": {"type": "number"},
+                "spotSize": {"type": "integer"},
+                "detectorDistance": {"type": "number"},
+                "wavelength": {"type": "number"},
+                "fractionPolarization": {"type": "number"},
+                "orgx": {"type": "number"},
+                "orgy": {"type": "number"},
+                "oscillationRange": {"type": "number"},
+                "imageStep": {"type": "number"},
+                "startingAngle": {"type": "number"},
+                "firstImageNumber": {"type": "integer"},
+                "numberImages": {"type": "integer"},
+                "nameTemplateImage": {"type": "string"},
+                "wedgeNumber": {"type": "integer"},
+                "radiationDamage": {"type": "boolean"},
+                "overlap": {"type": "number"}
+            }
+        }
+
+    def getOutDataSchema(self):
+        return {
+            "type": "object",
+            "required": ["imageDozor"],
+            "properties": {
+                "imageDozor": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["number", "angle", "spotsNumOf",
+                                     "spotsIntAver", "spotsResolution",
+                                     "mainScore", "spotScore",
+                                     "visibleResolution"],
+                        "properties": {
+                            "number": {"type": "integer"},
+                            "angle": {"type": "number"},
+                            "spotsNumOf": {"type": "number"},
+                            "spotsIntAver": {"type": "number"},
+                            "spotsResolution": {"type": "number"},
+                            "mainScore": {"type": "number"},
+                            "spotScore": {"type": "number"},
+                            "visibleResolution": {"type": "number"},
+                            "powderWilsonScale": {"type": "number"},
+                            "powderWilsonBfactor": {"type": "number"},
+                            "powderWilsonResolution": {"type": "number"},
+                            "powderWilsonCorrelation": {"type": "number"},
+                            "powderWilsonRfactor": {"type": "number"},
+                            "spotFile": {"type": "string"},
+                        },
+                    },
+                },
+                "halfDoseTime": {"type": "number"},
+                "dozorPlot":  {"type": "string"},
+                "plotmtvFile":  {"type": "string"},
+                "pngPlots":  {
+                    "type": "array",
+                    "items": {"type": "string"}
+                },
+            },
+        }
+
     def run(self, inData):
         commands = self.generateCommands(inData)
         with open(str(self.getWorkingDirectory() / 'dozor.dat'), 'w') as f:
@@ -261,7 +331,6 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
                 resultDozor['imageDozor'].append(imageDozor)
             elif line.startswith('h'):
                 resultDozor['halfDoseTime'] = line.split('=')[1].split()[0]
-
         # Check if mtv plot file exists
         if workingDir is not None:
             mtvFileName = 'dozor_rd.mtv'
