@@ -266,9 +266,9 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
                 imageNumber = int(listLine[0])
                 overlap = inData.get('overlap', 0.0)
                 angle = inData['startingAngle'] + \
-                        (imageNumber - inData['firstImageNumber']) * \
-                        (inData['oscillationRange'] - overlap) + \
-                        inData['oscillationRange'] / 2.0
+                    (imageNumber - inData['firstImageNumber']) * \
+                    (inData['oscillationRange'] - overlap) + \
+                    inData['oscillationRange'] / 2.0
                 imageDozor['number'] = imageNumber
                 imageDozor['angle'] = angle
                 imageDozor['spotsNumOf'] = None
@@ -456,6 +456,11 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
 
 class ControlDozor(AbstractTask):
 
+    def __init__(self, inData):
+        AbstractTask.__init__(self, inData)
+        self.hasOverlap = False
+        self.overlap = 0.0
+
     def getInDataSchema(self):
         return {
             "type": "object",
@@ -518,35 +523,9 @@ class ControlDozor(AbstractTask):
 
     def run(self, inData):
         outData = {}
-        hasOverlap = False
         hasHdf5Prefix = False
         # Check if connection to ISPyB needed
-        if 'dataCollectionId' in inData:
-            ispybInData = {
-                'dataCollectionId': inData['dataCollectionId']
-            }
-            ispybTask = ISPyBRetrieveDataCollection(inData=ispybInData)
-            ispybTask.execute()
-            dataCollection = ispybTask.outData
-            batchSize = UtilsConfig.get('ControlDozor', 'batchSize')
-            if batchSize is None:
-                batchSize = dataCollection['numberOfImages']
-            if batchSize > MAX_BATCH_SIZE:
-                batchSize = MAX_BATCH_SIZE
-            if 'overlap' in dataCollection and \
-                abs(dataCollection['overlap']) > 1:
-                hasOverlap = True
-                overlap = dataCollection['overlap']
-            else:
-                overlap = 0.0
-            dictImage = self.createImageDictFromISPyB(dataCollection)
-        else:
-            # No connection to ISPyB, take parameters from input
-            if 'batchSize' in inData:
-                batchSize = inData['batchSize']
-            else:
-                batchSize = MAX_BATCH_SIZE
-            dictImage = self.createImageDict(inData)
+        batchSize, dictImage = self.determineBatchsize(inData)
         logger.info("ExecDozor batch size: {0}".format(batchSize))
         if 'hdf5BatchSize' in inData:
            hdf5BatchSize = inData['hdf5BatchSize']
@@ -596,13 +575,13 @@ class ControlDozor(AbstractTask):
                            'firstImageNumber': subWedge['image'][0]['number'],
                            'numberImages': len(listBatch),
                            'workingDirectory': str(self.getWorkingDirectory()),
-                           'overlap': inData.get('overlap', 0.0)}
+                           'overlap': inData.get('overlap', self.overlap)}
             fileName = os.path.basename(subWedge['image'][0]['path'])
             prefix = UtilsImage.getPrefix(fileName)
             suffix = UtilsImage.getSuffix(fileName)
             if UtilsConfig.isEMBL():
                 template = '{0}_?????.{1}'.format(prefix, suffix)
-            elif hasHdf5Prefix and not hasOverlap:
+            elif hasHdf5Prefix and not self.hasOverlap:
                 template = '{0}_??????.{1}'.format(prefix, suffix)
             else:
                 template = '{0}_????.{1}'.format(prefix, suffix)
@@ -633,6 +612,35 @@ class ControlDozor(AbstractTask):
             #            else:
             #                shutil.rmtree(self.cbfTempDir)
         return outData
+
+    def determineBatchsize(self, inData):
+        if 'dataCollectionId' in inData:
+            ispybInData = {
+                'dataCollectionId': inData['dataCollectionId']
+            }
+            ispybTask = ISPyBRetrieveDataCollection(inData=ispybInData)
+            ispybTask.execute()
+            dataCollection = ispybTask.outData
+            batchSize = UtilsConfig.get('ControlDozor', 'batchSize')
+            if batchSize is None:
+                batchSize = dataCollection['numberOfImages']
+            if batchSize > MAX_BATCH_SIZE:
+                batchSize = MAX_BATCH_SIZE
+            if 'overlap' in dataCollection and \
+                    abs(dataCollection['overlap']) > 1:
+                self.hasOverlap = True
+                self.overlap = dataCollection['overlap']
+            else:
+                self.overlap = 0.0
+            dictImage = self.createImageDictFromISPyB(dataCollection)
+        else:
+            # No connection to ISPyB, take parameters from input
+            if 'batchSize' in inData:
+                batchSize = inData['batchSize']
+            else:
+                batchSize = MAX_BATCH_SIZE
+            dictImage = self.createImageDict(inData)
+        return batchSize, dictImage
 
     def makePlot(self, dataCollectionId, outDataImageDozor, workingDirectory):
         minImageNumber = None
