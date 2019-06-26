@@ -5,4 +5,5 @@
 testdata
 .idea
 docs/build
-
+edna2/lib/autocryst/ext/build
+*.so
