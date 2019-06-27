@@ -57,12 +57,7 @@ class ExecDozorUnitTest(unittest.TestCase):
         logFileName = self.dataPath / 'Dozor_v2.0.2.log'
         with open(str(logFileName)) as f:
             output = f.read()
-        inData = {
-            'startingAngle': 0.0,
-            'firstImageNumber': 1,
-            'oscillationRange': 1.0
-        }
-        result = self.dozor.parseOutput(inData, output)
+        result = self.dozor.parseOutput(self.inData, output)
         self.assertEqual(10,
                          len(result['imageDozor']),
                          "Result from 10 images")
@@ -70,7 +65,7 @@ class ExecDozorUnitTest(unittest.TestCase):
         logFileName2 = self.dataPath / 'Dozor_v2.0.2_no_results.log'
         with open(str(logFileName2)) as f:
             output2 = f.read()
-        result2 = self.dozor.parseOutput(inData, output2)
+        result2 = self.dozor.parseOutput(self.inData, output2)
         self.assertEqual(51,
                          len(result2['imageDozor']),
                          "Result from 51 images")
