@@ -206,7 +206,6 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
             inData['firstImageNumber'])
         processInfo += ', no images: {0}'.format(
             inData['numberImages'])
-        logger.info(processInfo)
         command = '!\n'
         command += 'detector %s\n' % inData['detectorType']
         command += 'nx %d\n' % nx
@@ -246,7 +245,7 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
         command += 'name_template_image %s\n' % \
             inData['nameTemplateImage']
         command += 'end\n'
-        logger.debug('command: {0}'.format(command))
+        # logger.debug('command: {0}'.format(command))
         return command
 
     def parseOutput(self, inData, output, workingDir=None):
@@ -535,14 +534,14 @@ class ControlDozor(AbstractTask):
         overlap = inData.get('overlap', self.overlap)
         # Check if connection to ISPyB needed
         batchSize, dictImage = self.determineBatchsize(inData)
-        logger.info("ExecDozor batch size: {0}".format(batchSize))
+        logger.debug("ExecDozor batch size: {0}".format(batchSize))
         if 'hdf5BatchSize' in inData:
            hdf5BatchSize = inData['hdf5BatchSize']
         listAllBatches = self.createListOfBatches(dictImage.keys(), batchSize)
         if dictImage[listAllBatches[0][0]].endswith('h5'):
             hasHdf5Prefix = True
             # Convert HDF5 images to CBF
-            logger.info("HDF5 converter batch size: {0}".format(batchSize))
+            logger.debug("HDF5 converter batch size: {0}".format(batchSize))
             doRadiationDamage = inData.get('doRadiationDamage', False)
             if doRadiationDamage:
                cbfTempDir = None

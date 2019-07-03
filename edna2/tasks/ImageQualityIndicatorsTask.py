@@ -29,6 +29,7 @@ __date__ = "10/05/2019"
 #      EDPluginControlImageQualityIndicatorsv1_4.py
 
 import os
+import time
 import numpy
 import base64
 import pprint
@@ -308,27 +309,26 @@ class ImageQualityIndicatorsTask(AbstractTask):
                 # Check that we got at least one result
                 if len(controlDozor.outData['imageDozor']) == 0:
                     # Run the dozor plugin again, this time synchronously
-                    firstImage = os.path.basename(listBatch[0].path.value)
-                    lastImage = os.path.basename(listBatch[-1].path.value)
-                    self.screen(
-                        "No dozor results! Re-executing Dozor for images {0} to {1}".format(firstImage, lastImage))
+                    firstImage = listBatch[0].name
+                    lastImage = listBatch[-1].name
+                    logger.warning("No dozor results! Re-executing Dozor for" +
+                                   " images {0} to {1}".format(firstImage, lastImage))
                     time.sleep(5)
-                    inDataControlDozor = {
-
-                    }
                     controlDozor = ControlDozor(inDataControlDozor)
                     controlDozor.execute()
-                listImageQualityIndicators = list(controlDozor.outData['imageDozor'])
-                for imageDozor in listImageQualityIndicators:
+                listImageDozor = list(controlDozor.outData['imageDozor'])
+                for imageDozor in listImageDozor:
                     for imagePath, distlTask in listDistlTask:
                         if imageDozor['image'] == str(imagePath):
         #                     xsDataImageQualityIndicators.dozor_score = imageDozor.mainScore
         #                     xsDataImageQualityIndicators.dozorSpotFile = imageDozor.spotFile
-                            if imageDozor['spotFile'] is not None:
+                            if 'spotFile' in imageDozor and imageDozor['spotFile'] is not None:
                                 if os.path.exists(imageDozor['spotFile']):
                                     numpyArray = numpy.loadtxt(imageDozor['spotFile'], skiprows=3)
                                     imageDozor['dozorSpotList'] = base64.b64encode(numpyArray.tostring()).decode('utf-8')
                                     imageDozor['dozorSpotListShape'] = list(numpyArray.shape)
+                listImageQualityIndicators += listImageDozor
+
         #                     xsDataImageQualityIndicators.dozorSpotsIntAver = imageDozor.spotsIntAver
         #                     xsDataImageQualityIndicators.dozorSpotsResolution = imageDozor.spotsResolution
         #                     xsDataImageQualityIndicators.dozorVisibleResolution = imageDozor.visibleResolution
