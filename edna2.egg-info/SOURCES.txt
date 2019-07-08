@@ -1,0 +1,8 @@
+README.rst
+setup.py
+edna2/__init__.py
+edna2.egg-info/PKG-INFO
+edna2.egg-info/SOURCES.txt
+edna2.egg-info/dependency_links.txt
+edna2.egg-info/requires.txt
+edna2.egg-info/top_level.txt

@@ -52,6 +52,7 @@ class EDNA2Process(multiprocessing.Process):
         except Exception as e:
             tb = traceback.format_exc()
             self._cconn.send((e, tb))
+        return
 
     @property
     def exception(self):

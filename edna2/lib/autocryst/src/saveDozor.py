@@ -12,9 +12,9 @@ import glob
 import h5py
 import json
 import base64
-import src.dozor_input as di
-from src.Image import CBFreader
-import ext.fast_array_ext as af
+import lib.autocryst.src.dozor_input as di
+from lib.autocryst.src.Image import CBFreader
+import lib.autocryst.ext.fast_array_ext as af
 
 logger = logging.getLogger('autoCryst')
 
@@ -22,11 +22,13 @@ logger = logging.getLogger('autoCryst')
 class Dozor(object):
     stacks = dict()
 
-    def __init__(self, jsonfile):
-        if os.path.exists(jsonfile):
+    def __init__(self, jsonfile=None, jstr=None):
+        if os.path.exists(jsonfile) and jstr is None:
             fh = open(jsonfile, 'r')
             self.jshandle = json.load(fh)
             fh.close()
+        elif jstr is not None and jsonfile is None:
+            self.jshandle = json.loads(jstr, default=str)
         else:
             error = "input json file does not exist, Quit!"
             logger.info('Error:{}'.format(error))

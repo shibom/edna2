@@ -253,7 +253,7 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
         This method parses the output of dozor
         """
         resultDozor = {
-            'imageDozor': []
+            'imageDozor': []  # list of dict. each dict contains spotFile and Image_path
         }
         # Skip the four first lines
         listOutput = output.split('\n')[6:]
@@ -918,8 +918,8 @@ plot '{dozorCsvFileName}' using 1:3 title 'Number of spots' axes x1y1 with point
                     inDataH5ToCBF['forcedOutputDirectory'] = cbfTempDir
                 h5ToCBF = H5ToCBFTask(inData=inDataH5ToCBF)
                 h5ToCBF.execute()
-                outDataH5ToCBF = json.loads(h5ToCBF.output().open().read())
-                newDict[image] = outDataH5ToCBF['outputCBFFile']
+                outDataH5ToCBF = json.loads(h5ToCBF.outData().open().read())
+                newDict['image'] = outDataH5ToCBF['outputCBFFile']
         else:
             listH5ToCBF = []
             directory = os.path.dirname(dictImage[listAllBatches[0][0]])
@@ -943,8 +943,8 @@ plot '{dozorCsvFileName}' using 1:3 title 'Number of spots' axes x1y1 with point
                 h5ToCBF = H5ToCBFTask(inData=inDataH5ToCBF)
                 if doRadiationDamage:
                     h5ToCBF.execute()
-                    if edPluginH5ToCBF.dataOutput is not None and edPluginH5ToCBF.dataOutput.outputCBFFileTemplate is not None:
-                        outputCBFFileTemplate = edPluginH5ToCBF.dataOutput.outputCBFFileTemplate
+                    if h5ToCBF.outData is not None and h5ToCBF.outData['outputCBFFileTemplate'] is not None:
+                        outputCBFFileTemplate = h5ToCBF.outData['outputCBFFileTemplate']
                         for newImageNumber in batch:
                             oldImageNumber = newImageNumber - batch[0] + 1
                             oldPath = os.path.join(directory, outputCBFFileTemplate.path.value.replace('######', '{0:06d}'.format(oldImageNumber)))

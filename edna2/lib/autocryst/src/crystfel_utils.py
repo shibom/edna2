@@ -14,11 +14,11 @@ import time
 from collections import Counter
 from datetime import datetime
 
-from src.Image import ImageHandler as Im
-from src.cell_analysis import Cell
-from src.geom import Geom
-from src.point_group import *
-from src.stream import Stream
+from lib.autocryst.src.Image import ImageHandler as Im
+from lib.autocryst.src.cell_analysis import Cell
+from lib.autocryst.src.geom import Geom
+from lib.autocryst.src.point_group import *
+from lib.autocryst.src.stream import Stream
 
 logger = logging.getLogger('autoCryst')
 
