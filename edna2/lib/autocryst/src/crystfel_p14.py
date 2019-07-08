@@ -21,6 +21,7 @@ class ExeCrystFEL(object):
         self._outdir = None
         self._geomfile = None
         self._cellfile = None
+        self._suffix = '*cbf'
 
         if os.path.exists(jsonfile) and jstr is None:
             fh = open(jsonfile, 'r')
@@ -44,6 +45,8 @@ class ExeCrystFEL(object):
             self._outdir = pathlib.Path(self.jshandle['proc_folder'])
             self._geomfile = pathlib.Path(self.jshandle['geometry_file'])
             self._cellfile = pathlib.Path(self.jshandle['unit_cell_file'])
+            self._suffix = self.jshandle['data_suffix']
+            print(self._suffix)
             self.success = True
         except Exception as err:
             print('patherror:{}'.format(err))
@@ -69,7 +72,7 @@ class ExeCrystFEL(object):
 
     def find_data(self):
         if self._datadir.exists():
-            for fname in list(self._datadir.glob('*.cbf.gz')):
+            for fname in list(self._datadir.glob(self._suffix)):
                 self.filelist.append(fname.as_posix())
                 self.success = True
         else:
