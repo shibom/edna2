@@ -28,11 +28,17 @@ __date__ = "10/05/2019"
 # mxv1/plugins/EDPluginControlImageQualityIndicators-v1.4/plugins/
 #      EDPluginControlImageQualityIndicatorsv1_4.py
 
+import os
+import time
+import numpy
+import base64
+import pprint
 import logging
 import pathlib
 
 from tasks.AbstractTask import AbstractTask
 from tasks.WaitFileTask import WaitFileTask
+from tasks.DozorTasks import ControlDozor
 
 from utils import UtilsImage
 from utils import UtilsConfig
@@ -193,14 +199,14 @@ class ImageQualityIndicatorsTask(AbstractTask):
                     #     self.setFailure()
                 else:
                     if not imagePath.exists():
-                        # self.screen("Waiting for file {0}".format(strPathToImage))
+                        logger.info("Waiting for file {0}".format(imagePath))
                         inDataWaitFileTask = {
                             'file': str(imagePath),
                             'size': minImageSize,
                             'timeOut': waitFileTimeOut
                         }
                         waitFileTask = WaitFileTask(inData=inDataWaitFileTask)
-                        logger.info("Wait file timeOut set to %.0f s" % waitFileTimeOut)
+                        logger.debug("Wait file timeOut set to %.0f s" % waitFileTimeOut)
                         waitFileTask.execute()
                     if not imagePath.exists():
                         errormessage = "Time-out while waiting for image "+ \
@@ -259,7 +265,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
         #                         continueLoop = False
         #
                 for image in listOfImagesInBatch:
-                    execImageQualityIndicatorTask = None
+                    distlTask = None
                     # Check if we should run distl.signalStrength
                     if doDistlSignalStrength:
                         raise RuntimeError("not yet implemented...")
@@ -273,20 +279,18 @@ class ImageQualityIndicatorsTask(AbstractTask):
                         # xsDataInputDistlSignalStrength.setReferenceImage(xsDataImageNew)
                         # edPluginPluginExecImageQualityIndicator.setDataInput(xsDataInputDistlSignalStrength)
                         # edPluginPluginExecImageQualityIndicator.execute()
-                    listDistlTask.append((imagePath, execImageQualityIndicatorTask))
+                    listDistlTask.append((image, distlTask))
+                inDataControlDozor = {
+                    'image': listOfImagesInBatch,
+                    'batchSize': len(listOfImagesInBatch)
+                }
+                controlDozor = ControlDozor(inDataControlDozor)
+                controlDozor.start()
+                listDozorTask.append((controlDozor, inDataControlDozor, list(listOfImagesInBatch)))
 
-                # controlDozor = ControlDozor(inData={})
-                # xsDataInputControlDozor = XSDataInputControlDozor()
-                # for image in listOfImagesInBatch:
-                #     xsDataInputControlDozor.addImage(XSDataFile(image.path))
-                # xsDataInputControlDozor.batchSize = XSDataInteger(len(listOfImagesInBatch))
-                # edPluginControlDozor.dataInput = xsDataInputControlDozor
-                # edPluginControlDozor.execute()
-                # listPluginDozor.append((edPluginControlDozor, list(listOfImagesInBatch)))
-        #
-        # if not self.isFailure():
-        #     listIndexing = []
-        #     # Synchronize all image quality indicator plugins and upload to ISPyB
+        if not self.isFailure():
+            listIndexing = []
+            # Synchronize all image quality indicator plugins and upload to ISPyB
         #     xsDataInputStoreListOfImageQualityIndicators = XSDataInputStoreListOfImageQualityIndicators()
         #
         #     for (xsDataImage, edPluginPluginExecImageQualityIndicator) in listPluginDistl:
@@ -300,40 +304,31 @@ class ImageQualityIndicatorsTask(AbstractTask):
         #                         edPluginPluginExecImageQualityIndicator.dataOutput.imageQualityIndicators.marshal())
         #         self.xsDataResultControlImageQualityIndicators.addImageQualityIndicators(xsDataImageQualityIndicators)
         #
-        #     for (edPluginControlDozor, listBatch) in listPluginDozor:
-        #         edPluginControlDozor.synchronize()
-        #         # Check that we got at least one result
-        #         if len(edPluginControlDozor.dataOutput.imageDozor) == 0:
-        #             # Run the dozor plugin again, this time synchronously
-        #             firstImage = os.path.basename(listBatch[0].path.value)
-        #             lastImage = os.path.basename(listBatch[-1].path.value)
-        #             self.screen(
-        #                 "No dozor results! Re-executing Dozor for images {0} to {1}".format(firstImage, lastImage))
-        #             time.sleep(5)
-        #             edPluginControlDozor = self.loadPlugin(self.strPluginNameControlDozor,
-        #                                                    "ControlDozor_reexecution_{0}".format(
-        #                                                        os.path.splitext(firstImage)[0]))
-        #             xsDataInputControlDozor = XSDataInputControlDozor()
-        #             for image in listBatch:
-        #                 xsDataInputControlDozor.addImage(XSDataFile(image.path))
-        #             xsDataInputControlDozor.batchSize = XSDataInteger(batchSize)
-        #             edPluginControlDozor.dataInput = xsDataInputControlDozor
-        #             edPluginControlDozor.executeSynchronous()
-        #         for imageDozor in edPluginControlDozor.dataOutput.imageDozor:
-        #             for xsDataImageQualityIndicators in self.xsDataResultControlImageQualityIndicators.imageQualityIndicators:
-        #                 if xsDataImageQualityIndicators.image.path.value == imageDozor.image.path.value:
+            for (controlDozor, inDataControlDozor, listBatch) in listDozorTask:
+                controlDozor.join()
+                # Check that we got at least one result
+                if len(controlDozor.outData['imageDozor']) == 0:
+                    # Run the dozor plugin again, this time synchronously
+                    firstImage = listBatch[0].name
+                    lastImage = listBatch[-1].name
+                    logger.warning("No dozor results! Re-executing Dozor for" +
+                                   " images {0} to {1}".format(firstImage, lastImage))
+                    time.sleep(5)
+                    controlDozor = ControlDozor(inDataControlDozor)
+                    controlDozor.execute()
+                listImageDozor = list(controlDozor.outData['imageDozor'])
+                for imageDozor in listImageDozor:
+                    for imagePath, distlTask in listDistlTask:
+                        if imageDozor['image'] == str(imagePath):
         #                     xsDataImageQualityIndicators.dozor_score = imageDozor.mainScore
         #                     xsDataImageQualityIndicators.dozorSpotFile = imageDozor.spotFile
-        #                     if imageDozor.spotFile is not None:
-        #                         if os.path.exists(imageDozor.spotFile.path.value):
-        #                             numpyArray = numpy.loadtxt(imageDozor.spotFile.path.value, skiprows=3)
-        #                             xsDataImageQualityIndicators.dozorSpotList = XSDataString(
-        #                                 base64.b64encode(numpyArray.tostring()))
-        #                             xsDataImageQualityIndicators.addDozorSpotListShape(
-        #                                 XSDataInteger(numpyArray.shape[0]))
-        #                             if len(numpyArray.shape) > 1:
-        #                                 xsDataImageQualityIndicators.addDozorSpotListShape(
-        #                                     XSDataInteger(numpyArray.shape[1]))
+                            if 'spotFile' in imageDozor and imageDozor['spotFile'] is not None:
+                                if os.path.exists(imageDozor['spotFile']):
+                                    numpyArray = numpy.loadtxt(imageDozor['spotFile'], skiprows=3)
+                                    imageDozor['dozorSpotList'] = base64.b64encode(numpyArray.tostring()).decode('utf-8')
+                                    imageDozor['dozorSpotListShape'] = list(numpyArray.shape)
+                listImageQualityIndicators += listImageDozor
+
         #                     xsDataImageQualityIndicators.dozorSpotsIntAver = imageDozor.spotsIntAver
         #                     xsDataImageQualityIndicators.dozorSpotsResolution = imageDozor.spotsResolution
         #                     xsDataImageQualityIndicators.dozorVisibleResolution = imageDozor.visibleResolution
@@ -400,18 +395,6 @@ class ImageQualityIndicatorsTask(AbstractTask):
         #                 if selectedSolution is not None:
         #                     xsDataResultControlImageQualityIndicator.selectedIndexingSolution = selectedSolution
 
-        for image in listImage:
-            listImageQualityIndicators.append({
-                'image': image,
-                'number': None,
-                'angle': None,
-                'spotsNumOf': None,
-                'spotsIntAver': None,
-                'spotsResolution': None,
-                'mainScore': None,
-                'spotScore': None,
-                'visibleResolution': None
-            })
         outData = {'imageQualityIndicators': listImageQualityIndicators}
         return outData
 

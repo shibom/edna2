@@ -34,10 +34,11 @@ Documentation
 
 The documentation can be found at https://edna2.readthedocs.io.
 
-Testing
--------
+Testing and code review
+-----------------------
 
 - Travis CI status: |Travis Status|
+- Automatic code quality check: https://app.codacy.com/project/olofsvensson/edna2/dashboard
 
 Contribute
 ----------

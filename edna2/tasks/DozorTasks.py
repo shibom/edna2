@@ -115,12 +115,13 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
                     "type": "array",
                     "items": {
                         "type": "object",
-                        "required": ["number", "angle", "spotsNumOf",
+                        "required": ["number", "image", "angle", "spotsNumOf",
                                      "spotsIntAver", "spotsResolution",
                                      "mainScore", "spotScore",
                                      "visibleResolution"],
                         "properties": {
                             "number": {"type": "integer"},
+                            "image": {"type": "string"},
                             "angle": {"type": "number"},
                             "spotsNumOf": {"type": "number"},
                             "spotsIntAver": {"type": "number"},
@@ -205,7 +206,6 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
             inData['firstImageNumber'])
         processInfo += ', no images: {0}'.format(
             inData['numberImages'])
-        logger.info(processInfo)
         command = '!\n'
         command += 'detector %s\n' % inData['detectorType']
         command += 'nx %d\n' % nx
@@ -245,7 +245,7 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
         command += 'name_template_image %s\n' % \
             inData['nameTemplateImage']
         command += 'end\n'
-        logger.debug('command: {0}'.format(command))
+        # logger.debug('command: {0}'.format(command))
         return command
 
     def parseOutput(self, inData, output, workingDir=None):
@@ -255,6 +255,11 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
         resultDozor = {
             'imageDozor': []  # list of dict. each dict contains spotFile and Image_path
         }
+        # Create template for image name
+        template = inData['nameTemplateImage']
+        noWildCards = template.count('?')
+        template = template.replace('?'*noWildCards,
+                                    '{0:0'+str(noWildCards) + '}')
         # Skip the four first lines
         listOutput = output.split('\n')[6:]
 
@@ -266,10 +271,11 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
                 imageNumber = int(listLine[0])
                 overlap = inData.get('overlap', 0.0)
                 angle = inData['startingAngle'] + \
-                        (imageNumber - inData['firstImageNumber']) * \
-                        (inData['oscillationRange'] - overlap) + \
-                        inData['oscillationRange'] / 2.0
+                    (imageNumber - inData['firstImageNumber']) * \
+                    (inData['oscillationRange'] - overlap) + \
+                    inData['oscillationRange'] / 2.0
                 imageDozor['number'] = imageNumber
+                imageDozor['image'] = template.format(imageNumber)
                 imageDozor['angle'] = angle
                 imageDozor['spotsNumOf'] = None
                 imageDozor['spotsIntAver'] = None
@@ -456,6 +462,11 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
 
 class ControlDozor(AbstractTask):
 
+    def __init__(self, inData):
+        AbstractTask.__init__(self, inData)
+        self.hasOverlap = False
+        self.overlap = 0.0
+
     def getInDataSchema(self):
         return {
             "type": "object",
@@ -487,7 +498,7 @@ class ControlDozor(AbstractTask):
                     "type": "array",
                     "items": {
                         "type": "object",
-                        "required": ["number", "angle", "spotsNumOf",
+                        "required": ["number", "image", "angle", "spotsNumOf",
                                      "spotsIntAver", "spotsResolution",
                                      "mainScore", "spotScore",
                                      "visibleResolution"],
@@ -518,43 +529,19 @@ class ControlDozor(AbstractTask):
 
     def run(self, inData):
         outData = {}
-        hasOverlap = False
         hasHdf5Prefix = False
+        # Check overlap
+        overlap = inData.get('overlap', self.overlap)
         # Check if connection to ISPyB needed
-        if 'dataCollectionId' in inData:
-            ispybInData = {
-                'dataCollectionId': inData['dataCollectionId']
-            }
-            ispybTask = ISPyBRetrieveDataCollection(inData=ispybInData)
-            ispybTask.execute()
-            dataCollection = ispybTask.outData
-            batchSize = UtilsConfig.get('ControlDozor', 'batchSize')
-            if batchSize is None:
-                batchSize = dataCollection['numberOfImages']
-            if batchSize > MAX_BATCH_SIZE:
-                batchSize = MAX_BATCH_SIZE
-            if 'overlap' in dataCollection and \
-                abs(dataCollection['overlap']) > 1:
-                hasOverlap = True
-                overlap = dataCollection['overlap']
-            else:
-                overlap = 0.0
-            dictImage = self.createImageDictFromISPyB(dataCollection)
-        else:
-            # No connection to ISPyB, take parameters from input
-            if 'batchSize' in inData:
-                batchSize = inData['batchSize']
-            else:
-                batchSize = MAX_BATCH_SIZE
-            dictImage = self.createImageDict(inData)
-        logger.info("ExecDozor batch size: {0}".format(batchSize))
+        batchSize, dictImage = self.determineBatchsize(inData)
+        logger.debug("ExecDozor batch size: {0}".format(batchSize))
         if 'hdf5BatchSize' in inData:
            hdf5BatchSize = inData['hdf5BatchSize']
         listAllBatches = self.createListOfBatches(dictImage.keys(), batchSize)
         if dictImage[listAllBatches[0][0]].endswith('h5'):
             hasHdf5Prefix = True
             # Convert HDF5 images to CBF
-            logger.info("HDF5 converter batch size: {0}".format(batchSize))
+            logger.debug("HDF5 converter batch size: {0}".format(batchSize))
             doRadiationDamage = inData.get('doRadiationDamage', False)
             if doRadiationDamage:
                cbfTempDir = None
@@ -572,67 +559,112 @@ class ControlDozor(AbstractTask):
             )
         outData['imageDozor'] = []
         for listBatch in listAllBatches:
-            # Read the header from the first image in the batch
-            image = dictImage[listBatch[0]]
-            inDataReadHeader = {
-                'image': image
-            }
-            controlHeader = ReadImageHeader(inData=inDataReadHeader)
-            controlHeader.execute()
-            outDataHeader = controlHeader.outData
-            subWedge = outDataHeader['subWedge'][0]
-            experimentalCondition = subWedge['experimentalCondition']
-            beam = experimentalCondition['beam']
-            detector = experimentalCondition['detector']
-            goniostat = experimentalCondition['goniostat']
-            inDataDozor = {'detectorType': detector['type'],
-                           'exposureTime': beam['exposureTime'],
-                           'detectorDistance': detector['distance'],
-                           'spotSize': 3, 'wavelength': beam['wavelength'],
-                           'orgx': detector['beamPositionX'] / detector['pixelSizeX'],
-                           'orgy': detector['beamPositionY'] / detector['pixelSizeY'],
-                           'oscillationRange': goniostat['oscillationWidth'],
-                           'startingAngle': goniostat['rotationAxisStart'],
-                           'firstImageNumber': subWedge['image'][0]['number'],
-                           'numberImages': len(listBatch),
-                           'workingDirectory': str(self.getWorkingDirectory()),
-                           'overlap': inData.get('overlap', 0.0)}
-            fileName = os.path.basename(subWedge['image'][0]['path'])
-            prefix = UtilsImage.getPrefix(fileName)
-            suffix = UtilsImage.getSuffix(fileName)
-            if UtilsConfig.isEMBL():
-                template = '{0}_?????.{1}'.format(prefix, suffix)
-            elif hasHdf5Prefix and not hasOverlap:
-                template = '{0}_??????.{1}'.format(prefix, suffix)
-            else:
-                template = '{0}_????.{1}'.format(prefix, suffix)
-            inDataDozor['nameTemplateImage'] = os.path.join(
-                os.path.dirname(subWedge['image'][0]['path']),
-                template
-            )
-            if 'wedgeNumber' in inData:
-                inDataDozor['wedgeNumber'] = inData['wedgeNumber']
-            if 'radiationDamage' in inData:
-                inDataDozor['radiationDamage'] = inData['radiationDamage']
-            dozor = ExecDozor(inData=inDataDozor)
-            dozor.execute()
-            if not dozor.isFailure():
-                outDataDozor = dozor.outData
+            outDataDozor = self.runDozorTask(inData=inData,
+                                             dictImage=dictImage,
+                                             listBatch=listBatch,
+                                             overlap=overlap,
+                                             workingDirectory=str(self.getWorkingDirectory()),
+                                             hasHdf5Prefix=hasHdf5Prefix,
+                                             hasOverlap=self.hasOverlap)
+            if outDataDozor is not None:
                 outData['imageDozor'] += outDataDozor['imageDozor']
             # Make plot if we have a data collection id
-            if 'dataCollectionId' in inData:
-                self.makePlot(inData['dataCollectionId'], outData, self.getWorkingDirectory())
-            #            xsDataResultControlDozor.halfDoseTime = edPluginDozor.dataOutput.halfDoseTime
-            #            xsDataResultControlDozor.pngPlots = edPluginDozor.dataOutput.pngPlots
-            #
-            #            self.sendResultToMXCuBE(imageDozorBatchList)
-            #            self.sendMessageToMXCuBE("Batch processed")
-            #        if self.cbfTempDir is not None:
-            #            if self.dataInput.keepCbfTmpDirectory is not None and self.dataInput.keepCbfTmpDirectory.value:
-            #                self.dataOutput.pathToCbfDirectory = XSDataFile(XSDataString(self.cbfTempDir))
-            #            else:
-            #                shutil.rmtree(self.cbfTempDir)
+        if 'dataCollectionId' in inData:
+            self.makePlot(inData['dataCollectionId'], outData, self.getWorkingDirectory())
+        #            xsDataResultControlDozor.halfDoseTime = edPluginDozor.dataOutput.halfDoseTime
+        #            xsDataResultControlDozor.pngPlots = edPluginDozor.dataOutput.pngPlots
+        #
+        #            self.sendResultToMXCuBE(imageDozorBatchList)
+        #            self.sendMessageToMXCuBE("Batch processed")
+        #        if self.cbfTempDir is not None:
+        #            if self.dataInput.keepCbfTmpDirectory is not None and self.dataInput.keepCbfTmpDirectory.value:
+        #                self.dataOutput.pathToCbfDirectory = XSDataFile(XSDataString(self.cbfTempDir))
+        #            else:
+        #                shutil.rmtree(self.cbfTempDir)
+
+        # Read the header from the first image in the batch
         return outData
+
+    def determineBatchsize(self, inData):
+        if 'dataCollectionId' in inData:
+            ispybInData = {
+                'dataCollectionId': inData['dataCollectionId']
+            }
+            ispybTask = ISPyBRetrieveDataCollection(inData=ispybInData)
+            ispybTask.execute()
+            dataCollection = ispybTask.outData
+            batchSize = UtilsConfig.get('ControlDozor', 'batchSize')
+            if batchSize is None:
+                batchSize = dataCollection['numberOfImages']
+            if batchSize > MAX_BATCH_SIZE:
+                batchSize = MAX_BATCH_SIZE
+            if 'overlap' in dataCollection and \
+                    abs(dataCollection['overlap']) > 1:
+                self.hasOverlap = True
+                self.overlap = dataCollection['overlap']
+            else:
+                self.overlap = 0.0
+            dictImage = self.createImageDictFromISPyB(dataCollection)
+        else:
+            # No connection to ISPyB, take parameters from input
+            if 'batchSize' in inData:
+                batchSize = inData['batchSize']
+            else:
+                batchSize = MAX_BATCH_SIZE
+            dictImage = self.createImageDict(inData)
+        return batchSize, dictImage
+
+    @classmethod
+    def runDozorTask(cls, inData, dictImage, listBatch,
+                     overlap, workingDirectory,
+                     hasHdf5Prefix, hasOverlap):
+        outDataDozor = None
+        image = dictImage[listBatch[0]]
+        inDataReadHeader = {
+            'image': image
+        }
+        controlHeader = ReadImageHeader(inData=inDataReadHeader)
+        controlHeader.execute()
+        outDataHeader = controlHeader.outData
+        subWedge = outDataHeader['subWedge'][0]
+        experimentalCondition = subWedge['experimentalCondition']
+        beam = experimentalCondition['beam']
+        detector = experimentalCondition['detector']
+        goniostat = experimentalCondition['goniostat']
+        inDataDozor = {'detectorType': detector['type'],
+                       'exposureTime': beam['exposureTime'],
+                       'detectorDistance': detector['distance'],
+                       'spotSize': 3, 'wavelength': beam['wavelength'],
+                       'orgx': detector['beamPositionX'] / detector['pixelSizeX'],
+                       'orgy': detector['beamPositionY'] / detector['pixelSizeY'],
+                       'oscillationRange': goniostat['oscillationWidth'],
+                       'startingAngle': goniostat['rotationAxisStart'],
+                       'firstImageNumber': subWedge['image'][0]['number'],
+                       'numberImages': len(listBatch),
+                       'workingDirectory': workingDirectory,
+                       'overlap': overlap}
+        fileName = os.path.basename(subWedge['image'][0]['path'])
+        prefix = UtilsImage.getPrefix(fileName)
+        suffix = UtilsImage.getSuffix(fileName)
+        if UtilsConfig.isEMBL():
+            template = '{0}_?????.{1}'.format(prefix, suffix)
+        elif hasHdf5Prefix and not hasOverlap:
+            template = '{0}_??????.{1}'.format(prefix, suffix)
+        else:
+            template = '{0}_????.{1}'.format(prefix, suffix)
+        inDataDozor['nameTemplateImage'] = os.path.join(
+            os.path.dirname(subWedge['image'][0]['path']),
+            template
+        )
+        if 'wedgeNumber' in inData:
+            inDataDozor['wedgeNumber'] = inData['wedgeNumber']
+        if 'radiationDamage' in inData:
+            inDataDozor['radiationDamage'] = inData['radiationDamage']
+        dozor = ExecDozor(inData=inDataDozor)
+        dozor.execute()
+        if not dozor.isFailure():
+            outDataDozor = dozor.outData
+        return outDataDozor
 
     def makePlot(self, dataCollectionId, outDataImageDozor, workingDirectory):
         minImageNumber = None

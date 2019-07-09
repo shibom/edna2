@@ -23,6 +23,7 @@ __authors__ = ["O. Svensson"]
 __license__ = "MIT"
 __date__ = "21/04/2019"
 
+import os
 import logging
 import unittest
 
@@ -64,3 +65,20 @@ class ImageQualityIndicatorsExecTest(unittest.TestCase):
         self.assertFalse(task.isFailure())
         outData = task.outData
         self.assertTrue('imageQualityIndicators' in outData)
+
+    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
+                     'Cannot run ImageQualityIndicatorsExecTest ' +
+                     'test with default config')
+    @unittest.skipIf(not os.path.exists('/data/visitor/mx415/id30a2/20160315/' +
+                                        'RAW_DATA/test3/mx415_1_0001.cbf'),
+                     'Image /data/visitor/mx415/id30a2/20160315/RAW_DATA/' +
+                     'test3/mx415_1_0001.cbf doesn\'t exist')
+    def test_execute_eiger4m_fastMesh(self):
+        referenceDataPath = self.dataPath / 'inData_eiger4m_fastMesh.json'
+        inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
+        task = ImageQualityIndicatorsTask(inData=inData)
+        task.execute()
+        self.assertFalse(task.isFailure())
+        outData = task.outData
+        self.assertTrue('imageQualityIndicators' in outData)
+        self.assertEqual(len(outData['imageQualityIndicators']), 400)
