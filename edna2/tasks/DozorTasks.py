@@ -114,29 +114,8 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
                 "imageDozor": {
                     "type": "array",
                     "items": {
-                        "type": "object",
-                        "required": ["number", "image", "angle", "spotsNumOf",
-                                     "spotsIntAver", "spotsResolution",
-                                     "mainScore", "spotScore",
-                                     "visibleResolution"],
-                        "properties": {
-                            "number": {"type": "integer"},
-                            "image": {"type": "string"},
-                            "angle": {"type": "number"},
-                            "spotsNumOf": {"type": "number"},
-                            "spotsIntAver": {"type": "number"},
-                            "spotsResolution": {"type": "number"},
-                            "mainScore": {"type": "number"},
-                            "spotScore": {"type": "number"},
-                            "visibleResolution": {"type": "number"},
-                            "powderWilsonScale": {"type": "number"},
-                            "powderWilsonBfactor": {"type": "number"},
-                            "powderWilsonResolution": {"type": "number"},
-                            "powderWilsonCorrelation": {"type": "number"},
-                            "powderWilsonRfactor": {"type": "number"},
-                            "spotFile": {"type": "string"},
-                        },
-                    },
+                        "$ref": self.getSchemaUrl("imageDozor.json")
+                    }
                 },
                 "halfDoseTime": {"type": "number"},
                 "dozorPlot":  {"type": "string"},
@@ -497,28 +476,8 @@ class ControlDozor(AbstractTask):
                 "imageDozor": {
                     "type": "array",
                     "items": {
-                        "type": "object",
-                        "required": ["number", "image", "angle", "spotsNumOf",
-                                     "spotsIntAver", "spotsResolution",
-                                     "mainScore", "spotScore",
-                                     "visibleResolution"],
-                        "properties": {
-                            "number": {"type": "integer"},
-                            "angle": {"type": "number"},
-                            "spotsNumOf": {"type": "number"},
-                            "spotsIntAver": {"type": "number"},
-                            "spotsResolution": {"type": "number"},
-                            "mainScore": {"type": "number"},
-                            "spotScore": {"type": "number"},
-                            "visibleResolution": {"type": "number"},
-                            "powderWilsonScale": {"type": "number"},
-                            "powderWilsonBfactor": {"type": "number"},
-                            "powderWilsonResolution": {"type": "number"},
-                            "powderWilsonCorrelation": {"type": "number"},
-                            "powderWilsonRfactor": {"type": "number"},
-                            "spotFile": {"type": "string"},
-                        },
-                    },
+                        "$ref": self.getSchemaUrl("imageDozor.json")
+                    }
                 },
                 "halfDoseTime": {"type": "number"},
                 "dozorPlot":  {"type": "string"},

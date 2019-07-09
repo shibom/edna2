@@ -1,0 +1,26 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://github.com/olofsvensson/edna2/edna2/schema/imageDozor.json#",
+    "type": "object",
+    "required": ["number", "image", "angle", "spotsNumOf",
+                 "spotsIntAver", "spotsResolution",
+                 "mainScore", "spotScore",
+                 "visibleResolution"],
+    "properties": {
+        "number": {"type": "integer"},
+        "image": {"type": "string"},
+        "angle": {"type": "number"},
+        "spotsNumOf": {"type": "number"},
+        "spotsIntAver": {"type": "number"},
+        "spotsResolution": {"type": "number"},
+        "mainScore": {"type": "number"},
+        "spotScore": {"type": "number"},
+        "visibleResolution": {"type": "number"},
+        "powderWilsonScale": {"type": "number"},
+        "powderWilsonBfactor": {"type": "number"},
+        "powderWilsonResolution": {"type": "number"},
+        "powderWilsonCorrelation": {"type": "number"},
+        "powderWilsonRfactor": {"type": "number"},
+        "spotFile": {"type": "string"}
+    }
+}
