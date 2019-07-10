@@ -29,14 +29,15 @@ __date__ = "21/04/2019"
 #      EDPluginControlReadImageHeaderv10.py
 
 import os
-import logging
+
+from utils import UtilsLogging
 
 from tasks.AbstractTask import AbstractTask
 from tasks.WaitFileTask import WaitFileTask
 
 from utils import UtilsImage
 
-logger = logging.getLogger('edna2')
+logger = UtilsLogging.getLogger()
 
 # Constants
 

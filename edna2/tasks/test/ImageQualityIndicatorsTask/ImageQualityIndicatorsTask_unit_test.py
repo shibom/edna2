@@ -27,11 +27,11 @@ import logging
 import pathlib
 import unittest
 
+from utils import UtilsLogging
+
 from tasks.ImageQualityIndicatorsTask import ImageQualityIndicatorsTask
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('edna2')
-logger.setLevel(logging.DEBUG)
+logger = UtilsLogging.getLogger()
 
 
 class ImageQualityIndicatorsUnitTest(unittest.TestCase):

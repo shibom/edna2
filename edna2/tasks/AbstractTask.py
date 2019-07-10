@@ -24,7 +24,6 @@ __license__ = "MIT"
 __date__ = "21/04/2019"
 
 import json
-import logging
 import pathlib
 import traceback
 import jsonschema
@@ -32,8 +31,9 @@ import subprocess
 import multiprocessing
 
 from utils import UtilsPath
+from utils import UtilsLogging
 
-logger = logging.getLogger('edna2')
+logger = UtilsLogging.getLogger()
 
 
 class EDNA2Process(multiprocessing.Process):

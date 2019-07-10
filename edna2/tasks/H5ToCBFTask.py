@@ -28,14 +28,14 @@ __date__ = '21/04/2019'
 # mxPluginExec/plugins/EDPluginH5ToCBF-v1.1/plugins/EDPluginH5ToCBFv1_1.py
 
 import pathlib
-import logging
 
 from tasks.AbstractTask import AbstractTask
 
 from utils import UtilsImage
 from utils import UtilsConfig
+from utils import UtilsLogging
 
-logger = logging.getLogger('edna2')
+logger = UtilsLogging.getLogger()
 
 
 class H5ToCBFTask(AbstractTask):

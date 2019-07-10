@@ -28,10 +28,11 @@ __date__ = '21/04/2019'
 # kernel/src/EDUtilsTable.py
 
 import json
-import logging
 import xmltodict
 
-logger = logging.getLogger('edna2')
+from utils import UtilsLogging
+
+logger = UtilsLogging.getLogger()
 
 
 def getDict(dnaTablesPath):

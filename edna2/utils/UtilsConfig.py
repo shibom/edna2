@@ -67,7 +67,7 @@ def getConfig(site=None):
         site = getSite()
     configFile = site + ".ini"
     configDir = getConfigDir()
-    configPath = configDir / configFile
+    configPath = configDir / configFile.lower()
     if configPath.exists():
         config.read(configPath.as_posix())
     return config
@@ -81,7 +81,7 @@ def getTaskConfig(taskName, site=None):
         dictConfig = dict(config[taskName])
     elif "Include" in sections:
         for site in config["Include"]:
-            dictConfig = getTaskConfig(taskName, site)
+            dictConfig.update(getTaskConfig(taskName, site))
     # Substitute ${} from os.environ
     for key in dictConfig:
         dictConfig[key] = os.path.expandvars(dictConfig[key])

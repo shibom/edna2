@@ -22,7 +22,6 @@ import os
 import json
 import shlex
 import shutil
-import logging
 import pathlib
 import tempfile
 
@@ -37,6 +36,7 @@ from tasks.ISPyBTasks import ISPyBRetrieveDataCollection
 from utils import UtilsPath
 from utils import UtilsImage
 from utils import UtilsConfig
+from utils import UtilsLogging
 
 # Corresponding EDNA code:
 # https://github.com/olofsvensson/edna-mx
@@ -45,7 +45,7 @@ from utils import UtilsConfig
 
 matplotlib.use('Agg')
 
-logger = logging.getLogger('edna2')
+logger = UtilsLogging.getLogger()
 
 # Default values for ESRF Pilatus2M : ID30a1: 1,776; 826,894
 IX_MIN_PILATUS_2M = 1

@@ -28,6 +28,9 @@ import os
 import unittest
 
 from utils import UtilsConfig
+from utils import UtilsLogging
+
+logger = UtilsLogging.getLogger()
 
 
 class UtilsConfigUnitTest(unittest.TestCase):

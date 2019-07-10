@@ -29,12 +29,12 @@ __date__ = '21/04/2019'
 
 import os
 import pathlib
-import logging
 import tempfile
 
 from utils import UtilsConfig
+from utils import UtilsLogging
 
-logger = logging.getLogger('edna2')
+logger = UtilsLogging.getLogger()
 
 
 def getWorkingDirectory(task, inData):
