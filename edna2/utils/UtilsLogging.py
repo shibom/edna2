@@ -23,6 +23,7 @@ __authors__ = ["O. Svensson"]
 __license__ = "MIT"
 __date__ = "21/04/2019"
 
+import os
 import graypy
 import logging
 
@@ -61,6 +62,8 @@ def getLogger(level=None):
     if not hasFileHandler:
         logPath = UtilsConfig.get('Logging', 'log_file_path')
         if logPath is not None:
+            if not os.path.exists(os.path.dirname(logPath)):
+                os.makedirs(os.path.dirname(logPath))
             maxBytes = int(UtilsConfig.get('Logging', 'log_file_maxbytes', 1e6))
             backupCount = int(UtilsConfig.get('Logging', 'log_file_backupCount', 10))
             fileHandler = logging.handlers.RotatingFileHandler(

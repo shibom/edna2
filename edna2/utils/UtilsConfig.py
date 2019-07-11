@@ -77,11 +77,13 @@ def getTaskConfig(taskName, site=None):
     dictConfig = {}
     config = getConfig(site)
     sections = config.sections()
-    if taskName in sections:
-        dictConfig = dict(config[taskName])
-    elif "Include" in sections:
+    # First search in included configs
+    if "Include" in sections:
         for site in config["Include"]:
             dictConfig.update(getTaskConfig(taskName, site))
+    # Then update with the current config
+    if taskName in sections:
+        dictConfig.update(dict(config[taskName]))
     # Substitute ${} from os.environ
     for key in dictConfig:
         dictConfig[key] = os.path.expandvars(dictConfig[key])
