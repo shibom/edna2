@@ -36,10 +36,13 @@ class ExeCrystFEL(AbstractTask):
         dd = sd.Dozor(inData)
         dd.extract_olof_json(inData)
         headerfile = pathlib.Path(dd.workingDir) / 'header.json'
-        if dd.success and not headerfile.exists():
-            with open(headerfile, 'w') as jhead:
-                json.dump(dd.cbfheader, jhead, sort_keys=True, indent=2)
-        elif dd.success and headerfile.exists():
+        if dd.success:
+            if not headerfile.exists():
+                with open(headerfile, 'w') as jhead:
+                    json.dump(dd.cbfheader, jhead, sort_keys=True, indent=2)
+            else:
+                pass
+
             if dd.stacklength <= 100:
                 dd.create_stack()
             else:
@@ -100,3 +103,9 @@ class ExeCrystFEL(AbstractTask):
             logger.info("something not correct with ImageQualityIndicator parsing")
             dd.success = False
         return outData
+
+
+if __name__ == '__main__':
+    crystfel = ExeCrystFEL(sys.argv[1])
+    result = crystfel.run(sys.argv[1])
+    print(result)
