@@ -29,9 +29,9 @@ import unittest
 from utils import UtilsLogging
 
 
-class UtilsGraylogExecTest(unittest.TestCase):
+class UtilsLoggingExecTest(unittest.TestCase):
 
-    def test_initLogging(self):
+    def test_logging(self):
         logger = UtilsLogging.getLogger('DEBUG')
         logger.debug("Test message debug")
         logger.info("Test message info")
