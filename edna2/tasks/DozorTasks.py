@@ -982,7 +982,7 @@ plot '{dozorCsvFileName}' using 1:3 title 'Number of spots' axes x1y1 with point
                             oldPath = os.path.join(directory, outputCBFFileTemplate.path.value.replace('######', '{0:06d}'.format(oldImageNumber)))
                             newPath = os.path.join(directory, outputCBFFileTemplate.path.value.replace('######', '{0:04d}'.format(newImageNumber)))
                             os.rename(oldPath, newPath)
-                            newDict[newImageNumber] = XSDataFile(XSDataString(newPath))
+                            # newDict[newImageNumber] = XSDataFile(XSDataString(newPath))
                     hasHdf5Prefix = False
                 else:
                     h5ToCBF.start()

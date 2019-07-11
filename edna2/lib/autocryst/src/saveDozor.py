@@ -28,7 +28,7 @@ class Dozor(object):
             self.jshandle = json.load(fh)
             fh.close()
         elif jstr is not None and jsonfile is None:
-            self.jshandle = json.loads(jstr, default=str)
+            self.jshandle = json.loads(jstr)
         else:
             error = "input json file does not exist, Quit!"
             logger.info('Error:{}'.format(error))
@@ -38,6 +38,7 @@ class Dozor(object):
         self.input_dict = dict()
         self.lst_of_files = []
         self.cbfheader = dict()
+        self.workingDir = os.getcwd()
         self.dozor_results = []
         self.max_npeaks = 0
         self.stacklength = 0
@@ -172,32 +173,26 @@ class Dozor(object):
 
         return
 
-    def extract_olof_json(self, olof_json):  # Olof's json file
+    def extract_olof_json(self, olof_json):  # Olof's json string
         try:
-            fh = open(olof_json, 'r')
-            js = json.load(fh)
-            fh.close()
-            # self.success = True
-        except (IOError, TypeError):
-            logger.info('DozorHit_Error:{}'.format("Olof json file does not exist"))
-            self.success = False
-            return
-        try:
-            for image in js['meshPositions']:
+            js = json.loads(olof_json)
+
+            for image in js["imageQualityIndicators"]:
                 if len(image['dozorSpotListShape']) > 0 and image['dozorSpotListShape'][0] > 5:
                     dozorDict = dict()
-                    imgPrefix = js['directory']
-                    dozorDict['image_name'] = os.path.join(imgPrefix, image['imageName'])
+                    dozorDict['image_name'] = image['image']
                     dozorDict['nPeaks'] = image['dozorSpotListShape'][0]
                     spot_arr = np.fromstring(base64.b64decode(image['dozorSpotList']))
                     spot_arr = spot_arr.reshape((spot_arr.size // 5, 5))
                     dozorDict['PeakXPosRaw'] = spot_arr[:, 1]
                     dozorDict['PeakYPosRaw'] = spot_arr[:, 2]
                     dozorDict['PeakTotalIntensity'] = spot_arr[:, 3]
-                    # dozorDict['DozorSpotList'] = spot_arr.tolist()
+
                     self.dozor_results.append(dozorDict)
                     if dozorDict['nPeaks'] > self.max_npeaks:
                         self.max_npeaks = dozorDict['nPeaks']
+                    spotpath = image['spotFile']
+                    self.workingDir = os.path.dirname(spotpath)
                 else:
                     pass
                 self.success = True

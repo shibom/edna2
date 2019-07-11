@@ -1,6 +1,7 @@
 from __future__ import division, print_function
 import os
 import sys
+from datetime import datetime
 import json
 import logging
 import pathlib
@@ -30,43 +31,72 @@ logger = logging.getLogger('autoCryst')
 class ExeCrystFEL(AbstractTask):
 
     def run(self, inData):
+        outData = {}
+
         dd = sd.Dozor(inData)
-        spot_path = pathlib.Path(dd.jshandle['spotFile'])
-        if spot_path.exists():
-            parents = spot_path.parents
-            dd.jshandle['dozorfolder'] = parents[0]
-        else:
-            pass
-        if dd.jshandle['dozorfolder'].is_dir():
-            dd.prep_spot()
-        if dd.success:
-            with open('header.json', 'w') as jhead:
+        dd.extract_olof_json(inData)
+        headerfile = pathlib.Path(dd.workingDir) / 'header.json'
+        if dd.success and not headerfile.exists():
+            with open(headerfile, 'w') as jhead:
                 json.dump(dd.cbfheader, jhead, sort_keys=True, indent=2)
+        elif dd.success and headerfile.exists():
             if dd.stacklength <= 100:
                 dd.create_stack()
             else:
                 dd.mp_stack()
             try:
+                cxipath = pathlib.Path(dd.workingDir)
+                cxi_all = cxipath.glob('dozor*cxi')
+                current = len(cxi_all) - 1
+                prefix = 'dozor_%d' % current
                 args = dict()
                 args['peak_search'] = 'cxi'
                 args['peak_info'] = '/data/peakinfo'
                 args['highres'] = '4.0'
-                cwd = os.getcwd()
-                cryst = Utils(cwd, 'dozor_*', 'cxi', **args)
-                cryst.run_indexing()
-                cryst.check_oarstat()
-                cryst.report_stats()
-                # status, results = crystfel_utils.__run__(cwd, 'dozor_2', 'cxi', **args)
-                if cryst.status:
+                cwd = dd.workingDir
+                cryst = Utils(cwd, prefix, 'cxi', **args)
+                cryst.find_files()
+                cryst.crystfel_dir = cwd
+
+                geomfile = cxipath.glob('*.geom')
+                if len(geomfile) > 0:
+                    cryst.geometry_file = geomfile[0]
+                else:
+                    kk = {'cxi': """dim0 = %\ndim1 = ss\ndim2 = fs\ndata = /data/data\n"""}
+                    cryst.make_geomfile(**kk)
+
+                if len(cryst.filelist) < 100 and os.path.isfile(cryst.geometry_file):
+                    cryst.infile = os.path.join(os.getcwd(), 'input.lst')
+                    outname = datetime.now().strftime('%H-%M-%S.stream')
+                    cryst.outstream = str(cxipath / outname)
+                    # shellfile = 'input.sh'
+
+                    ofh = open(cryst.infile, 'w')
+                    for fname in cryst.filelist:
+                        ofh.write(fname)
+                        ofh.write('\n')
+                    ofh.close()
+
+                    # Utils.run_script(cryst.indexamajig_cmd(), shellfile)
+                    # Run as AbstractTask method
+                    cmd = cryst.indexamajig_cmd()
+                    self.setLogFileName('autocryst.log')
+                    self.runCommandLine(cmd)
+                if cryst.status and os.path.exists(cryst.outstream):
+                    cryst.report_stats(cryst.outstream)
                     logger.info("MeshScan-results:{}".format(cryst.results))
+                    outData = cryst.results
+
                 else:
                     logger.info("Error:{}".format("crystfel pipeline has errors"))
                     cryst.status = False
+                    self.setFailure()
             except Exception as err:
                 logger.info("Error-crystfel:{}".format(err))
                 dd.success = False
+                self.setFailure()
 
         else:
-            logger.info("Dozor did not run properly")
+            logger.info("something not correct with ImageQualityIndicator parsing")
             dd.success = False
-        return
+        return outData

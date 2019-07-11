@@ -35,10 +35,12 @@ import base64
 import pprint
 import logging
 import pathlib
+import json
 
 from tasks.AbstractTask import AbstractTask
 from tasks.WaitFileTask import WaitFileTask
 from tasks.DozorTasks import ControlDozor
+from tasks.CrystfelTasks import ExeCrystFEL
 
 from utils import UtilsImage
 from utils import UtilsConfig
@@ -145,7 +147,9 @@ class ImageQualityIndicatorsTask(AbstractTask):
                 imageName = template.replace("####", "{0:04d}".format(index))
                 imagePath = directory / imageName
                 listImage.append(str(imagePath))
+        outData = dict()
         listImageQualityIndicators = []
+        listcrystfel_output = []
         inDataWaitFile = {}
         listDistlTask = []
         listDozorTask = []
@@ -327,7 +331,17 @@ class ImageQualityIndicatorsTask(AbstractTask):
                                     numpyArray = numpy.loadtxt(imageDozor['spotFile'], skiprows=3)
                                     imageDozor['dozorSpotList'] = base64.b64encode(numpyArray.tostring()).decode('utf-8')
                                     imageDozor['dozorSpotListShape'] = list(numpyArray.shape)
+
                 listImageQualityIndicators += listImageDozor
+
+                # a work around as autocryst module works with only json file/string
+                inDataCrystFEL = json.dumps({'imageQualityIndicators': listImageDozor})
+                crystfel = ExeCrystFEL(inData=inDataCrystFEL)
+                cryst_result_out = crystfel.run(inDataCrystFEL)
+                if not crystfel.isFailure():
+                    listcrystfel_output.append(cryst_result_out)
+                    # listImageQualityIndicators += listcrystfel_output
+
 
         #                     xsDataImageQualityIndicators.dozorSpotsIntAver = imageDozor.spotsIntAver
         #                     xsDataImageQualityIndicators.dozorSpotsResolution = imageDozor.spotsResolution
@@ -395,7 +409,8 @@ class ImageQualityIndicatorsTask(AbstractTask):
         #                 if selectedSolution is not None:
         #                     xsDataResultControlImageQualityIndicator.selectedIndexingSolution = selectedSolution
 
-        outData = {'imageQualityIndicators': listImageQualityIndicators}
+        outData['imageQualityIndicators'] = listImageQualityIndicators
+        outData['crystfel_per_batch'] = listcrystfel_output
         return outData
 
     @classmethod

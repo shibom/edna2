@@ -1,5 +1,6 @@
 from __future__ import division, print_function
 import json
+import jsonschema
 import subprocess as sub
 import pathlib
 import sys
@@ -22,6 +23,7 @@ class ExeCrystFEL(object):
         self._geomfile = None
         self._cellfile = None
         self._suffix = '*cbf'
+        self._prefix = None
 
         if os.path.exists(jsonfile) and jstr is None:
             fh = open(jsonfile, 'r')
@@ -39,14 +41,30 @@ class ExeCrystFEL(object):
 
         return
 
+    @staticmethod
+    def getInDataSchema():
+        return {
+            "type": "object",
+            "required": ["image_folder", "proc_folder", "geometry_file", "unit_cell_file"],
+            "properties": {
+                "image_folder": {"type": "string"},
+                "proc_folder": {"type": "string"},
+                "geometry_file": {"type": "string"},
+                "unit_cell_file": {"type": "string"},
+                "suffix": {"type": "string"},
+                "prefix": {"type": "string"}
+            },
+        }
+
     def get_paths(self):
         try:
+            jsonschema.validate(instance=self.jshandle, schema=self.getInDataSchema())
             self._datadir = pathlib.Path(self.jshandle['image_folder'])
             self._outdir = pathlib.Path(self.jshandle['proc_folder'])
             self._geomfile = pathlib.Path(self.jshandle['geometry_file'])
             self._cellfile = pathlib.Path(self.jshandle['unit_cell_file'])
             self._suffix = self.jshandle['data_suffix']
-            print(self._suffix)
+            self._prefix = self.jshandle.get('data_prefix', self._datadir.name)
             self.success = True
         except Exception as err:
             print('patherror:{}'.format(err))
@@ -60,9 +78,10 @@ class ExeCrystFEL(object):
             dir2 = parents[0].name
             if self._outdir is None:
                 self._outdir = pathlib.Path.cwd()
-            elif self._outdir.exists():
+            elif self._outdir.exists() and self._prefix != self._datadir.name:
+                self._outdir = self._outdir / dir1 / self._prefix
+            elif self._outdir.exists() and self._prefix == self._datadir.name:
                 self._outdir = self._outdir / dir2 / dir1
-            else:
                 print('Output directory path did work\n')
             self._outdir.mkdir(parents=True, exist_ok=True)
             self.success = True
@@ -71,7 +90,11 @@ class ExeCrystFEL(object):
         return
 
     def find_data(self):
-        if self._datadir.exists():
+        if self._datadir.exists() and self._prefix != self._datadir.name:
+            for fname in list(self._datadir.glob((self._prefix + self._suffix))):
+                self.filelist.append(fname.as_posix())
+                self.success = True
+        elif self._datadir.exists() and self._prefix == self._datadir.name:
             for fname in list(self._datadir.glob(self._suffix)):
                 self.filelist.append(fname.as_posix())
                 self.success = True
@@ -190,5 +213,6 @@ class ExeCrystFEL(object):
 
 
 if __name__ == '__main__':
+
     cryst = ExeCrystFEL(sys.argv[1])
     cryst.run_as_mpi()

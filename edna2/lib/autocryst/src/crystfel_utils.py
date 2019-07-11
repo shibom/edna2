@@ -82,15 +82,16 @@ class Utils(object):
         else:
             pass
 
-        outname = datetime.now().strftime('autoCryst_%Y-%m-%d_%H-%M-%S')
+        # outname = datetime.now().strftime('autoCryst_%Y-%m-%d_%H-%M-%S')
+        outname = datetime.now().strftime('autocryst_%Y_%m_%d')
         try:
             self.crystfel_dir = os.path.join(self.outdir, outname)
             # os.makedirs(self.crystfel_dir, 0o755)
-            os.makedirs(self.crystfel_dir)
+            os.makedirs(self.crystfel_dir, exist_ok=True)
             self.status = True
         except Exception as err:
             logger.info('Output_dir_Error:{}'.format(err))
-            self.status = False
+            pass
 
         return
 
@@ -186,14 +187,14 @@ class Utils(object):
         return
 
     @staticmethod
-    def run_script(command):
-        ofh = open('run.sh', 'w')
+    def run_script(command, shellfile):
+        ofh = open(shellfile, 'w')
         ofh.write('#!/bin/bash \n\n')
         ofh.write(command)
         ofh.close()
 
-        sub.call('chmod +x run.sh', shell=True)
-        sub.call('./run.sh')
+        sub.call('chmod +x %s' % shellfile, shell=True)
+        sub.call('./%s' % shellfile)
         return
 
     def indexamajig_cmd(self):
@@ -264,7 +265,7 @@ class Utils(object):
         except ImportError:
             submit = "submit module"
             logger.info('MSG:{}'.format('OAR %s not found, running locally' % submit))
-            Utils.run_script(crystfel_cmd)
+            Utils.run_script(crystfel_cmd, 'run.sh')
         return
 
     @staticmethod
@@ -331,7 +332,7 @@ class Utils(object):
             self.status = False
             logger.info('Run_Error:{}'.format(err))
             return
-        if len(self.filelist) < 50 and os.path.isfile(self.geometry_file):
+        if len(self.filelist) < 100 and os.path.isfile(self.geometry_file):
             self.infile = os.path.join(os.getcwd(), 'input.lst')
             outname = datetime.now().strftime('%H-%M-%S.stream')
             self.outstream = os.path.join(os.getcwd(), outname)
@@ -343,16 +344,13 @@ class Utils(object):
                 ofh.write('\n')
             ofh.close()
 
-            if 'RAW_DATA' in self.datadir:
-                Utils.oarshell_submit(shellfile, self.indexamajig_cmd())
-            else:
-                Utils.run_script(self.indexamajig_cmd())
+            Utils.run_script(self.indexamajig_cmd(), shellfile)
 
-        elif len(self.filelist) > 50 and os.path.isfile(self.geometry_file):
-            file_chunk = int(len(self.filelist)/50) + 1
+        elif len(self.filelist) > 100 and os.path.isfile(self.geometry_file):
+            file_chunk = int(len(self.filelist)/100) + 1
             for jj in range(file_chunk):
-                start = 50*jj
-                stop = 50*(jj+1)
+                start = 100*jj
+                stop = 100*(jj+1)
                 try:
                     images = self.filelist[start:stop]
                 except IndexError:
@@ -371,7 +369,7 @@ class Utils(object):
                 if Utils.is_executable('oarsub'):
                     Utils.oarshell_submit(shellfile, self.indexamajig_cmd())
                 else:
-                    Utils.run_script(self.indexamajig_cmd())
+                    Utils.run_script(self.indexamajig_cmd(), shellfile)
 
             self.status = True
         else:
@@ -402,6 +400,7 @@ class Utils(object):
         if self.status is True:
             cmd = 'cat *.stream >> alltogether.stream'
             sub.call(cmd, shell=True)
+            self.outstream = os.path.join(self.crystfel_dir, 'alltogether.stream')
         else:
             pass
         return
@@ -426,10 +425,10 @@ class Utils(object):
             self.status = False
         return
 
-    def report_cell(self):
+    def report_cell(self, streampath):
         # c = type('', (), {})  # c is a Cell type which is initialized as None type for python 2.7.
-        if os.path.exists(os.path.join(self.crystfel_dir, 'alltogether.stream')):
-            self.cellobject = Cell(os.path.join(self.crystfel_dir, 'alltogether.stream'))
+        if os.path.exists(streampath):
+            self.cellobject = Cell(streampath)
             self.cellobject.get_lattices()
             self.cellobject.calc_modal_cell()
             # self.results['unit_cell'] = [c.a_mode, c.b_mode, c.c_mode, c.al_mode, c.be_mode, c.ga_mode]
@@ -465,9 +464,10 @@ class Utils(object):
             self.status = False
         return
 
-    def report_stats(self):
+    def report_stats(self, streampath):
         try:
-            self.report_cell()
+            # streampath = os.path.join(self.crystfel_dir, 'alltogether.stream')
+            self.report_cell(streampath)
             self.write_cell_file()
             if not isinstance(self.cellobject, Cell) or self.status is False:
                 err = 'altogether.stream file does not exist or empty'
@@ -523,7 +523,7 @@ def __run__(directory_name, prefix, dataformat, **kwargs):
     cryst = Utils(directory_name, prefix, dataformat, **kwargs)
     cryst.run_indexing()
     cryst.check_oarstat()
-    cryst.report_stats()
+    cryst.report_stats(cryst.outstream)
     # cryst.extract_peaklist()
     if cryst.status is True:
         with open('crystfel_output.json', 'w') as fh:
