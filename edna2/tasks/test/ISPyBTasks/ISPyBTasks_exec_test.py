@@ -29,7 +29,6 @@ from tasks.ISPyBTasks import ISPyBRetrieveDataCollection
 class ISPyBRetrieveDataCollectionExecTest(unittest.TestCase):
 
     def setUp(self):
-        os.environ['EDNA2_SITE'] = 'esrf_id30a2'
         self.dataPath = UtilsTest.prepareTestDataPath(__file__)
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',

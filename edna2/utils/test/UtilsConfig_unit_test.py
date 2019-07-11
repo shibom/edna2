@@ -36,30 +36,34 @@ logger = UtilsLogging.getLogger()
 class UtilsConfigUnitTest(unittest.TestCase):
 
     def setUp(self):
-        self.site = "esrf_id30a2"
-        os.environ["EDNA2_SITE"] = self.site
-        os.environ["ISPyB_user"] = "ispybws1"
+        self.oldISPyBUser = None
+        if "ISPyB_user" in os.environ:
+            self.oldISPyBUser = os.environ["ISPyB_user"]
+        os.environ["ISPyB_user"] = "ispybuser"
+
+    def tearDown(self):
+        if self.oldISPyBUser is None:
+            del os.environ['ISPyB_user']
+        else:
+            os.environ["ISPyB_user"] = self.oldISPyBUser
 
     def test_getConfigDir(self):
         configDir = UtilsConfig.getConfigDir()
         self.assertTrue(configDir.exists())
 
-    def test_getSite(self):
-        site = UtilsConfig.getSite()
-        self.assertEqual(site, self.site)
-
     def test_getConfig(self):
-        config = UtilsConfig.getConfig()
+        config = UtilsConfig.getConfig(site='esrf_id30a2')
         sections = config.sections()
         self.assertTrue("ExecDozor" in sections)
 
     def test_getTaskConfig(self):
         taskName = "ExecDozor"
-        dictConfig = UtilsConfig.getTaskConfig(taskName)
+        dictConfig = UtilsConfig.getTaskConfig(taskName, site='esrf_id30a2')
         self.assertTrue("ix_min" in dictConfig)
         taskName = "ISPyB"
-        dictConfig = UtilsConfig.getTaskConfig(taskName)
+        dictConfig = UtilsConfig.getTaskConfig(taskName, site='esrf_id30a2')
         self.assertTrue("username" in dictConfig)
         self.assertEqual(dictConfig["username"], os.environ["ISPyB_user"])
+
 
 
