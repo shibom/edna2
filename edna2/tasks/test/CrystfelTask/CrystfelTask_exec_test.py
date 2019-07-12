@@ -26,7 +26,6 @@ __date__ = "21/04/2019"
 import os
 import logging
 import unittest
-import json
 
 from utils import UtilsTest
 from utils import UtilsConfig
@@ -54,9 +53,6 @@ class ImageQualityIndicatorsExecTest(unittest.TestCase):
         self.assertFalse(task.isFailure())
         outData = task.outData
         self.assertTrue('imageQualityIndicators' in outData)
-        outjsonpath = self.dataPath / 'outData_1.json'
-        with open(outjsonpath, 'w') as jh:
-            json.dump(outData, jh, sort_keys=True, indent=4)
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run ImageQualityIndicatorsExecTest ' +
@@ -69,9 +65,6 @@ class ImageQualityIndicatorsExecTest(unittest.TestCase):
         self.assertFalse(task.isFailure())
         outData = task.outData
         self.assertTrue('imageQualityIndicators' in outData)
-        outjsonpath = self.dataPath / 'outData_2.json'
-        with open(outjsonpath, 'w') as jh:
-            json.dump(outData, jh, sort_keys=True, indent=4)
     '''
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run ImageQualityIndicatorsExecTest ' +
