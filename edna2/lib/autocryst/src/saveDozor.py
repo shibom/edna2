@@ -22,18 +22,20 @@ logger = logging.getLogger('autoCryst')
 class Dozor(object):
     stacks = dict()
 
-    def __init__(self, jsonfile=None, jstr=None):
-        if os.path.exists(jsonfile) and jstr is None:
-            fh = open(jsonfile, 'r')
-            self.jshandle = json.load(fh)
-            fh.close()
-        elif jstr is not None and jsonfile is None:
-            self.jshandle = json.loads(jstr)
-        else:
-            error = "input json file does not exist, Quit!"
-            logger.info('Error:{}'.format(error))
-            self.success = False
-            sys.exit()
+    def __init__(self, jdata):
+        try:
+            self.jshandle = json.loads(jdata)
+        except Exception:
+            if jdata.endswith('.json'):
+                if os.path.exists(jdata):
+                    fh = open(jdata, 'r')
+                    self.jshandle = json.load(fh)
+                    fh.close()
+            else:
+                error = "input json file does not exist, Quit!"
+                logger.info('Error:{}'.format(error))
+                self.success = False
+                return
 
         self.input_dict = dict()
         self.lst_of_files = []

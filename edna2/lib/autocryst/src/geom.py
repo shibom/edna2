@@ -189,6 +189,7 @@ class Geom(object):
         elif self.detectorName == 'pilatus36m':
             self.geomfilename = 'pilatus6m.geom'
             ofh = open(self.geomfilename, 'w')
+            ofh.write(cxi+'\n')
             ofh.write(geom_template.format(**self.detectorGeom))
             ofh.write('\n\n')
             for each_row in self.bad_regs:
@@ -226,7 +227,7 @@ if __name__ == '__main__':
                         filename='test.log',
                         filemode='a+')
 
-    from src.Image import ImageHandler as Im
+    from lib.autocryst.src.Image import ImageHandler as Im
 
     c = Im(sys.argv[1])
     # c = Im('../examples/mesh-x_2_1_master.h5')

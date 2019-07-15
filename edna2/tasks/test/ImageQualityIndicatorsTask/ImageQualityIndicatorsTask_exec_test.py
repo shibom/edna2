@@ -23,7 +23,7 @@ __authors__ = ["O. Svensson"]
 __license__ = "MIT"
 __date__ = "21/04/2019"
 
-import os
+import os, pathlib
 import logging
 import unittest
 import json
@@ -42,6 +42,7 @@ class ImageQualityIndicatorsExecTest(unittest.TestCase):
 
     def setUp(self):
         self.dataPath = UtilsTest.prepareTestDataPath(__file__)
+        # self.dataPath = pathlib.Path(os.getcwd()) / 'data'
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run ImageQualityIndicatorsExecTest ' +
@@ -55,7 +56,7 @@ class ImageQualityIndicatorsExecTest(unittest.TestCase):
         outData = task.outData
         self.assertTrue('imageQualityIndicators' in outData)
         outjsonpath = self.dataPath / 'outData_1.json'
-        with open(outjsonpath, 'w') as jh:
+        with open(str(outjsonpath), 'w') as jh:
             json.dump(outData, jh, sort_keys=True, indent=4)
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
@@ -70,7 +71,7 @@ class ImageQualityIndicatorsExecTest(unittest.TestCase):
         outData = task.outData
         self.assertTrue('imageQualityIndicators' in outData)
         outjsonpath = self.dataPath / 'outData_2.json'
-        with open(outjsonpath, 'w') as jh:
+        with open(str(outjsonpath), 'w') as jh:
             json.dump(outData, jh, sort_keys=True, indent=4)
     '''
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
@@ -90,3 +91,7 @@ class ImageQualityIndicatorsExecTest(unittest.TestCase):
         self.assertTrue('imageQualityIndicators' in outData)
         self.assertEqual(len(outData['imageQualityIndicators']), 400)
     '''
+
+
+if __name__ == '__main__':
+    unittest.main()

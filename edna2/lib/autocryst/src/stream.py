@@ -10,7 +10,7 @@ import copy
 import re
 import logging
 import numpy as np
-from src.point_group import *
+from lib.autocryst.src.point_group import *
 import json
 
 

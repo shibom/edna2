@@ -38,7 +38,7 @@ class ExeCrystFEL(AbstractTask):
         headerfile = pathlib.Path(dd.workingDir) / 'header.json'
         if dd.success:
             if not headerfile.exists():
-                with open(headerfile, 'w') as jhead:
+                with open(str(headerfile), 'w') as jhead:
                     json.dump(dd.cbfheader, jhead, sort_keys=True, indent=2)
             else:
                 pass
@@ -106,6 +106,15 @@ class ExeCrystFEL(AbstractTask):
 
 
 if __name__ == '__main__':
-    crystfel = ExeCrystFEL(sys.argv[1])
-    result = crystfel.run(sys.argv[1])
+    logging.basicConfig(level=logging.DEBUG,
+                        format='%(asctime)s %(name)-12s %(levelname)-8s%(message)s',
+                        datefmt='%y-%m-%d %H:%M',
+                        filename='autoCryst.log',
+                        filemode='a+')
+    fh = open(sys.argv[1], 'r')
+    dic = json.load(fh)
+    fh.close()
+    jstring = json.dumps(dic)
+    crystfel = ExeCrystFEL(jstring)
+    result = crystfel.run(jstring)
     print(result)

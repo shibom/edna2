@@ -12,7 +12,7 @@ import numpy as np
 from scipy import stats
 import math
 import logging
-from src.stream import Stream
+from lib.autocryst.src.stream import Stream
 
 
 logger = logging.getLogger('autoCryst')
