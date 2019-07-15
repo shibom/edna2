@@ -1,0 +1,11 @@
+{
+    "doDistlSignalStrength": false,
+    "doIndexing": false,
+    "doUploadToIspyb": false,
+    "directory": "/scisoft/pxsoft/data/WORKFLOW_TEST_DATA/id30a1/20141110/RAW_DATA/opid30a1/1-1-4",
+    "template": "opid30a1_1_####.cbf",
+    "startNo": 1,
+    "endNo": 100,
+    "batchSize": 100,
+    "fastMesh": false
+}

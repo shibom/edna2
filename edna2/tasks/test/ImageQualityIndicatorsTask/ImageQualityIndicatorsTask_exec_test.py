@@ -46,7 +46,7 @@ class ImageQualityIndicatorsExecTest(unittest.TestCase):
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run ImageQualityIndicatorsExecTest ' +
                      'test with default config')
-    def test_execute_listOfImages(self):
+    def tes_execute_listOfImages(self):
         referenceDataPath = self.dataPath / 'inData_listOfImages.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         task = ImageQualityIndicatorsTask(inData=inData)
@@ -61,7 +61,7 @@ class ImageQualityIndicatorsExecTest(unittest.TestCase):
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run ImageQualityIndicatorsExecTest ' +
                      'test with default config')
-    def test_execute_startEnd(self):
+    def tes_execute_startEnd(self):
         referenceDataPath = self.dataPath / 'inData_startEnd.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         task = ImageQualityIndicatorsTask(inData=inData)
@@ -72,6 +72,23 @@ class ImageQualityIndicatorsExecTest(unittest.TestCase):
         outjsonpath = self.dataPath / 'outData_2.json'
         with open(str(outjsonpath), 'w') as jh:
             json.dump(outData, jh, sort_keys=True, indent=4)
+
+    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
+                     'Cannot run ImageQualityIndicatorsExecTest ' +
+                     'test with default config')
+    def test_execute_opid30a1(self):
+        referenceDataPath = self.dataPath / 'inData_id30a1.json'
+        inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
+        task = ImageQualityIndicatorsTask(inData=inData)
+        task.execute()
+        self.assertFalse(task.isFailure())
+        outData = task.outData
+        self.assertTrue('imageQualityIndicators' in outData)
+        outjsonpath = self.dataPath / 'outData_2.json'
+        with open(str(outjsonpath), 'w') as jh:
+            json.dump(outData, jh, sort_keys=True, indent=4)
+
+
     '''
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run ImageQualityIndicatorsExecTest ' +

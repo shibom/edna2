@@ -23,19 +23,20 @@ class Dozor(object):
     stacks = dict()
 
     def __init__(self, jdata):
-        try:
-            self.jshandle = json.loads(jdata)
-        except Exception:
-            if jdata.endswith('.json'):
-                if os.path.exists(jdata):
-                    fh = open(jdata, 'r')
-                    self.jshandle = json.load(fh)
-                    fh.close()
-            else:
-                error = "input json file does not exist, Quit!"
-                logger.info('Error:{}'.format(error))
-                self.success = False
-                return
+        self.jshandle = jdata
+        # try:
+        #     self.jshandle = json.loads(jdata)
+        # except Exception:
+        #     if jdata.endswith('.json'):
+        #         if os.path.exists(jdata):
+        #             fh = open(jdata, 'r')
+        #             self.jshandle = json.load(fh)
+        #             fh.close()
+        #     else:
+        #         error = "input json file does not exist, Quit!"
+        #         logger.info('Error:{}'.format(error))
+        #         self.success = False
+        #         return
 
         self.input_dict = dict()
         self.lst_of_files = []
@@ -177,7 +178,8 @@ class Dozor(object):
 
     def extract_olof_json(self, olof_json):  # Olof's json string
         try:
-            js = json.loads(olof_json)
+            js = olof_json
+            # js = json.loads(olof_json)
 
             for image in js["imageQualityIndicators"]:
                 if len(image['dozorSpotListShape']) > 0 and image['dozorSpotListShape'][0] > 5:
@@ -245,7 +247,7 @@ class Dozor(object):
             Dozor.save_h5(Dozor.stacks, 'dozor_0.cxi')
             self.success = True
         else:
-            nchunk = int(self.stacklength / 100) + 1
+            nchunk = int(self.stacklength / 100)
 
             for i in range(nchunk):
                 start = 100 * i

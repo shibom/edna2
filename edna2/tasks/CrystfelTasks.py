@@ -49,7 +49,7 @@ class ExeCrystFEL(AbstractTask):
                 dd.mp_stack()
             try:
                 cxipath = pathlib.Path(dd.workingDir)
-                cxi_all = cxipath.glob('dozor*cxi')
+                cxi_all = list(cxipath.glob('dozor*cxi'))
                 current = len(cxi_all) - 1
                 prefix = 'dozor_%d' % current
                 args = dict()
@@ -61,14 +61,14 @@ class ExeCrystFEL(AbstractTask):
                 cryst.find_files()
                 cryst.crystfel_dir = cwd
 
-                geomfile = cxipath.glob('*.geom')
+                geomfile = list(cxipath.glob('*.geom'))
                 if len(geomfile) > 0:
                     cryst.geometry_file = geomfile[0]
                 else:
                     kk = {'cxi': """dim0 = %\ndim1 = ss\ndim2 = fs\ndata = /data/data\n"""}
                     cryst.make_geomfile(**kk)
 
-                if len(cryst.filelist) < 100 and os.path.isfile(cryst.geometry_file):
+                if len(cryst.filelist) < 100 and cryst.geometry_file is not None and os.path.isfile(cryst.geometry_file):
                     cryst.infile = os.path.join(os.getcwd(), 'input.lst')
                     outname = datetime.now().strftime('%H-%M-%S.stream')
                     cryst.outstream = str(cxipath / outname)
@@ -85,7 +85,7 @@ class ExeCrystFEL(AbstractTask):
                     cmd = cryst.indexamajig_cmd()
                     self.setLogFileName('autocryst.log')
                     self.runCommandLine(cmd)
-                if cryst.status and os.path.exists(cryst.outstream):
+                if cryst.status and cryst.outstream is not None and os.path.exists(cryst.outstream):
                     cryst.report_stats(cryst.outstream)
                     logger.info("MeshScan-results:{}".format(cryst.results))
                     outData = cryst.results

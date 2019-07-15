@@ -23,21 +23,18 @@ __authors__ = ["O. Svensson"]
 __license__ = "MIT"
 __date__ = "21/04/2019"
 
-import os
-import logging
 import unittest
 
 from utils import UtilsTest
 from utils import UtilsConfig
+from utils import UtilsLogging
 
-from tasks.ImageQualityIndicatorsTask import ImageQualityIndicatorsTask
+from tasks.CrystfelTasks import ExeCrystFEL
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('edna2')
-logger.setLevel(logging.DEBUG)
+logger = UtilsLogging.getLogger()
 
 
-class ImageQualityIndicatorsExecTest(unittest.TestCase):
+class CrystfelTaskExecTest(unittest.TestCase):
 
     def setUp(self):
         self.dataPath = UtilsTest.prepareTestDataPath(__file__)
@@ -48,7 +45,7 @@ class ImageQualityIndicatorsExecTest(unittest.TestCase):
     def test_execute_listOfImages(self):
         referenceDataPath = self.dataPath / 'inData_listOfImages.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
-        task = ImageQualityIndicatorsTask(inData=inData)
+        task = ExeCrystFEL(inData=inData)
         task.execute()
         self.assertFalse(task.isFailure())
         outData = task.outData
@@ -57,10 +54,10 @@ class ImageQualityIndicatorsExecTest(unittest.TestCase):
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run ImageQualityIndicatorsExecTest ' +
                      'test with default config')
-    def test_execute_startEnd(self):
+    def tes_execute_startEnd(self):
         referenceDataPath = self.dataPath / 'inData_startEnd.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
-        task = ImageQualityIndicatorsTask(inData=inData)
+        task = CrystfelTasks(inData=inData)
         task.execute()
         self.assertFalse(task.isFailure())
         outData = task.outData
