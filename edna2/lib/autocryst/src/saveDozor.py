@@ -193,8 +193,8 @@ class Dozor(object):
                     self.dozor_results.append(dozorDict)
                     if dozorDict['nPeaks'] > self.max_npeaks:
                         self.max_npeaks = dozorDict['nPeaks']
-                    spotpath = image['spotFile']
-                    self.workingDir = os.path.dirname(spotpath)
+
+                    self.workingDir = os.getcwd()
                 else:
                     pass
                 self.success = True

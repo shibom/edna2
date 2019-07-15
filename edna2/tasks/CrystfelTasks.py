@@ -56,7 +56,7 @@ class ExeCrystFEL(AbstractTask):
                 args['peak_search'] = 'cxi'
                 args['peak_info'] = '/data/peakinfo'
                 args['highres'] = '4.0'
-                cwd = dd.workingDir
+                cwd = self.getWorkingDirectory()
                 cryst = Utils(cwd, prefix, 'cxi', **args)
                 cryst.find_files()
                 cryst.crystfel_dir = cwd
