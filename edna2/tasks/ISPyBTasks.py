@@ -32,14 +32,14 @@ __date__ = '21/04/2019'
 from suds.client import Client
 from suds.transport.http import HttpAuthenticated
 
-import logging
 import pathlib
 
 from utils import UtilsConfig
+from utils import UtilsLogging
 
 from tasks.AbstractTask import AbstractTask
 
-logger = logging.getLogger('edna2')
+logger = UtilsLogging.getLogger()
 
 
 class ISPyBRetrieveDataCollection(AbstractTask):

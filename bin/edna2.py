@@ -31,6 +31,8 @@ import logging
 import pathlib
 import argparse
 
+from utils import UtilsLogging
+
 # Set up PYTHONPATH
 
 filePath = pathlib.Path(__file__)
@@ -91,15 +93,13 @@ elif (inData is None and inDataFile is None) or \
 # Set up logging
 
 if errorLogLevel:
-    logging.basicConfig(level=logging.ERROR)
+    logger = UtilsLogging.getLogger('ERROR')
 elif warningLogLevel:
-    logging.basicConfig(level=logging.WARNING)
+    logger = UtilsLogging.getLogger('WARNING')
 elif debugLogLevel:
-    logging.basicConfig(level=logging.DEBUG)
+    logger = UtilsLogging.getLogger('DEBUG')
 else:
-    logging.basicConfig(level=logging.INFO)
-
-logger = logging.getLogger('edna2')
+    logger = UtilsLogging.getLogger('INFO')
 
 # Load and run EDNA2 task
 tasks = __import__('tasks.{0}'.format(taskName))

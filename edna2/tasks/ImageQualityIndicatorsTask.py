@@ -32,8 +32,6 @@ import os
 import time
 import numpy
 import base64
-import pprint
-import logging
 import pathlib
 import json
 
@@ -44,8 +42,9 @@ from tasks.CrystfelTasks import ExeCrystFEL
 
 from utils import UtilsImage
 from utils import UtilsConfig
+from utils import UtilsLogging
 
-logger = logging.getLogger('edna2')
+logger = UtilsLogging.getLogger()
 
 DEFAULT_MIN_IMAGE_SIZE = 1000000
 DEFAULT_WAIT_FILE_TIMEOUT = 120

@@ -17,17 +17,15 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import logging
 import unittest
 
 from utils import UtilsTest
+from utils import UtilsLogging
 
 from tasks.test.ParallelTasks.TestTask import TestTask
 from tasks.test.ParallelTasks.ControlTestTask import ControlTestTask
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('edna2')
-logger.setLevel(logging.DEBUG)
+logger = UtilsLogging.getLogger()
 
 
 class ParallelTasksExecTest(unittest.TestCase):

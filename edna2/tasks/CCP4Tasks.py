@@ -30,13 +30,13 @@ __date__ = "10/05/2019"
 
 import os
 import re
-import logging
 
 from tasks.AbstractTask import AbstractTask
 
 from utils import UtilsConfig
+from utils import UtilsLogging
 
-logger = logging.getLogger('edna2')
+logger = UtilsLogging.getLogger()
 
 
 class AimlessTask(AbstractTask):

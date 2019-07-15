@@ -23,18 +23,15 @@ __authors__ = ["O. Svensson"]
 __license__ = "MIT"
 __date__ = "14/05/2019"
 
-import os
-import logging
 import unittest
 
 from utils import UtilsTest
 from utils import UtilsConfig
+from utils import UtilsLogging
 
 from tasks.MosflmTasks import MosflmIndexingTask
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('edna2')
-logger.setLevel(logging.DEBUG)
+logger = UtilsLogging.getLogger()
 
 
 class MosflmTasksExecTest(unittest.TestCase):

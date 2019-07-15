@@ -22,7 +22,6 @@ import os
 import json
 import shlex
 import shutil
-import logging
 import pathlib
 import tempfile
 
@@ -37,6 +36,7 @@ from tasks.ISPyBTasks import ISPyBRetrieveDataCollection
 from utils import UtilsPath
 from utils import UtilsImage
 from utils import UtilsConfig
+from utils import UtilsLogging
 
 # Corresponding EDNA code:
 # https://github.com/olofsvensson/edna-mx
@@ -45,7 +45,7 @@ from utils import UtilsConfig
 
 matplotlib.use('Agg')
 
-logger = logging.getLogger('edna2')
+logger = UtilsLogging.getLogger()
 
 # Default values for ESRF Pilatus2M : ID30a1: 1,776; 826,894
 IX_MIN_PILATUS_2M = 1
@@ -114,29 +114,8 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
                 "imageDozor": {
                     "type": "array",
                     "items": {
-                        "type": "object",
-                        "required": ["number", "image", "angle", "spotsNumOf",
-                                     "spotsIntAver", "spotsResolution",
-                                     "mainScore", "spotScore",
-                                     "visibleResolution"],
-                        "properties": {
-                            "number": {"type": "integer"},
-                            "image": {"type": "string"},
-                            "angle": {"type": "number"},
-                            "spotsNumOf": {"type": "number"},
-                            "spotsIntAver": {"type": "number"},
-                            "spotsResolution": {"type": "number"},
-                            "mainScore": {"type": "number"},
-                            "spotScore": {"type": "number"},
-                            "visibleResolution": {"type": "number"},
-                            "powderWilsonScale": {"type": "number"},
-                            "powderWilsonBfactor": {"type": "number"},
-                            "powderWilsonResolution": {"type": "number"},
-                            "powderWilsonCorrelation": {"type": "number"},
-                            "powderWilsonRfactor": {"type": "number"},
-                            "spotFile": {"type": "string"},
-                        },
-                    },
+                        "$ref": self.getSchemaUrl("imageDozor.json")
+                    }
                 },
                 "halfDoseTime": {"type": "number"},
                 "dozorPlot":  {"type": "string"},
@@ -497,28 +476,8 @@ class ControlDozor(AbstractTask):
                 "imageDozor": {
                     "type": "array",
                     "items": {
-                        "type": "object",
-                        "required": ["number", "image", "angle", "spotsNumOf",
-                                     "spotsIntAver", "spotsResolution",
-                                     "mainScore", "spotScore",
-                                     "visibleResolution"],
-                        "properties": {
-                            "number": {"type": "integer"},
-                            "angle": {"type": "number"},
-                            "spotsNumOf": {"type": "number"},
-                            "spotsIntAver": {"type": "number"},
-                            "spotsResolution": {"type": "number"},
-                            "mainScore": {"type": "number"},
-                            "spotScore": {"type": "number"},
-                            "visibleResolution": {"type": "number"},
-                            "powderWilsonScale": {"type": "number"},
-                            "powderWilsonBfactor": {"type": "number"},
-                            "powderWilsonResolution": {"type": "number"},
-                            "powderWilsonCorrelation": {"type": "number"},
-                            "powderWilsonRfactor": {"type": "number"},
-                            "spotFile": {"type": "string"},
-                        },
-                    },
+                        "$ref": self.getSchemaUrl("imageDozor.json")
+                    }
                 },
                 "halfDoseTime": {"type": "number"},
                 "dozorPlot":  {"type": "string"},

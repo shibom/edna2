@@ -30,15 +30,16 @@ __date__ = "21/04/2019"
 import os
 import re
 import json
-import logging
 import pathlib
 import datetime
 import tempfile
 import threading
 
+from utils import UtilsLogging
+
 from urllib.request import urlopen, ProxyHandler, build_opener
 
-logger = logging.getLogger('edna2')
+logger = UtilsLogging.getLogger()
 
 URL_EDNA_SITE = "http://www.edna-site.org/data/tests/images"
 MAX_DOWNLOAD_TIME = 60

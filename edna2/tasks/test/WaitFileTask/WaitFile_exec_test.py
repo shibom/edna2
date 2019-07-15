@@ -23,15 +23,14 @@ __authors__ = ["O. Svensson"]
 __license__ = "MIT"
 __date__ = "21/04/2019"
 
-import logging
 import unittest
 
 from utils import UtilsTest
+from utils import UtilsLogging
+
 from tasks.WaitFileTask import WaitFileTask
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('edna2')
-logger.setLevel(logging.DEBUG)
+logger = UtilsLogging.getLogger()
 
 
 class MXWaitFileExecTest(unittest.TestCase):

@@ -21,31 +21,21 @@
 
 __authors__ = ["O. Svensson"]
 __license__ = "MIT"
-__date__ = "14/05/2019"
+__date__ = "21/04/2019"
+
 
 import unittest
 
-from utils import UtilsTest
-from utils import UtilsConfig
 from utils import UtilsLogging
 
-from tasks.MosflmTasks import MosflmGeneratePredictionTask
 
-logger = UtilsLogging.getLogger()
+class UtilsLoggingExecTest(unittest.TestCase):
 
-
-class MosflmTasksExecTest(unittest.TestCase):
-
-    def setUp(self):
-        self.dataPath = UtilsTest.prepareTestDataPath(__file__)
-
-    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
-                     'Cannot run mosflm test with default config')
-    def test_execute_MosflmGeneratePredictionTask(self):
-        UtilsTest.loadTestImage('ref-2m_RNASE_1_0001.cbf')
-        UtilsTest.loadTestImage('ref-2m_RNASE_1_0002.cbf')
-        referenceDataPath = self.dataPath / 'inDataGeneratePrediction.json'
-        inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
-        mosflmIndexingTask = MosflmGeneratePredictionTask(inData=inData)
-        mosflmIndexingTask.execute()
-        self.assertTrue(mosflmIndexingTask.isSuccess())
+    def test_logging(self):
+        logger = UtilsLogging.getLogger('DEBUG')
+        logger.debug("Test message debug")
+        logger.info("Test message info")
+        logger.warning("Test message warning")
+        logger.error("Test message error")
+        logger.critical("Test message critical")
+        logger.fatal("Test message fatal")

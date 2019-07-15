@@ -24,15 +24,16 @@ __license__ = "MIT"
 __date__ = "21/04/2019"
 
 import json
-import logging
+import pathlib
 import traceback
 import jsonschema
 import subprocess
 import multiprocessing
 
 from utils import UtilsPath
+from utils import UtilsLogging
 
-logger = logging.getLogger('edna2')
+logger = UtilsLogging.getLogger()
 
 
 class EDNA2Process(multiprocessing.Process):
@@ -73,6 +74,10 @@ class AbstractTask(object):
         self._process = EDNA2Process(target=self.executeRun, args=())
         self._workingDirectory = None
         self._logFileName = None
+        self._schemaPath = pathlib.Path(__file__).parents[1] / 'schema'
+
+    def getSchemaUrl(self, schemaName):
+        return 'file://' + str(self._schemaPath / schemaName)
 
     def executeRun(self):
         inData = self.getInData()

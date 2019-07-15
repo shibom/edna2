@@ -25,21 +25,18 @@ __date__ = "14/05/2019"
 
 import os
 import shutil
-import pprint
-import logging
 import pathlib
 import unittest
 import tempfile
 
 from utils import UtilsTest
+from utils import UtilsLogging
 
 from tasks.MosflmTasks import AbstractMosflmTask
 from tasks.MosflmTasks import MosflmIndexingTask
 from tasks.MosflmTasks import MosflmGeneratePredictionTask
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('edna2')
-logger.setLevel(logging.DEBUG)
+logger = UtilsLogging.getLogger()
 
 
 class MosflmTasksUnitTest(unittest.TestCase):
