@@ -141,32 +141,36 @@ class Utils(object):
             g.write_geomfile(image1.imobject.headers, **kwargs)
             self.geometry_file = os.path.join(os.getcwd(), g.geomfilename)
             self.detectorName = g.detectorName
-            if self.dataformat == 'hdf5' or self.dataformat == 'cxi':
-                datalst = os.path.join(self.crystfel_dir, 'input.lst')
-                fh = open(datalst, 'w')
-                for fname in self.filelist:
-                    fh.write(fname)
-                    fh.write('\n')
-                fh.close()
-                if os.path.exists(self.geometry_file):
-                    self.filelist = []
-                    self.all_events = os.path.join(os.getcwd(), 'all_events.lst')
-                    cmd = 'list_events -i %s -g %s -o %s' % (datalst, self.geometry_file, self.all_events)
-                    sub.call(cmd, shell=True)
-                    f = open(self.all_events, 'r')
-                    for line in f:
-                        line = line.strip('\n')
-                        self.filelist.append(line)
-                    f.close()
-                else:
-                    self.status = False
-                    logger.info('Error:No Geom file exists')
-            else:
-                self.status = True  # cbf files are not multi-events
-                pass
+
         except Exception as err:
             logger.info('Run_Error:{}'.format(err))
             self.status = False
+        return
+
+    def make_list_events(self):
+        if self.dataformat == 'hdf5' or self.dataformat == 'cxi':
+            datalst = os.path.join(self.crystfel_dir, 'input.lst')
+            fh = open(datalst, 'w')
+            for fname in self.filelist:
+                fh.write(fname)
+                fh.write('\n')
+            fh.close()
+            if os.path.exists(self.geometry_file):
+                self.filelist = []
+                self.all_events = os.path.join(os.getcwd(), 'all_events.lst')
+                cmd = 'list_events -i %s -g %s -o %s' % (datalst, self.geometry_file, self.all_events)
+                sub.call(cmd, shell=True)
+                f = open(self.all_events, 'r')
+                for line in f:
+                    line = line.strip('\n')
+                    self.filelist.append(line)
+                f.close()
+            else:
+                self.status = False
+                logger.info('Error:No Geom file exists')
+        else:
+            self.status = True  # cbf files are not multi-events
+            pass
         return
 
     @staticmethod

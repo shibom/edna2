@@ -204,6 +204,10 @@ class AbstractTask(object):
     def getWorkingDirectory(self):
         return self._workingDirectory
 
+    def setWorkingDirectory(self, inData):
+        self._workingDirectory = UtilsPath.getWorkingDirectory(self, inData)
+        return
+
     def getInDataSchema(self):
         return None
 

@@ -34,7 +34,8 @@ class CBFreader(object):
     def read_cbfheaders(self):
         self.headers['filename'] = self.cbf_file
         self.headers['dimension'] = []
-        for record in open(self.cbf_file, 'rb'):
+        fh = open(self.cbf_file, 'rb')
+        for record in fh:
             if b'X-Binary-Size-Padding' in record:
                 break
             if b'Pixel_size' in record:
@@ -62,6 +63,7 @@ class CBFreader(object):
                 self.headers['dimension'].append(int(record.decode().split()[1]))
             else:
                 pass
+        fh.close()
         return
 
     def read_cbfdata(self):

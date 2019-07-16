@@ -23,7 +23,7 @@ class Dozor(object):
     stacks = dict()
 
     def __init__(self, jdata):
-        self.jshandle = jdata
+        self._inDict = json.dumps(jdata, default=str)
         # try:
         #     self.jshandle = json.loads(jdata)
         # except Exception:
@@ -47,6 +47,14 @@ class Dozor(object):
         self.stacklength = 0
         self.success = True
         return
+
+    def getData_as_dict(self):
+        return json.loads(self._inDict)
+
+    def setData_as_dict(self, jdata):
+        self._inDict = json.dumps(jdata, default=str)
+
+    jshandle = property(getData_as_dict, setData_as_dict)
 
     def prep_dozorinput(self):
         try:
