@@ -194,7 +194,7 @@ class Dozor(object):
                     dozorDict = dict()
                     dozorDict['image_name'] = image['image']
                     dozorDict['nPeaks'] = image['dozorSpotListShape'][0]
-                    spot_arr = np.fromstring(base64.b64decode(image['dozorSpotList']))
+                    spot_arr = np.frombuffer(base64.b64decode(image['dozorSpotList']))
                     spot_arr = spot_arr.reshape((spot_arr.size // 5, 5))
                     dozorDict['PeakXPosRaw'] = spot_arr[:, 1]
                     dozorDict['PeakYPosRaw'] = spot_arr[:, 2]
@@ -333,7 +333,8 @@ if __name__ == '__main__':
                         datefmt='%y-%m-%d %H:%M',
                         filename='test.log',
                         filemode='a+')
-    dd = Dozor(sys.argv[1])
+    fh = open(sys.argv[1], 'r')
+    dd = Dozor(json.load(fh))
     try:
         dd.extract_olof_json(dd.jshandle['olof_json'])
     except (KeyError, IOError) as err:

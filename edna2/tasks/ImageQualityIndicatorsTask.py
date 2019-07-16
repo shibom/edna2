@@ -334,12 +334,12 @@ class ImageQualityIndicatorsTask(AbstractTask):
                 listImageQualityIndicators += listImageDozor
 
                 # a work around as autocryst module works with only json file/string
-                # inDataCrystFEL = json.dumps({'imageQualityIndicators': listImageDozor})
-                # crystfel = ExeCrystFEL(inData=inDataCrystFEL)
-                # cryst_result_out = crystfel.run(inDataCrystFEL)
-                # if not crystfel.isFailure():
-                #     listcrystfel_output.append(cryst_result_out)
-                    # listImageQualityIndicators += listcrystfel_output
+                inDataCrystFEL = json.dumps({'imageQualityIndicators': listImageDozor})
+                crystfel = ExeCrystFEL(inData=inDataCrystFEL)
+                cryst_result_out = crystfel.run(inDataCrystFEL)
+                if not crystfel.isFailure():
+                    listcrystfel_output.append(cryst_result_out)
+                    listImageQualityIndicators += listcrystfel_output
 
 
         #                     xsDataImageQualityIndicators.dozorSpotsIntAver = imageDozor.spotsIntAver
