@@ -42,6 +42,10 @@ class CrystfelTaskExecTest(unittest.TestCase):
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run ImageQualityIndicatorsExecTest ' +
                      'test with default config')
+    @unittest.skipIf(not os.path.exists('/scisoft/pxsoft/data/' +
+                     'WORKFLOW_TEST_DATA/id30a1/20141110/RAW_DATA/' +
+                     'opid30a1/1-1-4"'),
+                     'Image directory doesn\'t exist')
     def test_execute_listOfImages(self):
         referenceDataPath = self.dataPath / 'inData_listOfImages.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
@@ -49,34 +53,6 @@ class CrystfelTaskExecTest(unittest.TestCase):
         task.execute()
         self.assertFalse(task.isFailure())
         outData = task.outData
-        self.assertTrue('imageQualityIndicators' in outData)
+        self.assertEqual(outData['centering'], 'P')
+        self.assertEqual(outData['space_group'], 'P622')
 
-    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
-                     'Cannot run ImageQualityIndicatorsExecTest ' +
-                     'test with default config')
-    def tes_execute_startEnd(self):
-        referenceDataPath = self.dataPath / 'inData_startEnd.json'
-        inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
-        task = CrystfelTasks(inData=inData)
-        task.execute()
-        self.assertFalse(task.isFailure())
-        outData = task.outData
-        self.assertTrue('imageQualityIndicators' in outData)
-    '''
-    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
-                     'Cannot run ImageQualityIndicatorsExecTest ' +
-                     'test with default config')
-    @unittest.skipIf(not os.path.exists('/data/visitor/mx415/id30a2/20160315/' +
-                                        'RAW_DATA/test3/mx415_1_0001.cbf'),
-                     'Image /data/visitor/mx415/id30a2/20160315/RAW_DATA/' +
-                     'test3/mx415_1_0001.cbf doesn\'t exist')
-    def test_execute_eiger4m_fastMesh(self):
-        referenceDataPath = self.dataPath / 'inData_eiger4m_fastMesh.json'
-        inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
-        task = ImageQualityIndicatorsTask(inData=inData)
-        task.execute()
-        self.assertFalse(task.isFailure())
-        outData = task.outData
-        self.assertTrue('imageQualityIndicators' in outData)
-        self.assertEqual(len(outData['imageQualityIndicators']), 400)
-    '''
