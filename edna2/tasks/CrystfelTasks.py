@@ -70,12 +70,39 @@ class ExeCrystFEL(AbstractTask):
                     kk = {'cxi': """dim0 = %\ndim1 = ss\ndim2 = fs\ndata = /data/data\n"""}
                     cryst.make_geomfile(**kk)
 
-                if len(cryst.filelist) <= 100 and os.path.isfile(cryst.geometry_file):
+                cryst.make_list_events()
+
+                if len(cryst.filelist) > 10 and os.path.isfile(cryst.geometry_file):
+
+                    nchunk = len(cryst.filelist) // 10
+                    for jj in range(nchunk):
+                        start = 10 * jj
+                        stop = 10 * (jj + 1)
+                        try:
+                            images = cryst.filelist[start:stop]
+                        except IndexError:
+                            stop = start + (len(cryst.filelist) - stop)
+                            images = cryst.filelist[start:stop]
+
+                        cryst.infile = os.path.join(cryst.crystfel_dir, ('%d.lst' % jj))
+                        cryst.outstream = os.path.join(cryst.crystfel_dir, ('%d.stream' % jj))
+                        shellfile = os.path.join(cryst.crystfel_dir, ('%d.sh' % jj))
+                        ofh = open(cryst.infile, 'w')
+                        for fname in range(images):
+                            ofh.write(fname)
+                            ofh.write('\n')
+                        ofh.close()
+
+                        if Utils.is_executable('oarsub'):
+                            Utils.oarshell_submit(shellfile, cryst.indexamajig_cmd())
+                        else:
+                            pass
+
+                elif len(cryst.filelist) <= 10 and os.path.isfile(cryst.geometry_file):
+
                     cryst.infile = os.path.join(os.getcwd(), 'input.lst')
                     outname = datetime.now().strftime('%H-%M-%S.stream')
                     cryst.outstream = os.path.join(cryst.crystfel_dir, outname)
-                    # shellfile = 'input.sh'
-                    cryst.make_list_events()
 
                     ofh = open(cryst.infile, 'w')
                     for fname in cryst.filelist:
@@ -83,12 +110,12 @@ class ExeCrystFEL(AbstractTask):
                         ofh.write('\n')
                     ofh.close()
 
-                    # Utils.run_script(cryst.indexamajig_cmd(), shellfile)
-                    # Run as AbstractTask method
                     cmd = cryst.indexamajig_cmd()
-
                     self.runCommandLine(cmd)
-                if cryst.status and cryst.outstream is not None and os.path.exists(cryst.outstream):
+
+                cryst.check_oarstat()
+
+                if cryst.status and os.path.exists(cryst.outstream):
                     cryst.report_stats(cryst.outstream)
                     logger.info("MeshScan-results:{}".format(cryst.results))
                     outData = cryst.results
@@ -106,6 +133,36 @@ class ExeCrystFEL(AbstractTask):
             logger.info("something not correct with ImageQualityIndicator parsing")
             dd.success = False
         return outData
+
+    @staticmethod
+    def run_in_batch_mode(procdir, filelist, command):
+        if len(filelist) == 0 or os.path.exists(procdir) is False:
+            logger.debug("filelist empty or procdir does not exist")
+            return
+        nchunk = len(procdir) // 10
+        for jj in range(nchunk):
+            start = 10 * jj
+            stop = 10 * (jj + 1)
+            try:
+                images = filelist[start:stop]
+            except IndexError:
+                stop = start + (len(filelist) - stop)
+                images = filelist[start:stop]
+
+            infile = os.path.join(procdir, ('%d.lst' % jj))
+            outstream = os.path.join(procdir, ('%d.stream' % jj))
+            shellfile = os.path.join(procdir, ('%d.sh' % jj))
+            ofh = open(infile, 'w')
+            for fname in range(images):
+                ofh.write(fname)
+                ofh.write('\n')
+            ofh.close()
+
+            if Utils.is_executable('oarsub'):
+                Utils.oarshell_submit(shellfile, command)
+            else:
+                pass
+        return
 
 
 if __name__ == '__main__':

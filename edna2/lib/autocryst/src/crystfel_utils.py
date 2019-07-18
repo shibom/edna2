@@ -289,7 +289,7 @@ class Utils(object):
         oar_handle.close()
         sub.call('chmod +x %s' % shellfile, shell=True)
 
-        sub.call('oarsub -S ./%s' % shellfile, shell=True)
+        sub.call('oarsub -S %s' % shellfile, shell=True)
         return
 
     def scale_merge(self):
@@ -363,7 +363,7 @@ class Utils(object):
 
                 self.infile = os.path.join(os.getcwd(), ('%d.lst' % jj))
                 self.outstream = os.path.join(os.getcwd(), ('%d.stream' % jj))
-                shellfile = '%d.sh' % jj
+                shellfile = os.path.join(os.getcwd(), ('%d.sh' % jj))
                 ofh = open(self.infile, 'w')
                 for fname in images:
                     ofh.write(fname)
@@ -388,10 +388,10 @@ class Utils(object):
         njobs = sub.check_output('oarstat -u $USER | wc -l', shell=True)[:-1]
         wait_max = int(njobs)*200
         while int(njobs) > 2:
-            time.sleep(20)
+            time.sleep(1)
             msg = "all jobs are not yet finished"
             logger.info('Indexing_running:{}'.format(msg))
-            wait += 10
+            wait += 1
             njobs = sub.check_output('oarstat -u $USER | wc -l', shell=True)[:-1]
             njobs = int(njobs)
             if wait > wait_max:
