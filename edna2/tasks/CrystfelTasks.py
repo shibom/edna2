@@ -88,7 +88,7 @@ class ExeCrystFEL(AbstractTask):
                         cryst.outstream = os.path.join(cryst.crystfel_dir, ('%d.stream' % jj))
                         shellfile = os.path.join(cryst.crystfel_dir, ('%d.sh' % jj))
                         ofh = open(cryst.infile, 'w')
-                        for fname in range(images):
+                        for fname in images:
                             ofh.write(fname)
                             ofh.write('\n')
                         ofh.close()
