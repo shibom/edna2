@@ -19,9 +19,9 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-__authors__ = ["O. Svensson"]
+__authors__ = ["O. Svensson", "S.Basu"]
 __license__ = "MIT"
-__date__ = "21/04/2019"
+__date__ = "12/07/2019"
 
 import unittest
 
@@ -50,3 +50,4 @@ class CrystfelTaskExecTest(unittest.TestCase):
         self.assertFalse(task.isFailure())
         outData = task.outData
         self.assertTrue('resolution_limit' in outData)
+        return

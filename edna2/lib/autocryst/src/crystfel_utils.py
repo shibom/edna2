@@ -336,6 +336,7 @@ class Utils(object):
             self.status = False
             logger.info('Run_Error:{}'.format(err))
             return
+
         if len(self.filelist) < 100 and os.path.isfile(self.geometry_file):
             self.infile = os.path.join(os.getcwd(), 'input.lst')
             outname = datetime.now().strftime('%H-%M-%S.stream')

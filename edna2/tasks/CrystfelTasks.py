@@ -96,7 +96,7 @@ class ExeCrystFEL(AbstractTask):
                         if Utils.is_executable('oarsub'):
                             Utils.oarshell_submit(shellfile, cryst.indexamajig_cmd())
                         else:
-                            pass
+                            self.runCommandLine(cryst.indexamajig_cmd())
 
                 elif len(cryst.filelist) <= 10 and os.path.isfile(cryst.geometry_file):
 
