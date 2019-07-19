@@ -97,6 +97,7 @@ class ExeCrystFEL(AbstractTask):
                             Utils.oarshell_submit(shellfile, cryst.indexamajig_cmd())
                         else:
                             self.runCommandLine(cryst.indexamajig_cmd())
+                    cryst.check_oarstat()
 
                 elif len(cryst.filelist) <= 10 and os.path.isfile(cryst.geometry_file):
 
@@ -112,8 +113,6 @@ class ExeCrystFEL(AbstractTask):
 
                     cmd = cryst.indexamajig_cmd()
                     self.runCommandLine(cmd)
-
-                cryst.check_oarstat()
 
                 if cryst.status and os.path.exists(cryst.outstream):
                     cryst.report_stats(cryst.outstream)
