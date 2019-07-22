@@ -18,12 +18,12 @@ class ExeCrystFEL(object):
         self.success = False
         self.filelist = []
         self.all_jobs = []
-        self._datadir = None
-        self._outdir = None
-        self._geomfile = None
-        self._cellfile = None
-        self._suffix = '*cbf'
-        self._prefix = None
+        self.datadir = None
+        self.outdir = None
+        self.geomfile = None
+        self.cellfile = None
+        self.suffix = '*cbf'
+        self.prefix = None
 
         if os.path.exists(jsonfile) and jstr is None:
             fh = open(jsonfile, 'r')
@@ -59,12 +59,12 @@ class ExeCrystFEL(object):
     def get_paths(self):
         try:
             jsonschema.validate(instance=self.jshandle, schema=self.getInDataSchema())
-            self._datadir = pathlib.Path(self.jshandle['image_folder'])
-            self._outdir = pathlib.Path(self.jshandle['proc_folder'])
-            self._geomfile = pathlib.Path(self.jshandle['geometry_file'])
-            self._cellfile = pathlib.Path(self.jshandle['unit_cell_file'])
-            self._suffix = self.jshandle['data_suffix']
-            self._prefix = self.jshandle.get('data_prefix', self._datadir.name)
+            self.datadir = pathlib.Path(self.jshandle['image_folder'])
+            self.outdir = pathlib.Path(self.jshandle['proc_folder'])
+            self.geomfile = pathlib.Path(self.jshandle['geometry_file'])
+            self.cellfile = pathlib.Path(self.jshandle['unit_cell_file'])
+            self.suffix = self.jshandle['data_suffix']
+            self.prefix = self.jshandle.get('data_prefix', self.datadir.name)
             self.success = True
         except Exception as err:
             print('patherror:{}'.format(err))
@@ -72,47 +72,47 @@ class ExeCrystFEL(object):
         return
 
     def make_outdir(self):
-        if self._datadir.exists():
-            parents = self._datadir.parents
-            dir1 = self._datadir.name
+        if self.datadir.exists():
+            parents = self.datadir.parents
+            dir1 = self.datadir.name
             dir2 = parents[0].name
-            if self._outdir is None:
-                self._outdir = pathlib.Path.cwd()
-            elif self._outdir.exists() and self._prefix != self._datadir.name:
-                self._outdir = self._outdir / dir1 / self._prefix
-            elif self._outdir.exists() and self._prefix == self._datadir.name:
-                self._outdir = self._outdir / dir2 / dir1
+            if self.outdir is None:
+                self.outdir = pathlib.Path.cwd()
+            elif self.outdir.exists() and self.prefix != self.datadir.name:
+                self.outdir = self.outdir / dir1 / self.prefix
+            elif self.outdir.exists() and self.prefix == self.datadir.name:
+                self.outdir = self.outdir / dir2 / dir1
                 print('Output directory path did work\n')
-            self._outdir.mkdir(parents=True, exist_ok=True)
+            self.outdir.mkdir(parents=True, exist_ok=True)
             self.success = True
         else:
             print('Error:{}'.format('Data directory path does not exist'))
         return
 
     def find_data(self):
-        if self._datadir.exists() and self._prefix != self._datadir.name:
-            for fname in list(self._datadir.glob((self._prefix + self._suffix))):
+        if self.datadir.exists() and self.prefix != self.datadir.name:
+            for fname in list(self.datadir.glob((self.prefix + self.suffix))):
                 self.filelist.append(fname.as_posix())
                 self.success = True
-        elif self._datadir.exists() and self._prefix == self._datadir.name:
-            for fname in list(self._datadir.glob(self._suffix)):
+        elif self.datadir.exists() and self.prefix == self.datadir.name:
+            for fname in list(self.datadir.glob(self.suffix)):
                 self.filelist.append(fname.as_posix())
                 self.success = True
         else:
             print("No data found!!")
             self.success = False
-        if self._geomfile.exists():
-            self._geomfile = self._geomfile.as_posix()
+        if self.geomfile.exists():
+            self.geomfile = self.geomfile.as_posix()
             self.success = True
         else:
             print("Geometry file not provided")
             self.success = False
-        if self._cellfile.exists():
-            self._cellfile = self._cellfile.as_posix()
+        if self.cellfile.exists():
+            self.cellfile = self.cellfile.as_posix()
             self.success = True
         else:
             print("Unit cell file not found")
-            self._cellfile = None
+            self.cellfile = None
         return
 
     @staticmethod
@@ -149,7 +149,7 @@ class ExeCrystFEL(object):
             print('Error:{}'.format(err2))
             self.success = False
         if self.success:
-            os.chdir(self._outdir.as_posix())
+            os.chdir(self.outdir.as_posix())
             if len(self.filelist) > 1000:
                 nchunk = int(len(self.filelist) / 1000) + 1
                 for jj in range(nchunk):
@@ -169,7 +169,7 @@ class ExeCrystFEL(object):
                         ofh.write(fname)
                         ofh.write('\n')
                     ofh.close()
-                    cmd = ExeCrystFEL.indexing_cmd(infile, outstream, self._geomfile, self._cellfile)
+                    cmd = ExeCrystFEL.indexing_cmd(infile, outstream, self.geomfile, self.cellfile)
                     self.all_jobs.append(mp.Process(target=ExeCrystFEL.run_script, args=(cmd, shellfile)))
             else:
                 infile = os.path.join(os.getcwd(), 'input.lst')
@@ -179,7 +179,7 @@ class ExeCrystFEL(object):
                     ofh.write(fname)
                     ofh.write('\n')
                 ofh.close()
-                cmd = ExeCrystFEL.indexing_cmd(infile, outstream, self._geomfile, self._cellfile)
+                cmd = ExeCrystFEL.indexing_cmd(infile, outstream, self.geomfile, self.cellfile)
                 sub.call(cmd)
                 self.success = True
         else:
