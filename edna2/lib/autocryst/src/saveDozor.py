@@ -12,9 +12,9 @@ import glob
 import h5py
 import json
 import base64
-import lib.autocryst.src.dozor_input as di
+import edna2.lib.autocryst.src.dozor_input as di
 from lib.autocryst.src.Image import CBFreader
-import lib.autocryst.ext.fast_array_ext as af
+import edna2.lib.autocryst.ext.fast_array_ext as af
 
 logger = logging.getLogger('autoCryst')
 
