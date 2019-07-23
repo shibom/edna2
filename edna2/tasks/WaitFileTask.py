@@ -31,7 +31,7 @@ import os
 import time
 import pathlib
 
-from tasks.AbstractTask import AbstractTask
+from edna2.tasks.AbstractTask import AbstractTask
 
 from edna2.utils import UtilsConfig
 from edna2.utils import UtilsLogging

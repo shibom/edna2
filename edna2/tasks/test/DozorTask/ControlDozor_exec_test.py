@@ -31,7 +31,7 @@ from edna2.utils import UtilsConfig
 from edna2.utils import UtilsTest
 from edna2.utils import UtilsLogging
 
-from tasks.DozorTasks import ControlDozor
+from edna2.tasks.DozorTasks import ControlDozor
 
 logger = UtilsLogging.getLogger()
 

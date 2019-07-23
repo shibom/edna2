@@ -29,7 +29,7 @@ from edna2.utils import UtilsTest
 from edna2.utils import UtilsConfig
 from edna2.utils import UtilsLogging
 
-from tasks.MosflmTasks import MosflmGeneratePredictionTask
+from edna2.tasks.MosflmTasks import MosflmGeneratePredictionTask
 
 logger = UtilsLogging.getLogger()
 

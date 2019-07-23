@@ -23,7 +23,7 @@ import unittest
 from edna2.utils import UtilsTest
 from edna2.utils import UtilsConfig
 
-from tasks.ISPyBTasks import ISPyBRetrieveDataCollection
+from edna2.tasks.ISPyBTasks import ISPyBRetrieveDataCollection
 
 
 class ISPyBRetrieveDataCollectionExecTest(unittest.TestCase):

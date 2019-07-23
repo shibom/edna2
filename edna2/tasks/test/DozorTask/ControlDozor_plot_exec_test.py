@@ -29,7 +29,7 @@ import json
 import unittest
 
 from edna2.utils import UtilsTest
-from tasks.DozorTasks import ControlDozor
+from edna2.tasks.DozorTasks import ControlDozor
 
 
 class ControlDozorPlotExecTest(unittest.TestCase):

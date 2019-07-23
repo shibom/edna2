@@ -25,9 +25,9 @@ __date__ = '21/04/2019'
 
 from edna2.utils import UtilsLogging
 
-from tasks.AbstractTask import AbstractTask
+from edna2.tasks.AbstractTask import AbstractTask
 
-from tasks.test.ParallelTasks.TestTask import TestTask
+from edna2.tasks.test.ParallelTasks.TestTask import TestTask
 
 logger = UtilsLogging.getLogger()
 

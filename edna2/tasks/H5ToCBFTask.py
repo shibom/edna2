@@ -29,7 +29,7 @@ __date__ = '21/04/2019'
 
 import pathlib
 
-from tasks.AbstractTask import AbstractTask
+from edna2.tasks.AbstractTask import AbstractTask
 
 from edna2.utils import UtilsImage
 from edna2.utils import UtilsConfig

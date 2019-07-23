@@ -31,7 +31,7 @@ __date__ = "10/05/2019"
 import os
 import re
 
-from tasks.AbstractTask import AbstractTask
+from edna2.tasks.AbstractTask import AbstractTask
 
 from edna2.utils import UtilsConfig
 from edna2.utils import UtilsLogging

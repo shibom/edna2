@@ -23,7 +23,7 @@ __authors__ = ["O. Svensson"]
 __license__ = "MIT"
 __date__ = "10/05/2019"
 
-from tasks.AbstractTask import AbstractTask
+from edna2.tasks.AbstractTask import AbstractTask
 
 
 class HelloWorldTask(AbstractTask):

@@ -29,7 +29,7 @@ from edna2.utils import UtilsTest
 from edna2.utils import UtilsConfig
 from edna2.utils import UtilsLogging
 
-from tasks.CCP4Tasks import AimlessTask
+from edna2.tasks.CCP4Tasks import AimlessTask
 
 logger = UtilsLogging.getLogger()
 

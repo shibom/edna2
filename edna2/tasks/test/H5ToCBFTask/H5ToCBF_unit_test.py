@@ -26,7 +26,7 @@ __date__ = "21/04/2019"
 import pathlib
 import unittest
 
-from tasks.H5ToCBFTask import H5ToCBFTask
+from edna2.tasks.H5ToCBFTask import H5ToCBFTask
 
 from edna2.utils import UtilsTest
 from edna2.utils import UtilsImage

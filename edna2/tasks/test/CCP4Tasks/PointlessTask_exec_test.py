@@ -28,7 +28,7 @@ import unittest
 from edna2.utils import UtilsTest
 from edna2.utils import UtilsConfig
 
-from tasks.CCP4Tasks import PointlessTask
+from edna2.tasks.CCP4Tasks import PointlessTask
 
 from edna2.utils import UtilsLogging
 

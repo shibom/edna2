@@ -22,8 +22,8 @@ import unittest
 from edna2.utils import UtilsTest
 from edna2.utils import UtilsLogging
 
-from tasks.test.ParallelTasks.TestTask import TestTask
-from tasks.test.ParallelTasks.ControlTestTask import ControlTestTask
+from edna2.tasks.test.ParallelTasks.TestTask import TestTask
+from edna2.tasks.test.ParallelTasks.ControlTestTask import ControlTestTask
 
 logger = UtilsLogging.getLogger()
 

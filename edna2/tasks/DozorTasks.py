@@ -28,10 +28,10 @@ import tempfile
 import matplotlib
 import matplotlib.pyplot as plt
 
-from tasks.AbstractTask import AbstractTask
-from tasks.H5ToCBFTask import H5ToCBFTask
-from tasks.ReadImageHeader import ReadImageHeader
-from tasks.ISPyBTasks import ISPyBRetrieveDataCollection
+from edna2.tasks.AbstractTask import AbstractTask
+from edna2.tasks.H5ToCBFTask import H5ToCBFTask
+from edna2.tasks.ReadImageHeader import ReadImageHeader
+from edna2.tasks.ISPyBTasks import ISPyBRetrieveDataCollection
 
 from edna2.utils import UtilsPath
 from edna2.utils import UtilsImage

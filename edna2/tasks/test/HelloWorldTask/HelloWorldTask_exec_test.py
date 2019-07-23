@@ -28,7 +28,7 @@ import unittest
 from edna2.utils import UtilsTest
 from edna2.utils import UtilsLogging
 
-from tasks.HelloWorldTask import HelloWorldTask
+from edna2.tasks.HelloWorldTask import HelloWorldTask
 
 logger = UtilsLogging.getLogger()
 

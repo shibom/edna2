@@ -28,7 +28,7 @@ import unittest
 from edna2.utils import UtilsTest
 from edna2.utils import UtilsLogging
 
-from tasks.WaitFileTask import WaitFileTask
+from edna2.tasks.WaitFileTask import WaitFileTask
 
 logger = UtilsLogging.getLogger()
 

@@ -29,7 +29,7 @@ This is 'Hello world!' in EDNA2:
 
 .. code-block:: python
 
-    from tasks.AbstractTask import AbstractTask
+    from edna2.tasks.AbstractTask import AbstractTask
 
 
     class HelloWorldTask(AbstractTask):

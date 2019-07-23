@@ -35,10 +35,10 @@ import base64
 import pathlib
 
 
-from tasks.AbstractTask import AbstractTask
-from tasks.WaitFileTask import WaitFileTask
-from tasks.DozorTasks import ControlDozor
-from tasks.CrystfelTasks import ExeCrystFEL
+from edna2.tasks.AbstractTask import AbstractTask
+from edna2.tasks.WaitFileTask import WaitFileTask
+from edna2.tasks.DozorTasks import ControlDozor
+from edna2.tasks.CrystfelTasks import ExeCrystFEL
 
 from edna2.utils import UtilsImage
 from edna2.utils import UtilsConfig

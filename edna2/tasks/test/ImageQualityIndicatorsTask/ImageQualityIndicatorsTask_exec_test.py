@@ -32,7 +32,7 @@ from edna2.utils import UtilsTest
 from edna2.utils import UtilsConfig
 from edna2.utils import UtilsLogging
 
-from tasks.ImageQualityIndicatorsTask import ImageQualityIndicatorsTask
+from edna2.tasks.ImageQualityIndicatorsTask import ImageQualityIndicatorsTask
 
 logger = UtilsLogging.getLogger()
 

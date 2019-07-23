@@ -32,8 +32,8 @@ import os
 
 from edna2.utils import UtilsLogging
 
-from tasks.AbstractTask import AbstractTask
-from tasks.WaitFileTask import WaitFileTask
+from edna2.tasks.AbstractTask import AbstractTask
+from edna2.tasks.WaitFileTask import WaitFileTask
 
 from edna2.utils import UtilsImage
 

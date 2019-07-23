@@ -21,7 +21,7 @@ import unittest
 
 from edna2.utils import UtilsTest
 
-from tasks.ReadImageHeader import ReadImageHeader
+from edna2.tasks.ReadImageHeader import ReadImageHeader
 
 
 class ReadImageHeaderTasksExecTest(unittest.TestCase):
