@@ -26,7 +26,7 @@ __date__ = "21/04/2019"
 
 import unittest
 
-from utils import UtilsTest
+from edna2.utils import UtilsTest
 
 
 class UtilsTestUnitTest(unittest.TestCase):

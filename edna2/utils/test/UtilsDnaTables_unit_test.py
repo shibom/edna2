@@ -26,8 +26,8 @@ __date__ = '21/04/2019'
 import pathlib
 import unittest
 
-from utils import UtilsDnaTables
-from utils import UtilsLogging
+from edna2.utils import UtilsDnaTables
+from edna2.utils import UtilsLogging
 
 logger = UtilsLogging.getLogger()
 

@@ -20,8 +20,8 @@
 import os
 import unittest
 
-from utils import UtilsTest
-from utils import UtilsConfig
+from edna2.utils import UtilsTest
+from edna2.utils import UtilsConfig
 
 from tasks.ISPyBTasks import ISPyBRetrieveDataCollection
 

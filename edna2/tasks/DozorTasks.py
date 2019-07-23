@@ -33,10 +33,10 @@ from tasks.H5ToCBFTask import H5ToCBFTask
 from tasks.ReadImageHeader import ReadImageHeader
 from tasks.ISPyBTasks import ISPyBRetrieveDataCollection
 
-from utils import UtilsPath
-from utils import UtilsImage
-from utils import UtilsConfig
-from utils import UtilsLogging
+from edna2.utils import UtilsPath
+from edna2.utils import UtilsImage
+from edna2.utils import UtilsConfig
+from edna2.utils import UtilsLogging
 
 # Corresponding EDNA code:
 # https://github.com/olofsvensson/edna-mx

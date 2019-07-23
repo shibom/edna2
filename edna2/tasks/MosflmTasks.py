@@ -30,9 +30,9 @@ __date__ = "10/05/2019"
 
 from tasks.AbstractTask import AbstractTask
 
-from utils import UtilsConfig
-from utils import UtilsDnaTables
-from utils import UtilsLogging
+from edna2.utils import UtilsConfig
+from edna2.utils import UtilsDnaTables
+from edna2.utils import UtilsLogging
 
 logger = UtilsLogging.getLogger()
 

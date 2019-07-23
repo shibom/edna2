@@ -28,8 +28,8 @@ import unittest
 
 from tasks.H5ToCBFTask import H5ToCBFTask
 
-from utils import UtilsTest
-from utils import UtilsImage
+from edna2.utils import UtilsTest
+from edna2.utils import UtilsImage
 
 
 class H5ToCBFUnitTest(unittest.TestCase):

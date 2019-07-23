@@ -40,9 +40,9 @@ from tasks.WaitFileTask import WaitFileTask
 from tasks.DozorTasks import ControlDozor
 from tasks.CrystfelTasks import ExeCrystFEL
 
-from utils import UtilsImage
-from utils import UtilsConfig
-from utils import UtilsLogging
+from edna2.utils import UtilsImage
+from edna2.utils import UtilsConfig
+from edna2.utils import UtilsLogging
 
 logger = UtilsLogging.getLogger()
 

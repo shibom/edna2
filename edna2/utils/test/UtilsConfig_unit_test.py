@@ -27,8 +27,8 @@ __date__ = "21/04/2019"
 import os
 import unittest
 
-from utils import UtilsConfig
-from utils import UtilsLogging
+from edna2.utils import UtilsConfig
+from edna2.utils import UtilsLogging
 
 logger = UtilsLogging.getLogger()
 

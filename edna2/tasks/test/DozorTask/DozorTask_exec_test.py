@@ -28,8 +28,8 @@ import unittest
 
 from tasks.DozorTasks import ExecDozor
 
-from utils import UtilsTest
-from utils import UtilsConfig
+from edna2.utils import UtilsTest
+from edna2.utils import UtilsConfig
 
 
 class ExecDozorTest(unittest.TestCase):

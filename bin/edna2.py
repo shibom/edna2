@@ -31,7 +31,7 @@ import logging
 import pathlib
 import argparse
 
-from utils import UtilsLogging
+from edna2.utils import UtilsLogging
 
 # Set up PYTHONPATH
 

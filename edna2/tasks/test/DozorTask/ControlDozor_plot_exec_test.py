@@ -28,7 +28,7 @@ import os
 import json
 import unittest
 
-from utils import UtilsTest
+from edna2.utils import UtilsTest
 from tasks.DozorTasks import ControlDozor
 
 

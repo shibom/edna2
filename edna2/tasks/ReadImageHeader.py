@@ -30,12 +30,12 @@ __date__ = "21/04/2019"
 
 import os
 
-from utils import UtilsLogging
+from edna2.utils import UtilsLogging
 
 from tasks.AbstractTask import AbstractTask
 from tasks.WaitFileTask import WaitFileTask
 
-from utils import UtilsImage
+from edna2.utils import UtilsImage
 
 logger = UtilsLogging.getLogger()
 

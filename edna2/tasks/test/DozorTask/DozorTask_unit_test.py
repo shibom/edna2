@@ -31,7 +31,7 @@ import tempfile
 
 from tasks.DozorTasks import ExecDozor
 
-from utils import UtilsTest
+from edna2.utils import UtilsTest
 
 
 class ExecDozorUnitTest(unittest.TestCase):

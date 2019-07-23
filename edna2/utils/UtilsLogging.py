@@ -27,7 +27,7 @@ import os
 import graypy
 import logging
 
-from utils import UtilsConfig
+from edna2.utils import UtilsConfig
 
 
 def getLogger(level=None):

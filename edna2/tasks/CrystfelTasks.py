@@ -31,7 +31,7 @@ import lib.autocryst.src.saveDozor as sd
 from lib.autocryst.src.crystfel_utils import Utils
 
 from tasks.AbstractTask import AbstractTask
-from utils import UtilsLogging
+from edna2.utils import UtilsLogging
 
 
 __author__ = ['S. Basu']

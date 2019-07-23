@@ -30,8 +30,8 @@ import jsonschema
 import subprocess
 import multiprocessing
 
-from utils import UtilsPath
-from utils import UtilsLogging
+from edna2.utils import UtilsPath
+from edna2.utils import UtilsLogging
 
 logger = UtilsLogging.getLogger()
 

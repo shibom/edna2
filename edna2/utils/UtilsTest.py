@@ -35,7 +35,7 @@ import datetime
 import tempfile
 import threading
 
-from utils import UtilsLogging
+from edna2.utils import UtilsLogging
 
 from urllib.request import urlopen, ProxyHandler, build_opener
 

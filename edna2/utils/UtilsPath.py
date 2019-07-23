@@ -31,8 +31,8 @@ import os
 import pathlib
 import tempfile
 
-from utils import UtilsConfig
-from utils import UtilsLogging
+from edna2.utils import UtilsConfig
+from edna2.utils import UtilsLogging
 
 logger = UtilsLogging.getLogger()
 

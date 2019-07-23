@@ -25,9 +25,9 @@ __date__ = "14/05/2019"
 
 import unittest
 
-from utils import UtilsTest
-from utils import UtilsConfig
-from utils import UtilsLogging
+from edna2.utils import UtilsTest
+from edna2.utils import UtilsConfig
+from edna2.utils import UtilsLogging
 
 from tasks.MosflmTasks import MosflmIndexingTask
 

@@ -23,7 +23,7 @@ __authors__ = ['O. Svensson']
 __license__ = 'MIT'
 __date__ = '21/04/2019'
 
-from utils import UtilsLogging
+from edna2.utils import UtilsLogging
 
 from tasks.AbstractTask import AbstractTask
 

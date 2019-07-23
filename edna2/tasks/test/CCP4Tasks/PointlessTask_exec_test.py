@@ -25,12 +25,12 @@ __date__ = "21/04/2019"
 
 import unittest
 
-from utils import UtilsTest
-from utils import UtilsConfig
+from edna2.utils import UtilsTest
+from edna2.utils import UtilsConfig
 
 from tasks.CCP4Tasks import PointlessTask
 
-from utils import UtilsLogging
+from edna2.utils import UtilsLogging
 
 logger = UtilsLogging.getLogger()
 

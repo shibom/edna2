@@ -27,7 +27,7 @@ import logging
 import pathlib
 import unittest
 
-from utils import UtilsLogging
+from edna2.utils import UtilsLogging
 
 from tasks.ImageQualityIndicatorsTask import ImageQualityIndicatorsTask
 

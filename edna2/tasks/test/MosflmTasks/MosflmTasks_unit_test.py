@@ -29,8 +29,8 @@ import pathlib
 import unittest
 import tempfile
 
-from utils import UtilsTest
-from utils import UtilsLogging
+from edna2.utils import UtilsTest
+from edna2.utils import UtilsLogging
 
 from tasks.MosflmTasks import AbstractMosflmTask
 from tasks.MosflmTasks import MosflmIndexingTask

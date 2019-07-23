@@ -25,7 +25,7 @@ __date__ = '21/04/2019'
 
 import time
 
-from utils import UtilsLogging
+from edna2.utils import UtilsLogging
 
 from tasks.AbstractTask import AbstractTask
 

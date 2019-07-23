@@ -19,7 +19,7 @@
 
 import unittest
 
-from utils import UtilsTest
+from edna2.utils import UtilsTest
 
 from tasks.ReadImageHeader import ReadImageHeader
 
