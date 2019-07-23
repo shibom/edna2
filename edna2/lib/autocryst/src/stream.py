@@ -10,7 +10,7 @@ import copy
 import re
 import logging
 import numpy as np
-from lib.autocryst.src.point_group import *
+from edna2.lib.autocryst.src.point_group import *
 import json
 
 

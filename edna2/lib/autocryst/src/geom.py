@@ -227,7 +227,7 @@ if __name__ == '__main__':
                         filename='test.log',
                         filemode='a+')
 
-    from lib.autocryst.src.Image import ImageHandler as Im
+    from edna2.lib.autocryst.src.Image import ImageHandler as Im
 
     c = Im(sys.argv[1])
     # c = Im('../examples/mesh-x_2_1_master.h5')
