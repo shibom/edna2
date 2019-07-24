@@ -7,4 +7,6 @@ xmltodict
 jsonschema
 graypy
 h5py
+fabio
+
 
