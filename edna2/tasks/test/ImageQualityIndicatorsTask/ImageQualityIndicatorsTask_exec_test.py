@@ -46,8 +46,8 @@ class ImageQualityIndicatorsExecTest(unittest.TestCase):
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run ImageQualityIndicatorsExecTest ' +
                      'test with default config')
-    def tes_execute_listOfImages(self):
-        referenceDataPath = self.dataPath / 'inData_listOfImages.json'
+    def test_execute_listOfImages(self):
+        referenceDataPath = self.dataPath / 'inData_pilatus6m_5images_list.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         task = ImageQualityIndicatorsTask(inData=inData)
         task.execute()
@@ -61,8 +61,8 @@ class ImageQualityIndicatorsExecTest(unittest.TestCase):
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run ImageQualityIndicatorsExecTest ' +
                      'test with default config')
-    def tes_execute_startEnd(self):
-        referenceDataPath = self.dataPath / 'inData_startEnd.json'
+    def test_execute_startEnd(self):
+        referenceDataPath = self.dataPath / 'inData_pilatus6m_5images_start_end.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         task = ImageQualityIndicatorsTask(inData=inData)
         task.execute()
@@ -77,7 +77,7 @@ class ImageQualityIndicatorsExecTest(unittest.TestCase):
                      'Cannot run ImageQualityIndicatorsExecTest ' +
                      'test with default config')
     def test_execute_opid30a1(self):
-        referenceDataPath = self.dataPath / 'inData_id30a1.json'
+        referenceDataPath = self.dataPath / 'inData_pilatus2m_20images.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         task = ImageQualityIndicatorsTask(inData=inData)
         task.execute()
