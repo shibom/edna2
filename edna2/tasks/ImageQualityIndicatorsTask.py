@@ -38,7 +38,11 @@ import pathlib
 from edna2.tasks.AbstractTask import AbstractTask
 from edna2.tasks.WaitFileTask import WaitFileTask
 from edna2.tasks.DozorTasks import ControlDozor
-from edna2.tasks.CrystfelTasks import ExeCrystFEL
+try:
+    from edna2.tasks.CrystfelTasks import ExeCrystFEL
+    crystFelImportFailed = False
+except ImportError:
+    crystFelImportFailed = True
 
 from edna2.utils import UtilsImage
 from edna2.utils import UtilsConfig
@@ -333,13 +337,14 @@ class ImageQualityIndicatorsTask(AbstractTask):
 
                 listImageQualityIndicators += listImageDozor
 
-                # a work around as autocryst module works with only json file/string
-                inDataCrystFEL = {'imageQualityIndicators': listImageDozor}
-                crystfel = ExeCrystFEL(inData=inDataCrystFEL)
-                cryst_result_out = crystfel.run(inDataCrystFEL)
-                if not crystfel.isFailure():
-                    listcrystfel_output.append(cryst_result_out)
-                    # listImageQualityIndicators += listcrystfel_output
+                if not crystFelImportFailed:
+                    # a work around as autocryst module works with only json file/string
+                    inDataCrystFEL = {'imageQualityIndicators': listImageDozor}
+                    crystfel = ExeCrystFEL(inData=inDataCrystFEL)
+                    cryst_result_out = crystfel.run(inDataCrystFEL)
+                    if not crystfel.isFailure():
+                        listcrystfel_output.append(cryst_result_out)
+                        # listImageQualityIndicators += listcrystfel_output
 
 
         #                     xsDataImageQualityIndicators.dozorSpotsIntAver = imageDozor.spotsIntAver
