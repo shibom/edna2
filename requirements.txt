@@ -6,3 +6,5 @@ suds-jurko
 xmltodict
 jsonschema
 graypy
+h5py
+

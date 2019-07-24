@@ -28,6 +28,7 @@ from setuptools import setup, find_packages
 setup(name="edna2",
       version='0.1',
       packages=['edna2'],
-      install_requires=['matplotlib', 'suds-jurko', 'xmltodict', 'jsonschema', 'graypy'],
+      install_requires=['matplotlib', 'suds-jurko', 'xmltodict', 'jsonschema',
+                        'graypy', 'h5py'],
       )
 
