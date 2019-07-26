@@ -135,7 +135,8 @@ class AbstractTask(object):
             log = f.read()
         return log
 
-    def runCommandLine(self, commandLine, logPath=None, listCommand=None):
+    def runCommandLine(self, commandLine, logPath=None, listCommand=None,
+                       ignoreErrors=False):
         if listCommand is not None:
             commandLine += ' << EOF-EDNA2\n'
             for command in listCommand:
@@ -161,9 +162,10 @@ class AbstractTask(object):
             with open(str(logPath), 'w') as f:
                 f.write(log)
         if len(stderr) > 0:
-            logger.warning("Error messages from command {0}".format(
-                commandLine.split(' ')[0])
-            )
+            if not ignoreErrors:
+                logger.warning("Error messages from command {0}".format(
+                    commandLine.split(' ')[0])
+                )
             errorLogFileName = self.__class__.__name__ + ".err.txt"
             errorLogPath = self._workingDirectory / errorLogFileName
             with open(str(errorLogPath), 'w') as f:
