@@ -1,9 +1,0 @@
-{
-	"image": [
-		"$EDNA2_TESTDATA_IMAGES/mesh-test_1_0001.cbf",
-		"$EDNA2_TESTDATA_IMAGES/mesh-test_1_0002.cbf",
-		"$EDNA2_TESTDATA_IMAGES/mesh-test_1_0003.cbf",
-		"$EDNA2_TESTDATA_IMAGES/mesh-test_1_0004.cbf",
-		"$EDNA2_TESTDATA_IMAGES/mesh-test_1_0005.cbf"
-	]
-}

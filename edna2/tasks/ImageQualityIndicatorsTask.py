@@ -38,6 +38,7 @@ import pathlib
 from edna2.tasks.AbstractTask import AbstractTask
 from edna2.tasks.WaitFileTask import WaitFileTask
 from edna2.tasks.DozorTasks import ControlDozor
+from edna2.tasks.H5ToCBFTask import H5ToCBFTask
 try:
     from edna2.tasks.CrystfelTasks import ExeCrystFEL
     crystFelImportFailed = False
@@ -65,6 +66,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
             "properties": {
                 "doDistlSignalStrength": {"type": "boolean"},
                 "doIndexing": {"type": "boolean"},
+                "doCrystfel": {"type": "boolean"},
                 "doUploadToIspyb": {"type": "boolean"},
                 "processDirectory": {"type": "string"},
                 "image": {
@@ -137,6 +139,10 @@ class ImageQualityIndicatorsTask(AbstractTask):
         batchSize = inData.get('batchSize', 1)
         doDistlSignalStrength = inData.get('doDistlSignalStrength', False)
         doIndexing = inData.get('doIndexing', False)
+        if crystFelImportFailed:
+            doCrystfel = False
+        else:
+            doCrystfel = inData.get('doCrystfel', False)
         isFastMesh = inData.get('fastMesh', False)
         # Loop through all the incoming reference images
         listImage = inData.get('image', [])
@@ -181,29 +187,29 @@ class ImageQualityIndicatorsTask(AbstractTask):
                 # If Eiger, just wait for the h5 file
                 if imagePath.suffix == '.h5':
                     h5MasterFilePath, h5DataFilePath, hdf5ImageNumber = \
-                        self.getH5FilePath(image,
+                        self.getH5FilePath(imagePath,
                                            batchSize=batchSize,
                                            isFastMesh=isFastMesh)
                     if not h5DataFilePath in listH5FilePath:
-                        raise RuntimeError("not yet implemented...")
-                    #     logger.info("Eiger data, waiting for master" +
-                    #                 " and data files...")
-                    #     listH5FilePath.append(h5DataFilePath)
-                    #     self.edPluginMXWaitFile = self.loadPlugin(self.strPluginMXWaitFileName)
-                    #     xsDataInputMXWaitFile.file = XSDataFile(XSDataString(h5DataFilePath))
-                    #     xsDataInputMXWaitFile.setSize(XSDataInteger(self.minImageSize))
-                    #     xsDataInputMXWaitFile.setTimeOut(XSDataTime(self.fMXWaitFileTimeOut))
-                    #     self.screen("Waiting for file {0}".format(h5DataFilePath))
-                    #     self.DEBUG("Wait file timeOut set to %f" % self.fMXWaitFileTimeOut)
-                    #     self.edPluginMXWaitFile.setDataInput(xsDataInputMXWaitFile)
-                    #     self.edPluginMXWaitFile.executeSynchronous()
+                        logger.info("Eiger data, waiting for master" +
+                                    " and data files...")
+                        listH5FilePath.append(h5DataFilePath)
+                        inDataWaitFileTask = {
+                            'file': str(h5DataFilePath),
+                            'size': minImageSize,
+                            'timeOut': waitFileTimeOut
+                        }
+                        waitFileTask = WaitFileTask(inData=inDataWaitFileTask)
+                        logger.info("Waiting for file {0}".format(h5DataFilePath))
+                        logger.debug("Wait file timeOut set to %f" % waitFileTimeOut)
+                        waitFileTask.execute()
                     #     #                    hdf5FilePath = strPathToImage.replace(".cbf", ".h5")
-                    #     time.sleep(1)
-                    # if not os.path.exists(h5DataFilePath):
-                    #     strError = "Time-out while waiting for image %s" % h5DataFilePath
-                    #     self.error(strError)
-                    #     self.addErrorMessage(strError)
-                    #     self.setFailure()
+                        time.sleep(1)
+                    if not os.path.exists(h5DataFilePath):
+                        strError = "Time-out while waiting for image %s" % h5DataFilePath
+                        self.error(strError)
+                        self.addErrorMessage(strError)
+                        self.setFailure()
                 else:
                     if not imagePath.exists():
                         logger.info("Waiting for file {0}".format(imagePath))
@@ -222,55 +228,45 @@ class ImageQualityIndicatorsTask(AbstractTask):
                         self.setFailure()
             if not self.isFailure():
                 pathToFirstImage = listOfImagesInBatch[0]
-                if imagePath.suffix == '.h5':
-                    raise RuntimeError("not yet implemented...")
-                    # indexLoop = 1
-                    # continueLoop = True
-                    # while continueLoop:
-        #                 directory = os.path.dirname(strPathToFirstImage)
-        #                 firstImage = EDUtilsImage.getImageNumber(listOfImagesInBatch[0].path.value)
-        #                 lastImage = EDUtilsImage.getImageNumber(listOfImagesInBatch[-1].path.value)
-        #                 xsDataInputH5ToCBF = XSDataInputH5ToCBF()
-        #                 xsDataInputH5ToCBF.hdf5File = XSDataFile(listOfImagesInBatch[0].path)
-        #                 xsDataInputH5ToCBF.hdf5ImageNumber = XSDataInteger(1)
-        #                 xsDataInputH5ToCBF.startImageNumber = XSDataInteger(firstImage)
-        #                 xsDataInputH5ToCBF.endImageNumber = XSDataInteger(lastImage)
-        #                 xsDataInputH5ToCBF.forcedOutputDirectory = XSDataFile(XSDataString(directory))
-        #                 edPluginH5ToCBF = self.loadPlugin("EDPluginH5ToCBFv1_1")
-        #                 edPluginH5ToCBF.dataInput = xsDataInputH5ToCBF
-        #                 edPluginH5ToCBF.execute()
-        #                 edPluginH5ToCBF.synchronize()
-        #                 outputCBFFileTemplate = edPluginH5ToCBF.dataOutput.outputCBFFileTemplate
-        #                 if outputCBFFileTemplate is not None:
-        #                     lastCbfFile = outputCBFFileTemplate.path.value.replace("######", "{0:06d}".format(
-        #                         EDUtilsImage.getImageNumber(listOfImagesInBatch[-1].path.value)))
-        #                     strPathToImage = os.path.join(directory, lastCbfFile)
-        #                     #                        print(cbfFile.path.value)
-        #                     if os.path.exists(strPathToImage):
-        #                         # Rename all images
-        #                         for image in listOfImagesInBatch:
-        #                             image.path.value = image.path.value.replace(".h5", ".cbf")
-        #                             imageNumber = EDUtilsImage.getImageNumber(image.path.value)
-        #                             oldPath = os.path.join(directory, outputCBFFileTemplate.path.value.replace("######",
-        #                                                                                                        "{0:06d}".format(
-        #                                                                                                            imageNumber)))
-        #                             newPath = os.path.join(directory, outputCBFFileTemplate.path.value.replace("######",
-        #                                                                                                        "{0:04d}".format(
-        #                                                                                                            imageNumber)))
-        #                             os.rename(oldPath, newPath)
-        #                         lastCbfFile = outputCBFFileTemplate.path.value.replace("######", "{0:04d}".format(
-        #                             EDUtilsImage.getImageNumber(listOfImagesInBatch[-1].path.value)))
-        #                         strPathToImage = os.path.join(directory, lastCbfFile)
-        #                         self.screen("Image has been converted to CBF file: {0}".format(strPathToImage))
-        #                         continueLoop = False
-        #                 #                    print(continueLoop)
-        #                 if continueLoop:
-        #                     self.screen("Still waiting for converting to CBF file: {0}".format(strPathToImage))
-        #                     indexLoop += 1
-        #                     time.sleep(5)
-        #                     if indexLoop > 10:
-        #                         continueLoop = False
-        #
+                directory = pathToFirstImage.parent
+                firstImage = UtilsImage.getImageNumber(listOfImagesInBatch[0])
+                lastImage = UtilsImage.getImageNumber(listOfImagesInBatch[-1])
+                inDataH5ToCBF = {
+                    'hdf5File': listOfImagesInBatch[0],
+                    'hdf5ImageNumber': 1,
+                    'startImageNumber': firstImage,
+                    'endImageNumber': lastImage,
+                    'forcedOutputDirectory': directory
+                }
+                h5ToCBFTask = H5ToCBFTask(inData=inDataH5ToCBF)
+                h5ToCBFTask.execute()
+                if h5ToCBFTask.isSuccess():
+                    outputCBFFileTemplate = h5ToCBFTask.outData['outputCBFFileTemplate']
+                    if outputCBFFileTemplate is not None:
+                        lastCbfFile = outputCBFFileTemplate.replace("######", "{0:06d}".format(
+                            UtilsImage.getImageNumber(listOfImagesInBatch[-1])))
+                        strPathToImage = os.path.join(directory, lastCbfFile)
+    #                     #                        print(cbfFile.path.value)
+                        if os.path.exists(strPathToImage):
+                            # Rename all images
+                            oldListOfImagesInBatch = listOfImagesInBatch
+                            listOfImagesInBatch = []
+                            for imagePathH5 in oldListOfImagesInBatch:
+                                imagePathCbf = pathlib.Path(str(imagePathH5).replace('.h5', '.cbf'))
+                                listOfImagesInBatch.append(imagePathCbf)
+                                imageNumber = UtilsImage.getImageNumber(imagePathCbf)
+                                oldPath = directory / outputCBFFileTemplate.replace('######',
+                                                                                    '{0:06d}'.format(imageNumber))
+                                newPath = directory / outputCBFFileTemplate.replace('######',
+                                                                                    '{0:04d}'.format(imageNumber))
+                                os.rename(oldPath, newPath)
+                            lastCbfFile = outputCBFFileTemplate.replace(
+                                '######',
+                                '{0:04d}'.format(UtilsImage.getImageNumber(listOfImagesInBatch[-1])))
+                            pathToLastImage = directory / lastCbfFile
+                            logger.info("Image has been converted to CBF file: {0}".format(pathToLastImage))
+
+
                 for image in listOfImagesInBatch:
                     distlTask = None
                     # Check if we should run distl.signalStrength
@@ -337,7 +333,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
 
                 listImageQualityIndicators += listImageDozor
 
-                if not crystFelImportFailed:
+                if doCrystfel:
                     # a work around as autocryst module works with only json file/string
                     inDataCrystFEL = {'imageQualityIndicators': listImageDozor}
                     crystfel = ExeCrystFEL(inData=inDataCrystFEL)
@@ -429,7 +425,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
             h5FileNumber = int((imageNumber - 1) / batchSize) * batchSize + 1
         h5MasterFileName = "{prefix}_{h5FileNumber}_master.h5".format(
             prefix=prefix, h5FileNumber=h5FileNumber)
-        h5MasterFilePath = filePath.parent /h5MasterFileName
+        h5MasterFilePath = filePath.parent / h5MasterFileName
         h5DataFileName = \
             "{prefix}_{h5FileNumber}_data_{h5ImageNumber:06d}.h5".format(
                 prefix=prefix, h5FileNumber=h5FileNumber, h5ImageNumber=h5ImageNumber)

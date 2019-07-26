@@ -37,76 +37,46 @@ from edna2.tasks.ImageQualityIndicatorsTask import ImageQualityIndicatorsTask
 logger = UtilsLogging.getLogger()
 
 
-class ImageQualityIndicatorsExecTest(unittest.TestCase):
+class ImageQualityIndicatorsPilatus6MExecTest(unittest.TestCase):
 
     def setUp(self):
         self.dataPath = UtilsTest.prepareTestDataPath(__file__)
-        # self.dataPath = pathlib.Path(os.getcwd()) / 'data'
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run ImageQualityIndicatorsExecTest ' +
                      'test with default config')
-    def test_execute_listOfImages(self):
-        referenceDataPath = self.dataPath / 'inData_pilatus6m_5images_list.json'
+    def test_execute_pilatus6m_10images_list(self):
+        referenceDataPath = self.dataPath / 'pilatus6m_10images_list.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         task = ImageQualityIndicatorsTask(inData=inData)
         task.execute()
         self.assertFalse(task.isFailure())
         outData = task.outData
         self.assertTrue('imageQualityIndicators' in outData)
-        outjsonpath = self.dataPath / 'outData_1.json'
-        with open(str(outjsonpath), 'w') as jh:
-            json.dump(outData, jh, sort_keys=True, indent=4)
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run ImageQualityIndicatorsExecTest ' +
                      'test with default config')
-    def test_execute_startEnd(self):
-        referenceDataPath = self.dataPath / 'inData_pilatus6m_5images_start_end.json'
+    def test_execute_pilatus6m_10images(self):
+        referenceDataPath = self.dataPath / 'pilatus6m_10images.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         task = ImageQualityIndicatorsTask(inData=inData)
         task.execute()
         self.assertFalse(task.isFailure())
         outData = task.outData
         self.assertTrue('imageQualityIndicators' in outData)
-        outjsonpath = self.dataPath / 'outData_2.json'
-        with open(str(outjsonpath), 'w') as jh:
-            json.dump(outData, jh, sort_keys=True, indent=4)
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run ImageQualityIndicatorsExecTest ' +
                      'test with default config')
-    def test_execute_opid30a1(self):
-        referenceDataPath = self.dataPath / 'inData_pilatus2m_20images.json'
+    def test_execute_pilatus6m_10images_crystfel(self):
+        referenceDataPath = self.dataPath / 'pilatus6m_10images_crystfel.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         task = ImageQualityIndicatorsTask(inData=inData)
         task.execute()
         self.assertFalse(task.isFailure())
         outData = task.outData
         self.assertTrue('imageQualityIndicators' in outData)
-        outjsonpath = self.dataPath / 'outData_2.json'
-        with open(str(outjsonpath), 'w') as jh:
-            json.dump(outData, jh, sort_keys=True, indent=4)
-
-
-    '''
-    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
-                     'Cannot run ImageQualityIndicatorsExecTest ' +
-                     'test with default config')
-    @unittest.skipIf(not os.path.exists('/data/visitor/mx415/id30a2/20160315/' +
-                                        'RAW_DATA/test3/mx415_1_0001.cbf'),
-                     'Image /data/visitor/mx415/id30a2/20160315/RAW_DATA/' +
-                     'test3/mx415_1_0001.cbf doesn\'t exist')
-    def test_execute_eiger4m_fastMesh(self):
-        referenceDataPath = self.dataPath / 'inData_eiger4m_fastMesh.json'
-        inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
-        task = ImageQualityIndicatorsTask(inData=inData)
-        task.execute()
-        self.assertFalse(task.isFailure())
-        outData = task.outData
-        self.assertTrue('imageQualityIndicators' in outData)
-        self.assertEqual(len(outData['imageQualityIndicators']), 400)
-    '''
 
 
 if __name__ == '__main__':
