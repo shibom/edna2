@@ -39,6 +39,7 @@ from edna2.tasks.AbstractTask import AbstractTask
 from edna2.tasks.WaitFileTask import WaitFileTask
 from edna2.tasks.DozorTasks import ControlDozor
 from edna2.tasks.H5ToCBFTask import H5ToCBFTask
+from edna2.tasks.PhenixTasks import DistlSignalStrengthTask
 try:
     from edna2.tasks.CrystfelTasks import ExeCrystFEL
     crystFelImportFailed = False
@@ -228,60 +229,53 @@ class ImageQualityIndicatorsTask(AbstractTask):
                         self.setFailure()
             if not self.isFailure():
                 pathToFirstImage = listOfImagesInBatch[0]
-                directory = pathToFirstImage.parent
-                firstImage = UtilsImage.getImageNumber(listOfImagesInBatch[0])
-                lastImage = UtilsImage.getImageNumber(listOfImagesInBatch[-1])
-                inDataH5ToCBF = {
-                    'hdf5File': listOfImagesInBatch[0],
-                    'hdf5ImageNumber': 1,
-                    'startImageNumber': firstImage,
-                    'endImageNumber': lastImage,
-                    'forcedOutputDirectory': directory
-                }
-                h5ToCBFTask = H5ToCBFTask(inData=inDataH5ToCBF)
-                h5ToCBFTask.execute()
-                if h5ToCBFTask.isSuccess():
-                    outputCBFFileTemplate = h5ToCBFTask.outData['outputCBFFileTemplate']
-                    if outputCBFFileTemplate is not None:
-                        lastCbfFile = outputCBFFileTemplate.replace("######", "{0:06d}".format(
-                            UtilsImage.getImageNumber(listOfImagesInBatch[-1])))
-                        strPathToImage = os.path.join(directory, lastCbfFile)
-    #                     #                        print(cbfFile.path.value)
-                        if os.path.exists(strPathToImage):
-                            # Rename all images
-                            oldListOfImagesInBatch = listOfImagesInBatch
-                            listOfImagesInBatch = []
-                            for imagePathH5 in oldListOfImagesInBatch:
-                                imagePathCbf = pathlib.Path(str(imagePathH5).replace('.h5', '.cbf'))
-                                listOfImagesInBatch.append(imagePathCbf)
-                                imageNumber = UtilsImage.getImageNumber(imagePathCbf)
-                                oldPath = directory / outputCBFFileTemplate.replace('######',
-                                                                                    '{0:06d}'.format(imageNumber))
-                                newPath = directory / outputCBFFileTemplate.replace('######',
-                                                                                    '{0:04d}'.format(imageNumber))
-                                os.rename(oldPath, newPath)
-                            lastCbfFile = outputCBFFileTemplate.replace(
-                                '######',
-                                '{0:04d}'.format(UtilsImage.getImageNumber(listOfImagesInBatch[-1])))
-                            pathToLastImage = directory / lastCbfFile
-                            logger.info("Image has been converted to CBF file: {0}".format(pathToLastImage))
-
-
+                if pathToFirstImage.suffix == 'h5':
+                    directory = pathToFirstImage.parent
+                    firstImage = UtilsImage.getImageNumber(listOfImagesInBatch[0])
+                    lastImage = UtilsImage.getImageNumber(listOfImagesInBatch[-1])
+                    inDataH5ToCBF = {
+                        'hdf5File': listOfImagesInBatch[0],
+                        'hdf5ImageNumber': 1,
+                        'startImageNumber': firstImage,
+                        'endImageNumber': lastImage,
+                        'forcedOutputDirectory': directory
+                    }
+                    h5ToCBFTask = H5ToCBFTask(inData=inDataH5ToCBF)
+                    h5ToCBFTask.execute()
+                    if h5ToCBFTask.isSuccess():
+                        outputCBFFileTemplate = h5ToCBFTask.outData['outputCBFFileTemplate']
+                        if outputCBFFileTemplate is not None:
+                            lastCbfFile = outputCBFFileTemplate.replace("######", "{0:06d}".format(
+                                UtilsImage.getImageNumber(listOfImagesInBatch[-1])))
+                            strPathToImage = os.path.join(directory, lastCbfFile)
+        #                     #                        print(cbfFile.path.value)
+                            if os.path.exists(strPathToImage):
+                                # Rename all images
+                                oldListOfImagesInBatch = listOfImagesInBatch
+                                listOfImagesInBatch = []
+                                for imagePathH5 in oldListOfImagesInBatch:
+                                    imagePathCbf = pathlib.Path(str(imagePathH5).replace('.h5', '.cbf'))
+                                    listOfImagesInBatch.append(imagePathCbf)
+                                    imageNumber = UtilsImage.getImageNumber(imagePathCbf)
+                                    oldPath = directory / outputCBFFileTemplate.replace('######',
+                                                                                        '{0:06d}'.format(imageNumber))
+                                    newPath = directory / outputCBFFileTemplate.replace('######',
+                                                                                        '{0:04d}'.format(imageNumber))
+                                    os.rename(oldPath, newPath)
+                                lastCbfFile = outputCBFFileTemplate.replace(
+                                    '######',
+                                    '{0:04d}'.format(UtilsImage.getImageNumber(listOfImagesInBatch[-1])))
+                                pathToLastImage = directory / lastCbfFile
+                                logger.info("Image has been converted to CBF file: {0}".format(pathToLastImage))
                 for image in listOfImagesInBatch:
                     distlTask = None
                     # Check if we should run distl.signalStrength
                     if doDistlSignalStrength:
-                        raise RuntimeError("not yet implemented...")
-                        # if self.bUseThinClient:
-                        #     strPluginName = self.strPluginNameThinClient
-                        # else:
-                        #     strPluginName = self.strPluginName
-                        # edPluginPluginExecImageQualityIndicator = self.loadPlugin(strPluginName)
-                        # self.listPluginExecImageQualityIndicator.append(edPluginPluginExecImageQualityIndicator)
-                        # xsDataInputDistlSignalStrength = XSDataInputDistlSignalStrength()
-                        # xsDataInputDistlSignalStrength.setReferenceImage(xsDataImageNew)
-                        # edPluginPluginExecImageQualityIndicator.setDataInput(xsDataInputDistlSignalStrength)
-                        # edPluginPluginExecImageQualityIndicator.execute()
+                        inDataDistl = {
+                            'referenceImage': str(image)
+                        }
+                        distlTask = DistlSignalStrengthTask(inData=inDataDistl)
+                        distlTask.start()
                     listDistlTask.append((image, distlTask))
                 inDataControlDozor = {
                     'image': listOfImagesInBatch,
@@ -290,23 +284,21 @@ class ImageQualityIndicatorsTask(AbstractTask):
                 controlDozor = ControlDozor(inDataControlDozor)
                 controlDozor.start()
                 listDozorTask.append((controlDozor, inDataControlDozor, list(listOfImagesInBatch)))
-
         if not self.isFailure():
             listIndexing = []
+            listDistlResult = []
             # Synchronize all image quality indicator plugins and upload to ISPyB
-        #     xsDataInputStoreListOfImageQualityIndicators = XSDataInputStoreListOfImageQualityIndicators()
-        #
-        #     for (xsDataImage, edPluginPluginExecImageQualityIndicator) in listPluginDistl:
-        #         xsDataImageQualityIndicators = XSDataImageQualityIndicators()
-        #         xsDataImageQualityIndicators.image = xsDataImage.copy()
-        #         if edPluginPluginExecImageQualityIndicator is not None:
-        #             edPluginPluginExecImageQualityIndicator.synchronize()
-        #             if edPluginPluginExecImageQualityIndicator.dataOutput is not None:
-        #                 if edPluginPluginExecImageQualityIndicator.dataOutput.imageQualityIndicators is not None:
-        #                     xsDataImageQualityIndicators = XSDataImageQualityIndicators.parseString( \
-        #                         edPluginPluginExecImageQualityIndicator.dataOutput.imageQualityIndicators.marshal())
-        #         self.xsDataResultControlImageQualityIndicators.addImageQualityIndicators(xsDataImageQualityIndicators)
-        #
+            for (image, distlTask) in listDistlTask:
+                imageQualityIndicators = {}
+                if distlTask is not None:
+                    distlTask.join()
+                    if distlTask.isSuccess():
+                        outDataDistl = distlTask.outData
+                        if outDataDistl is not None:
+                            imageQualityIndicators = outDataDistl['imageQualityIndicators']
+                imageQualityIndicators['image'] = str(image)
+                listDistlResult.append(imageQualityIndicators)
+                # self.xsDataResultControlImageQualityIndicators.addImageQualityIndicators(xsDataImageQualityIndicators)
             for (controlDozor, inDataControlDozor, listBatch) in listDozorTask:
                 controlDozor.join()
                 # Check that we got at least one result
@@ -321,10 +313,11 @@ class ImageQualityIndicatorsTask(AbstractTask):
                     controlDozor.execute()
                 listImageDozor = list(controlDozor.outData['imageDozor'])
                 for imageDozor in listImageDozor:
-                    for imagePath, distlTask in listDistlTask:
-                        if imageDozor['image'] == str(imagePath):
+                    for distlResult in listDistlResult:
+                        if imageDozor['image'] == distlResult['image']:
         #                     xsDataImageQualityIndicators.dozor_score = imageDozor.mainScore
         #                     xsDataImageQualityIndicators.dozorSpotFile = imageDozor.spotFile
+                            imageDozor.update(distlResult)
                             if 'spotFile' in imageDozor and imageDozor['spotFile'] is not None:
                                 if os.path.exists(imageDozor['spotFile']):
                                     numpyArray = numpy.loadtxt(imageDozor['spotFile'], skiprows=3)
