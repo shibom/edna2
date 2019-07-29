@@ -124,8 +124,7 @@ class ExeCrystFEL(AbstractTask):
                         ofh.write('\n')
                     ofh.close()
 
-                    cmd = cryst.indexamajig_cmd()
-                    self.runCommandLine(cmd)
+                    self.runCommandLine(cryst.indexamajig_cmd())
 
                 if cryst.status and os.path.exists(cryst.outstream):
                     cryst.report_stats(cryst.outstream)
