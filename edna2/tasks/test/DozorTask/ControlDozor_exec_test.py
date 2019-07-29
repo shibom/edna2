@@ -50,7 +50,7 @@ class ControlDozorExecTest(unittest.TestCase):
         controlDozor.execute()
         self.assertTrue(controlDozor.isSuccess())
         outData = controlDozor.outData
-        self.assertEqual(len(outData['imageDozor']), 5)
+        self.assertEqual(len(outData['imageQualityIndicators']), 5)
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run control dozor test with default config')
@@ -61,7 +61,7 @@ class ControlDozorExecTest(unittest.TestCase):
         controlDozor.execute()
         self.assertTrue(controlDozor.isSuccess())
         outData = controlDozor.outData
-        self.assertEqual(len(outData['imageDozor']), 5)
+        self.assertEqual(len(outData['imageQualityIndicators']), 5)
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run control dozor test with default config')
@@ -72,7 +72,7 @@ class ControlDozorExecTest(unittest.TestCase):
         controlDozor.execute()
         self.assertTrue(controlDozor.isSuccess())
         outData = controlDozor.outData
-        self.assertEqual(len(outData['imageDozor']), 4)
+        self.assertEqual(len(outData['imageQualityIndicators']), 4)
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run control dozor test with default config')
@@ -87,7 +87,7 @@ class ControlDozorExecTest(unittest.TestCase):
         controlDozor.execute()
         self.assertTrue(controlDozor.isSuccess())
         outData = controlDozor.outData
-        self.assertEqual(len(outData['imageDozor']), 740)
+        self.assertEqual(len(outData['imageQualityIndicators']), 740)
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run control dozor test with default config')
@@ -105,7 +105,7 @@ class ControlDozorExecTest(unittest.TestCase):
         self.assertTrue(controlDozor.isSuccess())
         UtilsConfig.setSite(currentSite)
         outData = controlDozor.outData
-        self.assertEqual(len(outData['imageDozor']), 640)
+        self.assertEqual(len(outData['imageQualityIndicators']), 640)
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run control dozor test with default config')
@@ -124,4 +124,4 @@ class ControlDozorExecTest(unittest.TestCase):
         UtilsConfig.setSite(currentSite)
         self.assertTrue(controlDozor.isSuccess())
         outData = controlDozor.outData
-        self.assertEqual(len(outData['imageDozor']), 51)
+        self.assertEqual(len(outData['imageQualityIndicators']), 51)

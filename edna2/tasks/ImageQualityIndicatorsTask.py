@@ -92,45 +92,8 @@ class ImageQualityIndicatorsTask(AbstractTask):
                 "imageQualityIndicators": {
                     "type": "array",
                     "items": {
-                        "type": "object",
-                        "required": ["number", "angle", "spotsNumOf",
-                                     "spotsIntAver", "spotsResolution",
-                                     "mainScore", "spotScore",
-                                     "visibleResolution"],
-                        "properties": {
-                            "dozor_score": {"type": "number"},
-                            "dozorSpotFile": {"type": "string"},
-                            "dozorSpotList": {"type": "string"},
-                            "dozorSpotListShape": {
-                                "type": "array",
-                                "items": {
-                                    "type": "integer",
-                                }
-                            },
-                            "dozorSpotsIntAver": {"type": "number"},
-                            "dozorSpotsResolution": {"type": "number"},
-                            "dozorVisibleResolution": {"type": "number"},
-                            "binPopCutOffMethod2Res": {"type": "number"},
-                            "goodBraggCandidates": {"type": "integer"},
-                            "iceRings": {"type": "integer"},
-                            "image": {"type": "string"},
-                            "inResTotal": {"type": "integer"},
-                            "inResolutionOvrlSpots": {"type": "integer"},
-                            "maxUnitCell": {"type": "number"},
-                            "method1Res": {"type": "number"},
-                            "method2Res": {"type": "number"},
-                            "pctSaturationTop50Peaks": {"type": "number"},
-                            "saturationRangeAverage": {"type": "number"},
-                            "saturationRangeMax": {"type": "number"},
-                            "saturationRangeMin": {"type": "number"},
-                            "selectedIndexingSolution": {"type": "number"},
-                            "signalRangeAverage": {"type": "number"},
-                            "signalRangeMax": {"type": "number"},
-                            "signalRangeMin": {"type": "number"},
-                            "spotTotal": {"type": "integer"},
-                            "totalIntegratedSignal": {"type": "number"},
-                        },
-                    },
+                        "$ref": self.getSchemaUrl("imageQualityIndicators.json")
+                    }
                 },
                 "inputDozor": {"type": "number"},
             },
@@ -229,7 +192,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
                         self.setFailure()
             if not self.isFailure():
                 pathToFirstImage = listOfImagesInBatch[0]
-                if pathToFirstImage.suffix == 'h5':
+                if pathToFirstImage.suffix == '.h5':
                     directory = pathToFirstImage.parent
                     firstImage = UtilsImage.getImageNumber(listOfImagesInBatch[0])
                     lastImage = UtilsImage.getImageNumber(listOfImagesInBatch[-1])
@@ -267,16 +230,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
                                     '{0:04d}'.format(UtilsImage.getImageNumber(listOfImagesInBatch[-1])))
                                 pathToLastImage = directory / lastCbfFile
                                 logger.info("Image has been converted to CBF file: {0}".format(pathToLastImage))
-                for image in listOfImagesInBatch:
-                    distlTask = None
-                    # Check if we should run distl.signalStrength
-                    if doDistlSignalStrength:
-                        inDataDistl = {
-                            'referenceImage': str(image)
-                        }
-                        distlTask = DistlSignalStrengthTask(inData=inDataDistl)
-                        distlTask.start()
-                    listDistlTask.append((image, distlTask))
+                # Run Control Dozor
                 inDataControlDozor = {
                     'image': listOfImagesInBatch,
                     'batchSize': len(listOfImagesInBatch)
@@ -284,6 +238,15 @@ class ImageQualityIndicatorsTask(AbstractTask):
                 controlDozor = ControlDozor(inDataControlDozor)
                 controlDozor.start()
                 listDozorTask.append((controlDozor, inDataControlDozor, list(listOfImagesInBatch)))
+                # Check if we should run distl.signalStrength
+                if doDistlSignalStrength:
+                    for image in listOfImagesInBatch:
+                        inDataDistl = {
+                            'referenceImage': str(image)
+                        }
+                        distlTask = DistlSignalStrengthTask(inData=inDataDistl)
+                        distlTask.start()
+                        listDistlTask.append((image, distlTask))
         if not self.isFailure():
             listIndexing = []
             listDistlResult = []
@@ -302,7 +265,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
             for (controlDozor, inDataControlDozor, listBatch) in listDozorTask:
                 controlDozor.join()
                 # Check that we got at least one result
-                if len(controlDozor.outData['imageDozor']) == 0:
+                if len(controlDozor.outData['imageQualityIndicators']) == 0:
                     # Run the dozor plugin again, this time synchronously
                     firstImage = listBatch[0].name
                     lastImage = listBatch[-1].name
@@ -311,27 +274,24 @@ class ImageQualityIndicatorsTask(AbstractTask):
                     time.sleep(5)
                     controlDozor = ControlDozor(inDataControlDozor)
                     controlDozor.execute()
-                listImageDozor = list(controlDozor.outData['imageDozor'])
-                for imageDozor in listImageDozor:
-                    for distlResult in listDistlResult:
-                        if imageDozor['image'] == distlResult['image']:
-        #                     xsDataImageQualityIndicators.dozor_score = imageDozor.mainScore
-        #                     xsDataImageQualityIndicators.dozorSpotFile = imageDozor.spotFile
-                            imageDozor.update(distlResult)
-                            if 'spotFile' in imageDozor and imageDozor['spotFile'] is not None:
-                                if os.path.exists(imageDozor['spotFile']):
-                                    numpyArray = numpy.loadtxt(imageDozor['spotFile'], skiprows=3)
-                                    imageDozor['dozorSpotList'] = base64.b64encode(numpyArray.tostring()).decode('utf-8')
-                                    imageDozor['dozorSpotListShape'] = list(numpyArray.shape)
-
-                listImageQualityIndicators += listImageDozor
+                listOutDataControlDozor = list(controlDozor.outData['imageQualityIndicators'])
+                if doDistlSignalStrength:
+                    for outDataControlDozor in listOutDataControlDozor:
+                        for distlResult in listDistlResult:
+                            if outDataControlDozor['image'] == distlResult['image']:
+                                imageQualityIndicators = dict(outDataControlDozor)
+                                imageQualityIndicators.update(distlResult)
+                                listImageQualityIndicators.append(imageQualityIndicators)
+                else:
+                    listImageQualityIndicators += listOutDataControlDozor
 
                 if doCrystfel:
                     # a work around as autocryst module works with only json file/string
-                    inDataCrystFEL = {'imageQualityIndicators': listImageDozor}
+                    inDataCrystFEL = {'imageQualityIndicators': controlDozor}
                     crystfel = ExeCrystFEL(inData=inDataCrystFEL)
-                    cryst_result_out = crystfel.run(inDataCrystFEL)
+                    crystfel.execute()
                     if not crystfel.isFailure():
+                        cryst_result_out = crystfel.outData
                         listcrystfel_output.append(cryst_result_out)
                         # listImageQualityIndicators += listcrystfel_output
 

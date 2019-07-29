@@ -1,0 +1,46 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://github.com/olofsvensson/edna2/edna2/schema/imageQualityIndicators.json#",
+    "type": "object",
+    "required": ["angle", "image", "number",
+                 "dozorScore",
+                 "dozorSpotsResolution",
+                 "dozorVisibleResolution"],
+    "properties": {
+        "angle": {"type": "number"},
+        "dozorScore": {"type": "number"},
+        "dozorSpotFile": {"type": "string"},
+        "dozorSpotList": {"type": "string"},
+        "dozorSpotListShape": {
+            "type": "array",
+            "items": {
+                "type": "integer"
+            }
+        },
+        "dozorSpotsIntAver": {"type": "number"},
+        "dozorSpotsNumOf": {"type": "number"},
+        "dozorSpotsResolution": {"type": "number"},
+        "dozorSpotScore": {"type": "number"},
+        "dozorVisibleResolution": {"type": "number"},
+        "binPopCutOffMethod2Res": {"type": "number"},
+        "goodBraggCandidates": {"type": "integer"},
+        "iceRings": {"type": "integer"},
+        "image": {"type": "string"},
+        "inResTotal": {"type": "integer"},
+        "inResolutionOvrlSpots": {"type": "integer"},
+        "maxUnitCell": {"type": "number"},
+        "method1Res": {"type": "number"},
+        "method2Res": {"type": "number"},
+        "number": {"type": "integer"},
+        "pctSaturationTop50Peaks": {"type": "number"},
+        "saturationRangeAverage": {"type": "number"},
+        "saturationRangeMax": {"type": "number"},
+        "saturationRangeMin": {"type": "number"},
+        "selectedIndexingSolution": {"type": "number"},
+        "signalRangeAverage": {"type": "number"},
+        "signalRangeMax": {"type": "number"},
+        "signalRangeMin": {"type": "number"},
+        "spotTotal": {"type": "integer"},
+        "totalIntegratedSignal": {"type": "number"}
+    }
+}

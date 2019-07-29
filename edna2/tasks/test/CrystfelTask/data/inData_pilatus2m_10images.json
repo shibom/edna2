@@ -231,5 +231,6 @@
             ]
         }
     ],
-    "crystfel_per_batch": []
+    "crystfel_per_batch": [],
+    "detectorType": "pilatus6m"
 }

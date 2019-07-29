@@ -59,7 +59,7 @@ class ImageQualityIndicatorsEiger4MExecTest(unittest.TestCase):
         self.assertFalse(task.isFailure())
         outData = task.outData
         self.assertTrue('imageQualityIndicators' in outData)
-        self.assertEqual(len(outData['imageQualityIndicators']), 10)
+        self.assertEqual(10, len(outData['imageQualityIndicators']))
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run ImageQualityIndicatorsExecTest ' +

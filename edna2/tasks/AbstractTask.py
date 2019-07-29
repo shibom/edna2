@@ -81,14 +81,38 @@ class AbstractTask(object):
 
     def executeRun(self):
         inData = self.getInData()
+        hasValidInDataSchema = False
+        hasValidOutDataSchema = False
         if self.getInDataSchema() is not None:
-            jsonschema.validate(instance=inData, schema=self.getInDataSchema())
-        self._workingDirectory = UtilsPath.getWorkingDirectory(self, inData)
-        self.writeInputData(inData)
-        outData = self.run(inData)
+            instance = inData
+            schema = self.getInDataSchema()
+            try:
+                jsonschema.validate(instance=instance, schema=schema)
+                hasValidInDataSchema = True
+            except Exception as e:
+                logger.exception(e)
+        else:
+            hasValidInDataSchema = True
+        if hasValidInDataSchema:
+            self._workingDirectory = UtilsPath.getWorkingDirectory(self, inData)
+            self.writeInputData(inData)
+            outData = self.run(inData)
+        else:
+            raise RuntimeError("Schema validation error for inData")
         if self.getOutDataSchema() is not None:
-            jsonschema.validate(instance=outData, schema=self.getOutDataSchema())
-        self.writeOutputData(outData)
+            instance = outData
+            schema = self.getOutDataSchema()
+            try:
+                jsonschema.validate(instance=instance, schema=schema)
+                hasValidOutDataSchema = True
+            except Exception as e:
+                logger.exception(e)
+        else:
+            hasValidOutDataSchema = True
+        if hasValidOutDataSchema:
+            self.writeOutputData(outData)
+        else:
+            raise RuntimeError("Schema validation error for outData")
 
     def getInData(self):
         return json.loads(self._dictInOut['inData'])

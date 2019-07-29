@@ -20,8 +20,10 @@
 
 import os
 import json
+import numpy
 import shlex
 import shutil
+import base64
 import pathlib
 import tempfile
 
@@ -471,12 +473,12 @@ class ControlDozor(AbstractTask):
     def getOutDataSchema(self):
         return {
             "type": "object",
-            "required": ["imageDozor"],
+            "required": ["imageQualityIndicators"],
             "properties": {
-                "imageDozor": {
+                "imageQualityIndicators": {
                     "type": "array",
                     "items": {
-                        "$ref": self.getSchemaUrl("imageDozor.json")
+                        "$ref": self.getSchemaUrl("imageQualityIndicators.json")
                     }
                 },
                 "halfDoseTime": {"type": "number"},
@@ -516,7 +518,7 @@ class ControlDozor(AbstractTask):
                 doRadiationDamage=doRadiationDamage,
                 cbfTempDir=cbfTempDir
             )
-        outData['imageDozor'] = []
+        outData['imageQualityIndicators'] = []
         for listBatch in listAllBatches:
             outDataDozor = self.runDozorTask(inData=inData,
                                              dictImage=dictImage,
@@ -526,7 +528,28 @@ class ControlDozor(AbstractTask):
                                              hasHdf5Prefix=hasHdf5Prefix,
                                              hasOverlap=self.hasOverlap)
             if outDataDozor is not None:
-                outData['imageDozor'] += outDataDozor['imageDozor']
+                for imageDozor in outDataDozor['imageDozor']:
+                    imageQualityIndicators = {
+                        'angle': imageDozor['angle'],
+                        'number': imageDozor['number'],
+                        'image': imageDozor['image'],
+                        'dozorScore': imageDozor['mainScore'],
+                        'dozorSpotScore': imageDozor['spotScore'],
+                        'dozorSpotsNumOf': imageDozor['spotsNumOf'],
+                        'dozorSpotsIntAver': imageDozor['spotsIntAver'],
+                        'dozorSpotsResolution': imageDozor['spotsResolution'],
+                        'dozorVisibleResolution': imageDozor['visibleResolution'],
+                    }
+                    if 'spotFile' in imageDozor:
+                        if os.path.exists(imageDozor['spotFile']):
+                            spotFile = imageDozor['spotFile']
+                            imageQualityIndicators['dozorSpotFile'] = spotFile
+                            numpyArray = numpy.loadtxt(spotFile, skiprows=3)
+                            imageQualityIndicators['dozorSpotList'] = \
+                                base64.b64encode(numpyArray.tostring()).decode('utf-8')
+                            imageQualityIndicators['spotListShape'] = \
+                                list(numpyArray.shape)
+                    outData['imageQualityIndicators'].append(imageQualityIndicators)
             # Make plot if we have a data collection id
         if 'dataCollectionId' in inData:
             self.makePlot(inData['dataCollectionId'], outData, self.getWorkingDirectory())
@@ -655,37 +678,37 @@ class ControlDozor(AbstractTask):
                     "'Visible res.'",
                 )
             )
-            for imageDozor in outDataImageDozor['imageDozor']:
+            for imageQualityIndicators in outDataImageDozor['imageQualityIndicators']:
                gnuplotFile.write(
                    '{0:10d},{1:15.3f},{2:15d},{3:15.3f},{4:15.3f},{5:15.3f}\n'.format(
-                        imageDozor['number'],
-                        imageDozor['angle'],
-                        imageDozor['spotsNumOf'],
-                        10 * imageDozor['mainScore'],
-                        imageDozor['spotScore'],
-                        imageDozor['visibleResolution'],
+                        imageQualityIndicators['number'],
+                        imageQualityIndicators['angle'],
+                        imageQualityIndicators['dozorSpotsNumOf'],
+                        10 * imageQualityIndicators['dozorScore'],
+                        imageQualityIndicators['dozorSpotScore'],
+                        imageQualityIndicators['dozorVisibleResolution'],
                     )
                )
-               if minImageNumber is None or minImageNumber > imageDozor['number']:
-                   minImageNumber = imageDozor['number']
-                   minAngle = imageDozor['angle']
-               if maxImageNumber is None or maxImageNumber < imageDozor['number']:
-                   maxImageNumber = imageDozor['number']
-                   maxAngle = imageDozor['angle']
-               if minDozorValue is None or minDozorValue > imageDozor['mainScore']:
-                   minDozorValue = imageDozor['spotScore']
-               if maxDozorValue is None or maxDozorValue < imageDozor['mainScore']:
-                   maxDozorValue = imageDozor['spotScore']
+               if minImageNumber is None or minImageNumber > imageQualityIndicators['number']:
+                   minImageNumber = imageQualityIndicators['number']
+                   minAngle = imageQualityIndicators['angle']
+               if maxImageNumber is None or maxImageNumber < imageQualityIndicators['number']:
+                   maxImageNumber = imageQualityIndicators['number']
+                   maxAngle = imageQualityIndicators['angle']
+               if minDozorValue is None or minDozorValue > imageQualityIndicators['dozorScore']:
+                   minDozorValue = imageQualityIndicators['dozorScore']
+               if maxDozorValue is None or maxDozorValue < imageQualityIndicators['dozorScore']:
+                   maxDozorValue = imageQualityIndicators['dozorScore']
 
                # Min resolution: the higher the value the lower the resolution
-               if minResolution is None or minResolution < imageDozor['visibleResolution']:
+               if minResolution is None or minResolution < imageQualityIndicators['dozorVisibleResolution']:
                    # Disregard resolution worse than 10.0
-                   if imageDozor['visibleResolution'] < 10.0:
-                       minResolution = imageDozor['visibleResolution']
+                   if imageQualityIndicators['dozorVisibleResolution'] < 10.0:
+                       minResolution = imageQualityIndicators['dozorVisibleResolution']
 
                # Max resolution: the lower the number the better the resolution
-               if maxResolution is None or maxResolution > imageDozor['visibleResolution']:
-                   maxResolution = imageDozor['visibleResolution']
+               if maxResolution is None or maxResolution > imageQualityIndicators['dozorVisibleResolution']:
+                   maxResolution = imageQualityIndicators['dozorVisibleResolution']
 
 
         xtics = ''
