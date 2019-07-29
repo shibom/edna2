@@ -473,7 +473,7 @@ class ControlDozor(AbstractTask):
     def getOutDataSchema(self):
         return {
             "type": "object",
-            "required": ["imageQualityIndicators"],
+            "required": ["imageQualityIndicators", "detectorType"],
             "properties": {
                 "imageQualityIndicators": {
                     "type": "array",
@@ -481,6 +481,7 @@ class ControlDozor(AbstractTask):
                         "$ref": self.getSchemaUrl("imageQualityIndicators.json")
                     }
                 },
+                "detectorType": {"type": "string"},
                 "halfDoseTime": {"type": "number"},
                 "dozorPlot":  {"type": "string"},
                 "pathToCbfDirectory":  {"type": "string"},
@@ -491,6 +492,7 @@ class ControlDozor(AbstractTask):
     def run(self, inData):
         outData = {}
         hasHdf5Prefix = False
+        detectorType = None
         # Check overlap
         overlap = inData.get('overlap', self.overlap)
         # Check if connection to ISPyB needed
@@ -520,13 +522,15 @@ class ControlDozor(AbstractTask):
             )
         outData['imageQualityIndicators'] = []
         for listBatch in listAllBatches:
-            outDataDozor = self.runDozorTask(inData=inData,
-                                             dictImage=dictImage,
-                                             listBatch=listBatch,
-                                             overlap=overlap,
-                                             workingDirectory=str(self.getWorkingDirectory()),
-                                             hasHdf5Prefix=hasHdf5Prefix,
-                                             hasOverlap=self.hasOverlap)
+            outDataDozor, detectorType = self.runDozorTask(
+                inData=inData,
+                dictImage=dictImage,
+                listBatch=listBatch,
+                overlap=overlap,
+                workingDirectory=str(self.getWorkingDirectory()),
+                hasHdf5Prefix=hasHdf5Prefix,
+                hasOverlap=self.hasOverlap
+            )
             if outDataDozor is not None:
                 for imageDozor in outDataDozor['imageDozor']:
                     imageQualityIndicators = {
@@ -565,6 +569,7 @@ class ControlDozor(AbstractTask):
         #                shutil.rmtree(self.cbfTempDir)
 
         # Read the header from the first image in the batch
+        outData['detectorType'] = detectorType
         return outData
 
     def determineBatchsize(self, inData):
@@ -612,6 +617,7 @@ class ControlDozor(AbstractTask):
         experimentalCondition = subWedge['experimentalCondition']
         beam = experimentalCondition['beam']
         detector = experimentalCondition['detector']
+        detectorType = detector['type']
         goniostat = experimentalCondition['goniostat']
         inDataDozor = {'detectorType': detector['type'],
                        'exposureTime': beam['exposureTime'],
@@ -646,7 +652,7 @@ class ControlDozor(AbstractTask):
         dozor.execute()
         if not dozor.isFailure():
             outDataDozor = dozor.outData
-        return outDataDozor
+        return outDataDozor, detectorType
 
     def makePlot(self, dataCollectionId, outDataImageDozor, workingDirectory):
         minImageNumber = None

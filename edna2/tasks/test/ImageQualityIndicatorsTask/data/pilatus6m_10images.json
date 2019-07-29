@@ -1,5 +1,5 @@
 {
-	"doDistlSignalStrength": false,
+	"doDistlSignalStrength": true,
 	"doIndexing": false,
 	"doCrystfel": false,
 	"doUploadToIspyb": false,

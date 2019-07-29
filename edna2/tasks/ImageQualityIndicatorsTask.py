@@ -40,6 +40,7 @@ from edna2.tasks.WaitFileTask import WaitFileTask
 from edna2.tasks.DozorTasks import ControlDozor
 from edna2.tasks.H5ToCBFTask import H5ToCBFTask
 from edna2.tasks.PhenixTasks import DistlSignalStrengthTask
+from edna2.tasks.ReadImageHeader import ReadImageHeader
 try:
     from edna2.tasks.CrystfelTasks import ExeCrystFEL
     crystFelImportFailed = False
@@ -130,6 +131,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
         listOfAllBatches = []
         indexBatch = 0
         listH5FilePath = []
+        detectorType = None
         # Configurations
         minImageSize = UtilsConfig.get(
             self, 'minImageSize', defaultValue=DEFAULT_MIN_IMAGE_SIZE)
@@ -275,6 +277,8 @@ class ImageQualityIndicatorsTask(AbstractTask):
                     controlDozor = ControlDozor(inDataControlDozor)
                     controlDozor.execute()
                 listOutDataControlDozor = list(controlDozor.outData['imageQualityIndicators'])
+                if detectorType is None:
+                    detectorType = controlDozor.outData['detectorType']
                 if doDistlSignalStrength:
                     for outDataControlDozor in listOutDataControlDozor:
                         for distlResult in listDistlResult:
@@ -287,7 +291,10 @@ class ImageQualityIndicatorsTask(AbstractTask):
 
                 if doCrystfel:
                     # a work around as autocryst module works with only json file/string
-                    inDataCrystFEL = {'imageQualityIndicators': controlDozor}
+                    inDataCrystFEL = {
+                        'detectorType': detectorType,
+                        'imageQualityIndicators': listOutDataControlDozor
+                    }
                     crystfel = ExeCrystFEL(inData=inDataCrystFEL)
                     crystfel.execute()
                     if not crystfel.isFailure():

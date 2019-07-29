@@ -43,6 +43,41 @@ logger = UtilsLogging.getLogger()
 
 class ExeCrystFEL(AbstractTask):
 
+    def getInDataSchema(self):
+        return {
+            "type": "object",
+            "required": ["imageQualityIndicators", "detectorType"],
+            "properties": {
+                "detectorType": {"type": "string"},
+                "hdf5MasterFile": {"type": "string"},
+                "imageQualityIndicators": {
+                    "type": "array",
+                    "items": {
+                        "$ref": self.getSchemaUrl("imageDozor.json")
+                    }
+                }
+            }
+        }
+
+    def getOutDataSchema(self):
+        return {
+            "type": "object",
+            "properties": {
+                "centering": {"type": "string"},
+                "num_indexed_frames": {"type": "integer"},
+                "lattice": {"type": "string"},
+                "unique_axis": {"type": "string"},
+                "unit_cell": {
+                    "type": "array",
+                    "items": {"type": "number"},
+                },
+                "point_group": {"type": "string"},
+                "space_group": {"type": "string"},
+                "resolution_limit": {"type": "number"},
+                "average_num_spots": {"type": "number"}
+            }
+        }
+
     def run(self, inData):
         outData = {}
         self.setWorkingDirectory(inData)
