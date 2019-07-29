@@ -1,74 +1,74 @@
 {
-    "imageDozor": [
+    "imageQualityIndicators": [
         {
             "number": 1,
             "angle": 27.159,
-            "spotsNumOf": 192,
-            "spotsIntAver": 992.0,
-            "spotsResolution": 3.2,
-            "mainScore": 2.023,
-            "spotScore": 202.33,
-            "visibleResolution": 2.54,
-            "spotFile": "/home/svensson/git/edna2/testdata/rundir/20190505_082229/ControlDozor_mbr9i0tj/Dozor_cyyoj_b9/00001.spot"
+            "dozorSpotsNumOf": 192,
+            "dozorSpotsIntAver": 992.0,
+            "dozorSpotsResolution": 3.2,
+            "dozorScore": 2.023,
+            "dozorSpotScore": 202.33,
+            "dozorVisibleResolution": 2.54,
+            "dozorSpotFile": "/home/svensson/git/edna2/testdata/rundir/20190505_082229/ControlDozor_mbr9i0tj/Dozor_cyyoj_b9/00001.spot"
         },
         {
             "number": 2,
             "angle": 28.159,
-            "spotsNumOf": 454,
-            "spotsIntAver": 1461.0,
-            "spotsResolution": 2.7,
-            "mainScore": 1.873,
-            "spotScore": 583.56,
-            "visibleResolution": 2.14,
+            "dozorSpotsNumOf": 454,
+            "dozorSpotsIntAver": 1461.0,
+            "dozorSpotsResolution": 2.7,
+            "dozorScore": 1.873,
+            "dozorSpotScore": 583.56,
+            "dozorVisibleResolution": 2.14,
             "powderWilsonScale": 4.8,
             "powderWilsonBfactor": -7.4,
             "powderWilsonResolution": 2.1,
             "powderWilsonCorrelation": 0.8,
             "powderWilsonRfactor": 44.8,
-            "spotFile": "/home/svensson/git/edna2/testdata/rundir/20190505_082229/ControlDozor_mbr9i0tj/Dozor_cyyoj_b9/00002.spot"
+            "dozorSpotFile": "/home/svensson/git/edna2/testdata/rundir/20190505_082229/ControlDozor_mbr9i0tj/Dozor_cyyoj_b9/00002.spot"
         },
         {
             "number": 3,
             "angle": 29.159,
-            "spotsNumOf": 730,
-            "spotsIntAver": 1261.0,
-            "spotsResolution": 2.7,
-            "mainScore": 244.22,
-            "spotScore": 474.85,
-            "visibleResolution": 2.14,
+            "dozorSpotsNumOf": 730,
+            "dozorSpotsIntAver": 1261.0,
+            "dozorSpotsResolution": 2.7,
+            "dozorScore": 244.22,
+            "dozorSpotScore": 474.85,
+            "dozorVisibleResolution": 2.14,
             "powderWilsonScale": 1.11,
             "powderWilsonBfactor": 4.4,
             "powderWilsonResolution": 2.1,
             "powderWilsonCorrelation": 56.4,
             "powderWilsonRfactor": 35.4,
-            "spotFile": "/home/svensson/git/edna2/testdata/rundir/20190505_082229/ControlDozor_mbr9i0tj/Dozor_cyyoj_b9/00003.spot"
+            "dozorSpotFile": "/home/svensson/git/edna2/testdata/rundir/20190505_082229/ControlDozor_mbr9i0tj/Dozor_cyyoj_b9/00003.spot"
         },
         {
             "number": 4,
             "angle": 30.159,
-            "spotsNumOf": 655,
-            "spotsIntAver": 1382.0,
-            "spotsResolution": 3.3,
-            "mainScore": 2.96,
-            "spotScore": 296.02,
-            "visibleResolution": 2.61,
-            "spotFile": "/home/svensson/git/edna2/testdata/rundir/20190505_082229/ControlDozor_mbr9i0tj/Dozor_cyyoj_b9/00004.spot"
+            "dozorSpotsNumOf": 655,
+            "dozorSpotsIntAver": 1382.0,
+            "dozorSpotsResolution": 3.3,
+            "dozorScore": 2.96,
+            "dozorSpotScore": 296.02,
+            "dozorVisibleResolution": 2.61,
+            "dozorSpotFile": "/home/svensson/git/edna2/testdata/rundir/20190505_082229/ControlDozor_mbr9i0tj/Dozor_cyyoj_b9/00004.spot"
         },
         {
             "number": 5,
             "angle": 31.159,
-            "spotsNumOf": 938,
-            "spotsIntAver": 1870.0,
-            "spotsResolution": 2.6,
-            "mainScore": 488.198,
-            "spotScore": 795.88,
-            "visibleResolution": 2.07,
+            "dozorSpotsNumOf": 938,
+            "dozorSpotsIntAver": 1870.0,
+            "dozorSpotsResolution": 2.6,
+            "dozorScore": 488.198,
+            "dozorSpotScore": 795.88,
+            "dozorVisibleResolution": 2.07,
             "powderWilsonScale": 0.31,
             "powderWilsonBfactor": 20.9,
             "powderWilsonResolution": 2.1,
             "powderWilsonCorrelation": 70.0,
             "powderWilsonRfactor": 29.3,
-            "spotFile": "/home/svensson/git/edna2/testdata/rundir/20190505_082229/ControlDozor_mbr9i0tj/Dozor_cyyoj_b9/00005.spot"
+            "dozorSpotFile": "/home/svensson/git/edna2/testdata/rundir/20190505_082229/ControlDozor_mbr9i0tj/Dozor_cyyoj_b9/00005.spot"
         }
     ]
 }
