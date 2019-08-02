@@ -130,7 +130,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
         listOfImagesInBatch = []
         listOfAllBatches = []
         indexBatch = 0
-        listH5FilePath = []
+        self.listH5FilePath = []
         detectorType = None
         # Configurations
         minImageSize = UtilsConfig.get(
@@ -146,52 +146,24 @@ class ImageQualityIndicatorsTask(AbstractTask):
         if len(listOfImagesInBatch) > 0:
             listOfAllBatches.append(listOfImagesInBatch)
             listOfImagesInBatch = []
-        # Loop over batches
+
+        # Loop over batches:
+        # - Wait for all files in batch
+        # - If H5: First convert to CBF
+        # - Run Dozor and then run Crystfel if required
+        # -
         for listOfImagesInBatch in listOfAllBatches:
-            # First wait for images
+            listOfH5FilesInBatch = []
             for imagePath in listOfImagesInBatch:
-                # If Eiger, just wait for the h5 file
-                if imagePath.suffix == '.h5':
-                    h5MasterFilePath, h5DataFilePath, hdf5ImageNumber = \
-                        self.getH5FilePath(imagePath,
-                                           batchSize=batchSize,
-                                           isFastMesh=isFastMesh)
-                    if not h5DataFilePath in listH5FilePath:
-                        logger.info("Eiger data, waiting for master" +
-                                    " and data files...")
-                        listH5FilePath.append(h5DataFilePath)
-                        inDataWaitFileTask = {
-                            'file': str(h5DataFilePath),
-                            'size': minImageSize,
-                            'timeOut': waitFileTimeOut
-                        }
-                        waitFileTask = WaitFileTask(inData=inDataWaitFileTask)
-                        logger.info("Waiting for file {0}".format(h5DataFilePath))
-                        logger.debug("Wait file timeOut set to %f" % waitFileTimeOut)
-                        waitFileTask.execute()
-                    #     #                    hdf5FilePath = strPathToImage.replace(".cbf", ".h5")
-                        time.sleep(1)
-                    if not os.path.exists(h5DataFilePath):
-                        strError = "Time-out while waiting for image %s" % h5DataFilePath
-                        self.error(strError)
-                        self.addErrorMessage(strError)
-                        self.setFailure()
-                else:
-                    if not imagePath.exists():
-                        logger.info("Waiting for file {0}".format(imagePath))
-                        inDataWaitFileTask = {
-                            'file': str(imagePath),
-                            'size': minImageSize,
-                            'timeOut': waitFileTimeOut
-                        }
-                        waitFileTask = WaitFileTask(inData=inDataWaitFileTask)
-                        logger.debug("Wait file timeOut set to %.0f s" % waitFileTimeOut)
-                        waitFileTask.execute()
-                    if not imagePath.exists():
-                        errormessage = "Time-out while waiting for image "+ \
-                                       str(imagePath)
-                        logger.error(errormessage)
-                        self.setFailure()
+                # First wait for images
+                self.waitForImagePath(
+                    imagePath=imagePath,
+                    batchSize=batchSize,
+                    isFastMesh=isFastMesh,
+                    minImageSize=minImageSize,
+                    waitFileTimeOut=waitFileTimeOut,
+                    listofH5FilesInBatch=listOfH5FilesInBatch
+                )
             if not self.isFailure():
                 pathToFirstImage = listOfImagesInBatch[0]
                 if pathToFirstImage.suffix == '.h5':
@@ -239,7 +211,8 @@ class ImageQualityIndicatorsTask(AbstractTask):
                 }
                 controlDozor = ControlDozor(inDataControlDozor)
                 controlDozor.start()
-                listDozorTask.append((controlDozor, inDataControlDozor, list(listOfImagesInBatch)))
+                listDozorTask.append((controlDozor, inDataControlDozor,
+                                      list(listOfImagesInBatch), listOfH5FilesInBatch))
                 # Check if we should run distl.signalStrength
                 if doDistlSignalStrength:
                     for image in listOfImagesInBatch:
@@ -264,7 +237,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
                 imageQualityIndicators['image'] = str(image)
                 listDistlResult.append(imageQualityIndicators)
                 # self.xsDataResultControlImageQualityIndicators.addImageQualityIndicators(xsDataImageQualityIndicators)
-            for (controlDozor, inDataControlDozor, listBatch) in listDozorTask:
+            for (controlDozor, inDataControlDozor, listBatch, listH5FilePath) in listDozorTask:
                 controlDozor.join()
                 # Check that we got at least one result
                 if len(controlDozor.outData['imageQualityIndicators']) == 0:
@@ -293,7 +266,8 @@ class ImageQualityIndicatorsTask(AbstractTask):
                     # a work around as autocryst module works with only json file/string
                     inDataCrystFEL = {
                         'detectorType': detectorType,
-                        'imageQualityIndicators': listOutDataControlDozor
+                        'imageQualityIndicators': listOutDataControlDozor,
+                        'listH5FilePath': listH5FilePath
                     }
                     crystfel = ExeCrystFEL(inData=inDataCrystFEL)
                     crystfel.execute()
@@ -391,3 +365,46 @@ class ImageQualityIndicatorsTask(AbstractTask):
                 prefix=prefix, h5FileNumber=h5FileNumber, h5ImageNumber=h5ImageNumber)
         h5DataFilePath = filePath.parent / h5DataFileName
         return h5MasterFilePath, h5DataFilePath, h5FileNumber
+
+    def waitForImagePath(self, imagePath, batchSize, isFastMesh,
+                         minImageSize, waitFileTimeOut, listofH5FilesInBatch):
+        # If Eiger, just wait for the h5 file
+        if imagePath.suffix == '.h5':
+            h5MasterFilePath, h5DataFilePath, hdf5ImageNumber = \
+                self.getH5FilePath(imagePath,
+                                   batchSize=batchSize,
+                                   isFastMesh=isFastMesh)
+            if h5DataFilePath not in listofH5FilesInBatch:
+                listofH5FilesInBatch.append(h5DataFilePath)
+                logger.info("Eiger data, waiting for master" +
+                            " and data files...")
+                inDataWaitFileTask = {
+                    'file': str(h5DataFilePath),
+                    'size': minImageSize,
+                    'timeOut': waitFileTimeOut
+                }
+                waitFileTask = WaitFileTask(inData=inDataWaitFileTask)
+                logger.info("Waiting for file {0}".format(h5DataFilePath))
+                logger.debug("Wait file timeOut set to %f" % waitFileTimeOut)
+                waitFileTask.execute()
+                time.sleep(1)
+            if not os.path.exists(h5DataFilePath):
+                errorMessage = "Time-out while waiting for image %s" % h5DataFilePath
+                logger.error(errorMessage)
+                self.setFailure()
+        else:
+            if not imagePath.exists():
+                logger.info("Waiting for file {0}".format(imagePath))
+                inDataWaitFileTask = {
+                    'file': str(imagePath),
+                    'size': minImageSize,
+                    'timeOut': waitFileTimeOut
+                }
+                waitFileTask = WaitFileTask(inData=inDataWaitFileTask)
+                logger.debug("Wait file timeOut set to %.0f s" % waitFileTimeOut)
+                waitFileTask.execute()
+            if not imagePath.exists():
+                errorMessage = "Time-out while waiting for image " + \
+                               str(imagePath)
+                logger.error(errorMessage)
+                self.setFailure()

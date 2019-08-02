@@ -1,6 +1,6 @@
 {
 	"doDistlSignalStrength": true,
-	"doCrystfel": false,
+	"doCrystfel": true,
 	"doIndexing": false,
 	"doUploadToIspyb": false,
 	"directory": "/scisoft/pxsoft/data/WORKFLOW_TEST_DATA/id30a3/inhouse/opid30a3/20181126/RAW_DATA/tryp3/MXPressA_01",
