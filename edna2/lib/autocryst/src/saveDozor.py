@@ -24,19 +24,6 @@ class Dozor(object):
 
     def __init__(self, jdata):
         self._inDict = json.dumps(jdata, default=str)
-        # try:
-        #     self.jshandle = json.loads(jdata)
-        # except Exception:
-        #     if jdata.endswith('.json'):
-        #         if os.path.exists(jdata):
-        #             fh = open(jdata, 'r')
-        #             self.jshandle = json.load(fh)
-        #             fh.close()
-        #     else:
-        #         error = "input json file does not exist, Quit!"
-        #         logger.info('Error:{}'.format(error))
-        #         self.success = False
-        #         return
 
         self.input_dict = dict()
         self.lst_of_files = []

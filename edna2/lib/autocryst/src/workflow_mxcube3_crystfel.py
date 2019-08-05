@@ -11,7 +11,7 @@ from workflow_lib import collect
 from workflow_lib import edna_mxv1
 from workflow_lib import collect_and_ispyb
 from workflow_lib import workflow_logging, path
-from autoCryst import crystfel_utils
+from autoCryst import run_crystfel
 
 def run(beamline, workflowParameters, directory, meshPositionFile, run_number, expTypePrefix, workflow_working_dir,
         prefix, suffix, workflow_id, grid_info, workflow_title, workflow_type,
@@ -30,7 +30,7 @@ def run(beamline, workflowParameters, directory, meshPositionFile, run_number, e
         # args['indexing_method'] = 'xgandalf'
         # suffix = 'cbf' or 'h5'
         prefix = expTypePrefix + prefix
-        status, crystfel_result = crystfel_utils.__run__(directory, prefix, suffix, **args)
+        status, crystfel_result = run_crystfel.__run__(directory, prefix, suffix, **args)
         if status:
            logger.info('crystFEL:{}'.format(crystfel_result))
         else:

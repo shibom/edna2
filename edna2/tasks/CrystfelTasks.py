@@ -28,7 +28,7 @@ import logging
 
 
 import edna2.lib.autocryst.src.saveDozor as sd
-from edna2.lib.autocryst.src.crystfel_utils import Utils
+from edna2.lib.autocryst.src.run_crystfel import Utils
 
 from edna2.tasks.AbstractTask import AbstractTask
 from edna2.utils import UtilsLogging

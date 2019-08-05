@@ -10,7 +10,7 @@ import h5py
 import ctypes
 import multiprocessing as mp
 from contextlib import closing
-from src.Image import CBFreader
+from edna2.lib.autocryst.src.Image import CBFreader
 
 
 def prep_spot(imgPrefix, dozorfolder):

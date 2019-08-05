@@ -43,6 +43,7 @@ class Utils(object):
 
         self.beamline = kwargs.get('beamline', None)
         self.outdir = kwargs.get('outdir', os.getcwd())
+        self.unitcell = kwargs.get('unitcell', None)
         self.indexing_method = kwargs.get('indexing_method', 'mosflm')
         self.peak_search = kwargs.get('peak_search', 'peakfinder8')
         self.peak_info = kwargs.get('peak_info', '/data/peakinfo')
@@ -75,8 +76,8 @@ class Utils(object):
                 self.status = False
 
         elif self.beamline is None and os.path.isdir(self.datadir):
-            dirname = os.path.dirname(self.datadir)
-            basename = os.path.basename(dirname)
+            # dirname = os.path.dirname(self.datadir)
+            basename = os.path.basename(self.datadir)
             self.outdir = os.path.join(self.outdir, basename)
             self.status = True
         else:
@@ -202,22 +203,23 @@ class Utils(object):
         return
 
     def indexamajig_cmd(self):
+        command = '/opt/pxsoft/bin/indexamajig -i %s -o %s -g %s' \
+                  % (self.infile, self.outstream, self.geometry_file)
+        command += ' --indexing=%s --multi --no-cell-combinations --peaks=%s' \
+                   % (self.indexing_method, self.peak_search)
+        command += ' --integration=%s --int-radius=%s -j 20 --no-check-peaks --highres=%s' \
+                   % (self.int_method, self.int_radius, self.highres)
+
+        if self.unitcell is not None and os.path.isfile(self.unitcell):
+            command += ' -p %s' % self.unitcell
         if self.peak_search == 'cxi' or self.peak_search == 'hdf5':
-            command = '/opt/pxsoft/bin/indexamajig -i %s -o %s -g %s' \
-                      % (self.infile, self.outstream, self.geometry_file)
-            command += ' --indexing=%s --multi --no-cell-combinations --peaks=%s --hdf5-peaks=%s' \
-                       % (self.indexing_method, self.peak_search, self.peak_info)
-            command += ' --integration=%s --int-radius=%s -j 20 --no-check-peaks --highres=%s --no-revalidate' \
-                       % (self.int_method, self.int_radius, self.highres)
+            command += ' --hdf5-peaks=%s --no-revalidate' % self.peak_info
+
         else:
-            command = '/opt/pxsoft/bin/indexamajig -i %s -o %s -g %s' \
-                      % (self.infile, self.outstream, self.geometry_file)
-            command += ' --indexing=%s --multi --no-cell-combinations --peaks=%s --peak-radius=%s --min-peaks=%s' \
-                       % (self.indexing_method, self.peak_search, self.peak_radius, self.min_peaks)
+            command += ' --peak-radius=%s --min-peaks=%s' \
+                       % (self.peak_radius, self.min_peaks)
             command += ' --min-snr=%s --threshold=%s --local-bg-radius=%s --min-res=%s' \
                        % (self.min_snr, self.threshold, self.local_bg_radius, self.min_res)
-            command += ' --integration=%s --int-radius=%s -j 20 --no-check-peaks' \
-                       % (self.int_method, self.int_radius)
             command += ' --no-non-hits-in-stream'
 
         return command
@@ -331,17 +333,17 @@ class Utils(object):
                 self.make_geomfile(**kk)
             else:
                 self.make_geomfile(**kk)
+            self.make_list_events()
             self.status = True
         except (IOError, OSError) as err:
             self.status = False
             logger.info('Run_Error:{}'.format(err))
             return
-
-        if len(self.filelist) < 100 and os.path.isfile(self.geometry_file):
+        if len(self.filelist) < 10000 and os.path.isfile(self.geometry_file):
             self.infile = os.path.join(os.getcwd(), 'input.lst')
             outname = datetime.now().strftime('%H-%M-%S.stream')
             self.outstream = os.path.join(os.getcwd(), outname)
-            shellfile = 'input.sh'
+            shellfile = os.path.join(self.crystfel_dir, 'input.sh')
 
             ofh = open(self.infile, 'w')
             for fname in self.filelist:
@@ -351,11 +353,11 @@ class Utils(object):
 
             Utils.run_script(self.indexamajig_cmd(), shellfile)
 
-        elif len(self.filelist) > 100 and os.path.isfile(self.geometry_file):
-            file_chunk = int(len(self.filelist)/100) + 1
+        elif len(self.filelist) > 10000 and os.path.isfile(self.geometry_file):
+            file_chunk = int(len(self.filelist)/10000) + 1
             for jj in range(file_chunk):
-                start = 100*jj
-                stop = 100*(jj+1)
+                start = 10000*jj
+                stop = 10000*(jj+1)
                 try:
                     images = self.filelist[start:stop]
                 except IndexError:
@@ -364,7 +366,8 @@ class Utils(object):
 
                 self.infile = os.path.join(os.getcwd(), ('%d.lst' % jj))
                 self.outstream = os.path.join(os.getcwd(), ('%d.stream' % jj))
-                shellfile = os.path.join(os.getcwd(), ('%d.sh' % jj))
+                shellfile = os.path.join(self.crystfel_dir, '%d.sh' % jj)
+
                 ofh = open(self.infile, 'w')
                 for fname in images:
                     ofh.write(fname)
@@ -392,7 +395,7 @@ class Utils(object):
             time.sleep(1)
             msg = "all jobs are not yet finished"
             logger.info('Indexing_running:{}'.format(msg))
-            wait += 1
+            wait += 2
             njobs = sub.check_output('oarstat -u $USER | wc -l', shell=True)[:-1]
             njobs = int(njobs)
             if wait > wait_max:
@@ -551,7 +554,7 @@ def optparser():
     parser.add_argument("--beamline", type=str,
                         help="optional key, specify only if you the data is collected at ESRF to use OARsub "
                              "and folder structure")
-    parser.add_argument("--outdir", type=str, default='current working directory',
+    parser.add_argument("--outdir", type=str,
                         help="optional key, if you want to dump at a different folder")
     parser.add_argument("--indexing", type=str, default="mosflm",
                         help="change to asdf,or dirax or xds if needed")
@@ -566,6 +569,8 @@ def optparser():
     parser.add_argument("--local_bg_radius", type=str, default='10')
     parser.add_argument("--min-res", type=str, default='50',
                         help="Applied to avoid regions near beamstop in peak search")
+    parser.add_argument("--unitcell", type=str,
+                        help="optional key, if you want to index with a given unit-cell")
 
     args = parser.parse_args()
     return args
@@ -612,6 +617,8 @@ if __name__ == '__main__':
         keywords['local_bg_radius'] = op.local_bg_radius
     if op.min_res is not None:
         keywords['min_res'] = op.min_res
+    if op.unitcell is not None:
+        keywords['unitcell'] = op.unitcell
     else:
         pass
 
