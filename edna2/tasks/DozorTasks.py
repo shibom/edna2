@@ -551,7 +551,7 @@ class ControlDozor(AbstractTask):
                             numpyArray = numpy.loadtxt(spotFile, skiprows=3)
                             imageQualityIndicators['dozorSpotList'] = \
                                 base64.b64encode(numpyArray.tostring()).decode('utf-8')
-                            imageQualityIndicators['spotListShape'] = \
+                            imageQualityIndicators['dozorSpotListShape'] = \
                                 list(numpyArray.shape)
                     outData['imageQualityIndicators'].append(imageQualityIndicators)
             # Make plot if we have a data collection id

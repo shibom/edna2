@@ -24,6 +24,7 @@ import os
 import sys
 import json
 import logging
+import pathlib
 
 
 import edna2.lib.autocryst.src.saveDozor as sd
@@ -83,7 +84,7 @@ class ExeCrystFEL(AbstractTask):
 
     def run(self, inData):
         outData = {}
-        self.setWorkingDirectory(inData)
+        print(self.getWorkingDirectory())
         if inData['detectorType'] == 'eiger4m':
             os.chdir(self.getWorkingDirectory())
             outData = self.exeIndexing(inData)
@@ -117,15 +118,15 @@ class ExeCrystFEL(AbstractTask):
         in_for_crystfel['detectorType'] = inData['detectorType']
         in_for_crystfel['maxchunksize'] = 10
         if inData['detectorType'] == 'eiger4m':
-            in_for_crystfel['prefix'] = UtilsImage.getPrefix(inData['listH5FilePath'][0])
+            in_for_crystfel['prefix'] = UtilsImage.getPrefix(inData['listH5FilePath'][0]) + "*"
             in_for_crystfel['suffix'] = UtilsImage.getSuffix(inData['listH5FilePath'][0])
-            in_for_crystfel['image_directory'] = str(inData['listH5FilePath'][0].parent)
+            in_for_crystfel['image_directory'] = str(pathlib.Path(inData['listH5FilePath'][0]).parent)
 
         else:
             cxi_all = list(self.getWorkingDirectory().glob('dozor*cxi'))
             current = len(cxi_all) - 1
             in_for_crystfel['image_directory'] = self.getWorkingDirectory()
-            in_for_crystfel['prefix'] = 'dozor_%d' % current
+            in_for_crystfel['prefix'] = 'dozor_%d.' % current
             in_for_crystfel['suffix'] = 'cxi'
             in_for_crystfel['peak_search'] = 'cxi'
             in_for_crystfel['peak_info'] = '/data/peakinfo'

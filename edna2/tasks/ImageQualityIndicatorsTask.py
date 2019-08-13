@@ -107,7 +107,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
         if crystFelImportFailed:
             doCrystfel = False
         else:
-            doCrystfel = inData.get('doCrystfel', False)
+            doCrystfel = inData.get('doCrystfel', True)
         isFastMesh = inData.get('fastMesh', False)
         # Loop through all the incoming reference images
         listImage = inData.get('image', [])

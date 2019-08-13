@@ -86,5 +86,6 @@ class ImageQualityIndicatorsEiger4MExecTest(unittest.TestCase):
         self.assertEqual(len(outData['imageQualityIndicators']), 10)
         shutil.rmtree(tmpDirectory)
 
+
 if __name__ == '__main__':
     unittest.main()
