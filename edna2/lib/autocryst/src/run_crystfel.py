@@ -1,13 +1,33 @@
-"""
-Created on 18-Dec-2018
-Author: S. Basu
-"""
+#
+# Copyright (c) European Molecular Biology Laboratory (EMBL)
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
 
-from __future__ import division, print_function
+__author__ = ['S. Basu']
+__license__ = 'MIT'
+__date__ = '2019/08/08'
+
+
 import os
-import sys
-import glob
+import pathlib2 as pathlib
 import json
+import jsonschema
 import logging
 import subprocess as sub
 import time
@@ -23,156 +43,135 @@ from edna2.lib.autocryst.src.stream import Stream
 logger = logging.getLogger('autoCryst')
 
 
-class Utils(object):
+class AutoCrystFEL(object):
+    """
 
-    def __init__(self, filedir, prefix, dataformat, **kwargs):
-        self.status = False
-        self.datadir = filedir  # Olof's 'directory' key from json
-        self.results = {}
-        self.prefix = prefix
-        self.dataformat = dataformat
-        # attributes declare and assigned later...
-        self.crystfel_dir = None
-        self.geometry_file = None
-        self.detectorName = None
-        self.infile = None
-        self.outstream = None
-        self.all_events = None
-        self.cellobject = type('', (), {})
+    :rtype: object to run CrystFEL at ESRF or elsewhere as an automated workflow.
+    One can run it as a module with required dependencies. It is part of autocryst project
+    Input and output - both are json dictionaries. One can run it on commandLine.
+    python run_crystfel.py --help : check how to run as commandLine, which essentially calls AutoCrystFEL
+    as a module and creates necessary input dictionary based on commandLine.
+
+    """
+    def __init__(self, jData):
+        self._ioDict = dict()
+        self._ioDict['inData'] = json.dumps(jData, default=str)
+        self._ioDict['outData'] = json.dumps(dict(), default=str)
+        self._ioDict['success'] = True
+        self._ioDict['crystFEL_WorkingDirectory'] = None
         self.filelist = []
-
-        self.beamline = kwargs.get('beamline', None)
-        self.outdir = kwargs.get('outdir', os.getcwd())
-        self.unitcell = kwargs.get('unitcell', None)
-        self.indexing_method = kwargs.get('indexing_method', 'mosflm')
-        self.peak_search = kwargs.get('peak_search', 'peakfinder8')
-        self.peak_info = kwargs.get('peak_info', '/data/peakinfo')
-        self.int_method = kwargs.get('int_method', 'rings-grad-rescut')
-        self.peak_radius = kwargs.get('peak_radius', '3,4,6')  # '2,4,5'
-        self.int_radius = kwargs.get('int_radius', '3,4,6')  # '2,4,5'
-        self.min_peaks = kwargs.get('min_peaks', '30')  # grid of 15, 25, 30
-        self.min_snr = kwargs.get('min_snr', '4.0')  # grid of 3, 4, 5
-        self.threshold = kwargs.get('threshold', '10')  # grid of 5, 10, 20
-        self.local_bg_radius = kwargs.get('local_bg_radius', '10')  # grid of 7, 10, 15, 20
-        self.min_res = kwargs.get('min_res', '70')
-        self.highres = kwargs.get('highres', '0.0')
         return
 
-    def check_outdir(self):
-        # for ESRF beamlines..
+    def get_inData(self):
+        return json.loads(self._ioDict['inData'])
 
-        if self.beamline is not None and os.path.isdir(self.datadir):
-            list_path = self.datadir.split('/')
-            if 'RAW_DATA' in list_path:
-                idx = list_path.index('RAW_DATA')
-                process_str = 'RAW_DATA'.replace('RAW', 'PROCESSED')
-                list_path.insert(idx, process_str)
-                list_path.remove('RAW_DATA')
-                self.outdir = os.path.join('/', *list_path[1:])
-                self.status = True
-            else:
-                err = "Check if you are on ESRF beamline data space"
-                logger.info('Run_Error:{}'.format(err))
-                self.status = False
+    def set_inData(self, jData):
+        self._ioDict['inData'] = json.dumps(jData, default=str)
 
-        elif self.beamline is None and os.path.isdir(self.datadir):
-            # dirname = os.path.dirname(self.datadir)
-            basename = os.path.basename(self.datadir)
-            self.outdir = os.path.join(self.outdir, basename)
-            self.status = True
+    jshandle = property(get_inData, set_inData)
+
+    def get_outData(self):
+        return json.loads(self._ioDict['outData'])
+
+    def set_outData(self, results):
+        self._ioDict['outData'] = json.dumps(results, default=str)
+
+    results = property(get_outData, set_outData)
+
+    def writeInputData(self, inData):
+        # Write input data
+        if self._ioDict['crystFEL_WorkingDirectory'] is not None:
+            jsonName = "inData_" + self.__class__.__name__ + ".json"
+            with open(str(self.getOutputDirectory() / jsonName), 'w') as f:
+                f.write(json.dumps(inData, default=str, indent=4))
+        return
+
+    def writeOutputData(self, results):
+        self.set_outData(results)
+        if self._ioDict['crystFEL_WorkingDirectory'] is not None:
+            jsonName = "outData_" + self.__class__.__name__ + ".json"
+            with open(str(self.getOutputDirectory() / jsonName), 'w') as f:
+                f.write(json.dumps(results, default=str, indent=4))
+        return
+
+    def setFailure(self):
+        self._ioDict['success'] = False
+
+    def is_success(self):
+        return self._ioDict['success']
+
+    def setOutputDirectory(self, path=None):
+        if path is None:
+            directory = self.jshandle.get('processing_directory', os.getcwd())
+            self._ioDict['crystFEL_WorkingDirectory'] = pathlib.Path(directory)
         else:
-            pass
+            self._ioDict['crystFEL_WorkingDirectory'] = pathlib.Path(path)
 
-        # outname = datetime.now().strftime('autoCryst_%Y-%m-%d_%H-%M-%S')
-        outname = datetime.now().strftime('autocryst_%Y_%m_%d')
-        try:
-            self.crystfel_dir = os.path.join(self.outdir, outname)
-            # os.makedirs(self.crystfel_dir, 0o755)
-            os.makedirs(self.crystfel_dir, exist_ok=True)
-            self.status = True
-        except Exception as err:
-            logger.info('Output_dir_Error:{}'.format(err))
-            pass
+    def getOutputDirectory(self):
+        return self._ioDict['crystFEL_WorkingDirectory']
 
-        return
+    @staticmethod
+    def getInDataSchema():
+        return {
+            "type": "object",
+            "required": ["image_directory", "detectorType", "prefix", "suffix"],
+            "properties": {
+                "image_directory": {"type": "string"},
+                "detectorType": {"type": "string"},
+                "suffix": {"type": "string"},
+                "prefix": {"type": "string"},
+                "maxchunksize": {"type": "integer"},
+                "processing_directory": {"type": "string"},
+                "GeneratePeaklist": {"type": "boolean"},
+                "geometry_file": {"type": "string"},
+                "unit_cell_file": {"type": "string"},
+                "num_processors": {"type": "string"},
+                "beamline": {"type": "string"},
+                "indexing_method": {"type": "string"},
+                "peak_search": {"type": "string"},
+                "peak_info": {"type": "string"},
+                "int_method": {"type": "string"},
+                "peak_radius": {"type": "string"},
+                "int_radius": {"type": "string"},
+                "min_peaks": {"type": "string"},
+                "min_snr": {"type": "string"},
+                "threshold": {"type": "string"},
+                "local_bg_radius": {"type": "string"},
+                "min_res": {"type": "string"},
+                "highres": {"type": "string"}
+            },
+        }
 
-    def find_files(self):
-        if os.path.isdir(self.datadir) and self.dataformat == 'cbf':
-            search_str = self.prefix + '*.cbf'
-            self.filelist = glob.glob(os.path.join(self.datadir, search_str))
-
-            if len(self.filelist) > 0:
-                self.status = True
-                return
-
-        elif os.path.isdir(self.datadir) and self.dataformat == 'hdf5':
-            search_str = self.prefix + '*data*.h5'
-            self.filelist = glob.glob(os.path.join(self.datadir, search_str))
-            if len(self.filelist) > 0:
-                self.status = True
-                return
-        elif os.path.isdir(self.datadir) and self.dataformat == 'cxi':
-            search_str = self.prefix + '.cxi'
-            self.filelist = glob.glob(os.path.join(self.datadir, search_str))
-            if len(self.filelist) > 0:
-                self.status = True
-                return
-        else:
-            err = "No Mesh files found, check file directory"
-            logger.info('Run_Error:{}'.format(err))
-            self.status = False
-            return
-
-    def make_geomfile(self, **kwargs):
-        # geom_args = ['coffset', 'fs0', 'ss0']
-        try:
-            image1 = type('', (), {})  # initialize image1 as an empty object
-            if self.dataformat == 'cbf':
-                image1 = Im(self.filelist[0])
-            elif self.dataformat == 'hdf5':
-                master_str = self.prefix + '*master.h5'
-                image1 = Im(glob.glob(os.path.join(self.datadir, master_str))[0])
-            elif self.dataformat == 'cxi':
-                image1 = Im(self.filelist[0])
-            else:
-                logger.info('data_find_error:{}'.format('cbf or hdf5 are only supported'))
-                pass
-
-            g = Geom(image1.imobject.headers['detector_name'][0], image1.imobject.headers['detector_name'][1])
-            g.write_geomfile(image1.imobject.headers, **kwargs)
-            self.geometry_file = os.path.join(os.getcwd(), g.geomfilename)
-            self.detectorName = g.detectorName
-
-        except Exception as err:
-            logger.info('Run_Error:{}'.format(err))
-            self.status = False
-        return
-
-    def make_list_events(self):
-        if self.dataformat == 'hdf5' or self.dataformat == 'cxi':
-            datalst = os.path.join(self.crystfel_dir, 'input.lst')
-            fh = open(datalst, 'w')
-            for fname in self.filelist:
-                fh.write(fname)
-                fh.write('\n')
-            fh.close()
-            if os.path.exists(self.geometry_file):
-                self.filelist = []
-                self.all_events = os.path.join(os.getcwd(), 'all_events.lst')
-                cmd = 'list_events -i %s -g %s -o %s' % (datalst, self.geometry_file, self.all_events)
-                sub.call(cmd, shell=True)
-                f = open(self.all_events, 'r')
-                for line in f:
-                    line = line.strip('\n')
-                    self.filelist.append(line)
-                f.close()
-            else:
-                self.status = False
-                logger.info('Error:No Geom file exists')
-        else:
-            self.status = True  # cbf files are not multi-events
-            pass
-        return
+    @staticmethod
+    def getOutDataSchema():
+        return {
+            "type": "object",
+            "properties": {
+                "QualityMetrics": {
+                    "type": "object",
+                    "properties": {
+                        "centering": {"type": "string"},
+                        "num_indexed_frames": {"type": "integer"},
+                        "lattice": {"type": "string"},
+                        "unique_axis": {"type": "string"},
+                        "unit_cell": {
+                            "type": "array",
+                            "items": {"type": "number"},
+                        },
+                        "point_group": {"type": "string"},
+                        "space_group": {"type": "string"},
+                        "resolution_limit": {"type": "number"},
+                        "average_num_spots": {"type": "number"}
+                    }
+                },
+                "PeaksDictionary": {
+                    "type": "object",
+                    "properties": {
+                        "items": {"type": "array"},
+                    }
+                }
+            }
+        }
 
     @staticmethod
     def is_executable(program):
@@ -192,45 +191,58 @@ class Utils(object):
         return
 
     @staticmethod
-    def run_script(command, shellfile):
-        ofh = open(shellfile, 'w')
-        ofh.write('#!/bin/bash \n\n')
-        ofh.write(command)
-        ofh.close()
-
-        sub.call('chmod +x %s' % shellfile, shell=True)
-        sub.call('./%s' % shellfile)
+    def run_as_command(command):
+        pipes = sub.Popen(command, shell=True, stdout=sub.PIPE, stderr=sub.PIPE, cwd=os.getcwd())
+        stdout, stderr = pipes.communicate()
+        if pipes.returncode != 0:
+            err = '{0}, code {1}'.format(stderr, pipes.returncode)
+            logger.error('Error:'.format(err))
         return
 
-    def indexamajig_cmd(self):
-        command = '/opt/pxsoft/bin/indexamajig -i %s -o %s -g %s' \
-                  % (self.infile, self.outstream, self.geometry_file)
-        command += ' --indexing=%s --multi --no-cell-combinations --peaks=%s' \
-                   % (self.indexing_method, self.peak_search)
-        command += ' --integration=%s --int-radius=%s -j 20 --no-check-peaks --highres=%s' \
-                   % (self.int_method, self.int_radius, self.highres)
+    @staticmethod
+    def oarshell_submit(shellfile, crystfel_cmd):
+        oar_handle = open(shellfile, 'w')
 
-        if self.unitcell is not None and os.path.isfile(self.unitcell):
-            command += ' -p %s' % self.unitcell
-        if self.peak_search == 'cxi' or self.peak_search == 'hdf5':
-            command += ' --hdf5-peaks=%s --no-revalidate' % self.peak_info
+        oar_handle.write("#!/bin/bash \n\n")
 
-        else:
-            command += ' --peak-radius=%s --min-peaks=%s' \
-                       % (self.peak_radius, self.min_peaks)
-            command += ' --min-snr=%s --threshold=%s --local-bg-radius=%s --min-res=%s' \
-                       % (self.min_snr, self.threshold, self.local_bg_radius, self.min_res)
-            command += ' --no-non-hits-in-stream'
+        oar_handle.write("#OAR -q mx \n")
+        oar_handle.write("#OAR -n autoCryst \n")
+        oar_handle.write("#OAR -l nodes=1, walltime=01:00:00 \n\n")
+        oar_handle.write(crystfel_cmd)
+        oar_handle.close()
+        sub.call('chmod +x %s' % shellfile, shell=True)
 
-        return command
+        sub.call('oarsub -S %s' % shellfile, shell=True)
+        return
 
     @staticmethod
-    def partialator_cmd(stream_name, point_group):
+    def slurm_submit(shellfile, crystfel_cmd):
+        slurm_handle = open(shellfile, 'w')
+        slurm_handle.write("#!/bin/bash \n\n")
+        slurm_handle.write(crystfel_cmd)
+        slurm_handle.close()
+        sub.call('chmod +x %s' % shellfile, shell=True)
+
+        AutoCrystFEL.run_as_command('sbatch -p mx -J autoCryst %s' % shellfile)
+        return
+
+    @staticmethod
+    def combine_streams():
+        slurm_handle = open('tmp_cat.sh', 'w')
+        slurm_handle.write("#!/bin/bash \n\n")
+        slurm_handle.write("cat *.stream >> alltogether.stream")
+        slurm_handle.close()
+        AutoCrystFEL.run_as_command('chmod +x tmp_cat.sh')
+        AutoCrystFEL.run_as_command('sbatch -d singleton -J autoCryst -t 1:00 tmp_cat.sh')
+        return
+
+    @staticmethod
+    def partialator_cmd(stream_name, point_group, nproc):
         base_str = stream_name.split('.')
         outhkl = base_str[0] + '.hkl'
         command = 'partialator -i %s -o %s -y %s ' \
                   % (stream_name, outhkl, point_group)
-        command += ' --model=xsphere --push-res=1.5 --iterations=1 -j 24 --no-deltacchalf --no-logs'
+        command += ' --model=xsphere --push-res=1.5 --iterations=1 -j %s --no-deltacchalf --no-logs' % nproc
 
         return command
 
@@ -254,143 +266,240 @@ class Utils(object):
         return command
 
     @staticmethod
-    def oar_submit(crystfel_cmd):
+    def write_cell_file(cellinfo):
+        #  Method to write out crystFEL formatted *.cell file, compatible with other crystFEL programs
         try:
-            from oarpy.oarjob import submit
-            job = submit(command=crystfel_cmd, name='autoCryst', core=20, walltime={'hours': 2})
-            logger.info('MSG:{}'.format(job))
-            # job.wait()
-            if job.exit_code:
-                logger.info('Failed:\n{}'.format(job.stderr))
-            elif job.exit_code is None:
-                logger.info('Interrupted:\n{}'.format(job.stdout))
+            cwrite = open('auto.cell', 'w')
+            cwrite.write('CrystFEL unit cell file version 1.0\n\n')
+            cwrite.write('lattice_type = %s\n' % cellinfo['lattice'])
+            cwrite.write('centering = %s\n' % cellinfo['centering'])
+            cwrite.write('unique_axis = %s\n' % cellinfo['unique_axis'])
+            cwrite.write('a = %s A\n' % cellinfo['unit_cell'][0])
+            cwrite.write('b = %s A\n' % cellinfo['unit_cell'][1])
+            cwrite.write('c = %s A\n' % cellinfo['unit_cell'][2])
+            cwrite.write('al = %s deg\n' % cellinfo['unit_cell'][3])
+            cwrite.write('be = %s deg\n' % cellinfo['unit_cell'][4])
+            cwrite.write('ga = %s deg\n' % cellinfo['unit_cell'][5])
+            cwrite.close()
+
+        except (OSError, KeyError) as err:
+            logger.info('Cell_file_Error:{}'.format(err))
+            print("Needed a dictionary with keys: lattice, centering, unique_axis, and unit_cell\n")
+            print("unit_cell key has a list of cell parameters as value")
+            raise err
+        return
+
+    def datafinder(self):
+        datadir = pathlib.Path(self.jshandle['image_directory'])
+        if datadir.exists():
+            listofimagefiles = list(datadir.glob(self.jshandle['prefix'] + self.jshandle['suffix']))
+            for fname in listofimagefiles:
+                self.filelist.append(fname.as_posix())
+        else:
+            self.setFailure()
+            logger.error('dataError:{}'.format('no data found'))
+        return
+
+    def makeOutputDirectory(self):
+        self.setOutputDirectory()
+        datadir = pathlib.Path(self.jshandle['image_directory'])
+        image_folder_basename = datadir.name
+        image_folder_structure = datadir.parents
+        procdir = self.getOutputDirectory() / image_folder_structure[0].name / image_folder_basename
+        outname = datetime.now().strftime('autoCryst_%Y-%m-%d_%H-%M-%S')
+        crystfel_dir = procdir / outname
+        crystfel_dir.mkdir(parents=True, exist_ok=True)
+        os.chdir(crystfel_dir)
+        self.setOutputDirectory(str(crystfel_dir))
+        return
+
+    def make_geometry_file(self, **kwargs):
+        geomfile = self.jshandle.get('geometry_file', None)
+        if geomfile is None:
+            image1 = type('', (), {})  # initialize image1 as an empty object
+            if self.jshandle['detectorType'] == 'pilatus2m' or self.jshandle['detectorType'] == 'pilatus6m':
+                image1 = Im(self.filelist[0])
+            elif self.jshandle['detectorType'] == 'eiger4m':
+                master_str = self.jshandle['prefix'] + 'master.h5'
+                masterfile = list(pathlib.Path(self.jshandle['image_directory']).glob(master_str))[0]
+                image1 = Im(str(masterfile))
             else:
-                logger.info('Succes:\n{}'.format(job.stdout))
+                self.setFailure()
+                logger.error('format_error:{}'.format('cbf/h5/cxi formats supported'))
+            g = Geom(image1.imobject.headers['detector_name'][0], image1.imobject.headers['detector_name'][1])
+            g.write_geomfile(image1.imobject.headers, **kwargs)
+            geomfile = self.getOutputDirectory() / g.geomfilename
+        else:
+            geomfile = pathlib.Path(geomfile)
+        return geomfile
 
-            job.remove_logs()
-        except ImportError:
-            submit = "submit module"
-            logger.info('MSG:{}'.format('OAR %s not found, running locally' % submit))
-            Utils.run_script(crystfel_cmd, 'run.sh')
+    def make_list_events(self, geometryfile):
+        if self.jshandle['suffix'] == 'cxi' or self.jshandle['suffix'] == 'h5':
+            datalst = str(self.getOutputDirectory() / 'input.lst')
+            fh = open(datalst, 'w')
+            for fname in self.filelist:
+                fh.write(fname)
+                fh.write('\n')
+            fh.close()
+            if os.path.exists(geometryfile):
+                self.filelist = []
+                all_events = str(self.getOutputDirectory() / 'all_events.lst')
+                cmd = 'list_events -i %s -g %s -o %s' % (datalst, geometryfile, all_events)
+                self.run_as_command(cmd)
+                f = open(all_events, 'r')
+                for line in f:
+                    line = line.strip('\n')
+                    self.filelist.append(line)
+                f.close()
+            else:
+                self.setFailure()
+                logger.error('List_events_Error:No Geom file exists')
+        else:
+            # cbf files are not multi-events
+            pass
         return
 
-    @staticmethod
-    def oarshell_submit(shellfile, crystfel_cmd):
-        oar_handle = open(shellfile, 'w')
+    def indexamajig_cmd(self, infile, streamfile, geometryfile):
+        command = ""
+        unitcell = self.jshandle.get('unit_cell_file', None)
+        indexing_method = self.jshandle.get('indexing_method', 'mosflm')
+        peak_search = self.jshandle.get('peak_search', 'peakfinder8')
+        int_method = self.jshandle.get('int_method', 'rings-cen-rescut')
+        int_radius = self.jshandle.get('int_radius', '3,4,6')
+        highres = self.jshandle.get('highres', '0.0')
+        nproc = self.jshandle.get('num_processors', '20')
 
-        # dst = "/users/opid23/perl5/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:\
-        # /opt/demeter/bin:/usr/local/gd1/Scripts:/usr/local/gd1/Linux-x86_64:\
-        # /sware/exp/gnxas/debian9:/opt/oar/utilities:/opt/pxsoft/bin"
+        if self.is_executable('indexamajig'):
+            command = 'indexamajig -i %s -o %s -g %s' \
+                      % (infile, streamfile, geometryfile)
+            command += ' --indexing=%s --multi --no-cell-combinations --peaks=%s' \
+                       % (indexing_method, peak_search)
+            command += ' --integration=%s --int-radius=%s -j %s --no-check-peaks --highres=%s' \
+                       % (int_method, int_radius, nproc, highres)
 
-        oar_handle.write("#!/bin/bash \n\n")
+            if unitcell is not None and os.path.isfile(unitcell):
+                command += ' -p %s --tolerance=%s' % (unitcell, '10,10,10,1.5')
 
-        oar_handle.write("#OAR -q mx \n")
-        oar_handle.write("#OAR -n autoCryst \n")
-        oar_handle.write("#OAR -l nodes=1, walltime=01:00:00 \n\n")
-        oar_handle.write(crystfel_cmd)
-        oar_handle.close()
-        sub.call('chmod +x %s' % shellfile, shell=True)
+            if peak_search == 'cxi' or peak_search == 'hdf5':
+                peak_info = self.jshandle.get('peak_info', '/data/peakinfo')
+                command += ' --hdf5-peaks=%s --no-revalidate' % peak_info
 
-        sub.call('oarsub -S %s' % shellfile, shell=True)
-        return
+            else:
+                peak_radius = self.jshandle.get('peak_radius', '3,4,5')
+                local_bg_radius = self.jshandle.get('local_bg_radius', '10')
+                min_peaks = self.jshandle.get('min_peaks', '30')
+                min_snr = self.jshandle.get('min_snr', '4')
+                min_res = self.jshandle.get('min_res', '50')
+                threshold = self.jshandle.get('threshold', '10')
 
-    def scale_merge(self):
+                command += ' --peak-radius=%s --min-peaks=%s' \
+                           % (peak_radius, min_peaks)
+                command += ' --min-snr=%s --threshold=%s --local-bg-radius=%s --min-res=%s' \
+                           % (min_snr, threshold, local_bg_radius, min_res)
+                command += ' --no-non-hits-in-stream'
+        else:
+            self.setFailure()
+            logger.error('Error:{}'.format('indexamajig could not be found in PATH'))
+
+        return command
+
+    def scale_merge(self, streamfile):
         try:
-            final_stream = os.path.join(self.crystfel_dir, 'alltogether.stream')
-            base_str = os.path.basename(final_stream)  # type: str
+            self.setOutputDirectory()
+            os.chdir(str(self.getOutputDirectory()))
+            nproc = self.jshandle.get('num_processors', '20')
+            final_stream = pathlib.Path(streamfile)
+            base_str = str(final_stream.name)  # type: str
             base_str = base_str.split('.')  # type: list
             ohkl = base_str[0] + '.hkl'  # type: str
             ohkl1 = base_str[0] + '.hkl1'  # type: str
             ohkl2 = base_str[0] + '.hkl2'  # type: str
-            cmd = Utils.partialator_cmd(final_stream, self.results['point_group'])
+            cmd = self.partialator_cmd(str(final_stream), self.results['point_group'], nproc)
             cmd += '\n\n'
 
-            cmd += Utils.check_hkl_cmd(ohkl, self.results['point_group'], 'auto.cell', self.results['resolution_limit'])
+            cmd += self.check_hkl_cmd(ohkl, self.results['point_group'], 'auto.cell', self.results['resolution_limit'])
             cmd += '\n\n'
 
-            cmd += Utils.compare_hkl_cmd(ohkl1, ohkl2, 'auto.cell', self.results['resolution_limit'])
+            cmd += self.compare_hkl_cmd(ohkl1, ohkl2, 'auto.cell', self.results['resolution_limit'])
             cmd += '\n\n'
 
-            cmd += Utils.compare_hkl_cmd(ohkl1, ohkl2, 'auto.cell', self.results['resolution_limit'], fom='Rsplit')
+            cmd += self.compare_hkl_cmd(ohkl1, ohkl2, 'auto.cell', self.results['resolution_limit'], fom='CCstar')
             cmd += '\n\n'
-
-            Utils.oarshell_submit('merge.sh', cmd)
+            if self.is_executable('oarsub'):
+                self.oarshell_submit('merge.sh', cmd)
+            else:
+                self.run_as_command(cmd)
 
         except (IOError, KeyError) as err:
+            self.setFailure()
             logger.info('Merging_Error:{}'.format(err))
-            self.status = False
         return
 
     def run_indexing(self):
 
         try:
-            self.check_outdir()
-            os.chdir(self.crystfel_dir)
-            self.find_files()
+            jsonschema.validate(instance=self.jshandle, schema=self.getInDataSchema())
+            self.datafinder()
+            self.makeOutputDirectory()
             kk = {}
-            if self.dataformat == 'cxi':
+            if self.jshandle['suffix'] == 'cxi':
                 kk['cxi'] = """dim0 = %\ndim1 = ss\ndim2 = fs\ndata = /data/data\n"""
-                self.make_geomfile(**kk)
+                geomfile = self.make_geometry_file(**kk)
             else:
-                self.make_geomfile(**kk)
-            self.make_list_events()
-            self.status = True
-        except (IOError, OSError) as err:
-            self.status = False
-            logger.info('Run_Error:{}'.format(err))
-            return
-        if len(self.filelist) < 10000 and os.path.isfile(self.geometry_file):
-            self.infile = os.path.join(os.getcwd(), 'input.lst')
-            outname = datetime.now().strftime('%H-%M-%S.stream')
-            self.outstream = os.path.join(os.getcwd(), outname)
-            shellfile = os.path.join(self.crystfel_dir, 'input.sh')
+                geomfile = self.make_geometry_file(**kk)
 
-            ofh = open(self.infile, 'w')
-            for fname in self.filelist:
-                ofh.write(fname)
-                ofh.write('\n')
-            ofh.close()
+            self.make_list_events(str(geomfile))
 
-            Utils.run_script(self.indexamajig_cmd(), shellfile)
+            maxchunksize = self.jshandle.get('maxchunksize', 10)
+            if len(self.filelist) <= maxchunksize:
+                infile = str(self.getOutputDirectory() / 'input.lst')
+                outname = datetime.now().strftime('%H-%M-%S.stream')
+                outstream = str(self.getOutputDirectory() / outname)
 
-        elif len(self.filelist) > 10000 and os.path.isfile(self.geometry_file):
-            file_chunk = int(len(self.filelist)/10000) + 1
-            for jj in range(file_chunk):
-                start = 10000*jj
-                stop = 10000*(jj+1)
-                try:
-                    images = self.filelist[start:stop]
-                except IndexError:
-                    stop = start + (len(self.filelist) - stop)
-                    images = self.filelist[start:stop]
-
-                self.infile = os.path.join(os.getcwd(), ('%d.lst' % jj))
-                self.outstream = os.path.join(os.getcwd(), ('%d.stream' % jj))
-                shellfile = os.path.join(self.crystfel_dir, '%d.sh' % jj)
-
-                ofh = open(self.infile, 'w')
-                for fname in images:
+                ofh = open(infile, 'w')
+                for fname in self.filelist:
                     ofh.write(fname)
                     ofh.write('\n')
                 ofh.close()
-                # self.oar_submit(self.indexamajig_cmd())
-                if Utils.is_executable('oarsub'):
-                    Utils.oarshell_submit(shellfile, self.indexamajig_cmd())
-                else:
-                    Utils.run_script(self.indexamajig_cmd(), shellfile)
 
-            self.status = True
-        else:
-            err = "indexing job submission failed, check for filelist, paths, geometry_file"
-            logger.info('Run_Error:{}'.format(err))
-            self.status = False
+                self.run_as_command(self.indexamajig_cmd(infile, outstream, str(geomfile)))
+            elif len(self.filelist) > maxchunksize:
+                file_chunk = int(len(self.filelist) / maxchunksize) + 1
+                for jj in range(file_chunk):
+                    start = maxchunksize * jj
+                    stop = maxchunksize * (jj + 1)
+                    try:
+                        images = self.filelist[start:stop]
+                    except IndexError:
+                        stop = start + (len(self.filelist) - stop)
+                        images = self.filelist[start:stop]
 
+                    infile = str(self.getOutputDirectory() / ('%d.lst' % jj))
+                    outstream = str(self.getOutputDirectory() / ('%d.stream' % jj))
+                    shellfile = str(self.getOutputDirectory() / ('%d.sh' % jj))
+
+                    ofh = open(infile, 'w')
+                    for fname in images:
+                        ofh.write(fname)
+                        ofh.write('\n')
+                    ofh.close()
+
+                    if self.is_executable('oarsub'):
+                        self.oarshell_submit(shellfile, self.indexamajig_cmd(infile, outstream, str(geomfile)))
+                    elif self.is_executable('sbatch'):
+                        self.slurm_submit(shellfile, self.indexamajig_cmd(infile, outstream, str(geomfile)))
+                    else:
+                        self.run_as_command(self.indexamajig_cmd(infile, outstream, str(geomfile)))
+
+        except Exception as err:
+            self.setFailure()
+            logger.error('Error:{}'.format(err))
         return
 
     def check_oarstat(self):
         wait = 0
         njobs = sub.check_output('oarstat -u $USER | wc -l', shell=True)[:-1]
-        wait_max = int(njobs)*200
+        wait_max = int(njobs) * 200
         while int(njobs) > 2:
             time.sleep(1)
             msg = "all jobs are not yet finished"
@@ -399,178 +508,172 @@ class Utils(object):
             njobs = sub.check_output('oarstat -u $USER | wc -l', shell=True)[:-1]
             njobs = int(njobs)
             if wait > wait_max:
-                logger.info('Run_Error:{}'.format('OAR is taking too long to finish'))
-                self.status = False
+                logger.error('Run_Error:{}'.format('OAR is taking too long to finish'))
+                self.setFailure()
                 break
             else:
-                self.status = True
+                pass
 
-        if self.status is True:
+        if self.is_success():
             cmd = 'cat *.stream >> alltogether.stream'
-            sub.call(cmd, shell=True)
-            self.outstream = os.path.join(self.crystfel_dir, 'alltogether.stream')
+            self.run_as_command(cmd)
         else:
             pass
         return
 
-    def write_cell_file(self):
-        try:
-            cwrite = open('auto.cell', 'w')
-            cwrite.write('CrystFEL unit cell file version 1.0\n\n')
-            cwrite.write('lattice_type = %s\n' % self.results['lattice'])
-            cwrite.write('centering = %s\n' % self.results['centering'])
-            cwrite.write('unique_axis = %s\n' % self.results['unique_axis'])
-            cwrite.write('a = %s A\n' % self.results['unit_cell'][0])
-            cwrite.write('b = %s A\n' % self.results['unit_cell'][1])
-            cwrite.write('c = %s A\n' % self.results['unit_cell'][2])
-            cwrite.write('al = %s deg\n' % self.results['unit_cell'][3])
-            cwrite.write('be = %s deg\n' % self.results['unit_cell'][4])
-            cwrite.write('ga = %s deg\n' % self.results['unit_cell'][5])
-            cwrite.close()
-            self.status = True
-        except (OSError, KeyError) as err:
-            logger.info('Cell_file_Error:{}'.format(err))
-            self.status = False
-        return
-
     def report_cell(self, streampath):
-        # c = type('', (), {})  # c is a Cell type which is initialized as None type for python 2.7.
+        # cellobject = type('', (), {})  # c is a Cell type which is initialized as None type for python 2.7.
+        results = dict()
         if os.path.exists(streampath):
-            self.cellobject = Cell(streampath)
-            self.cellobject.get_lattices()
-            self.cellobject.calc_modal_cell()
-            # self.results['unit_cell'] = [c.a_mode, c.b_mode, c.c_mode, c.al_mode, c.be_mode, c.ga_mode]
-            # self.results['lattice_from_stream'] = self.cellobject.most_common_lattice_type
-            self.results['centering'] = self.cellobject.most_common_centering
-            # self.results['unique_axis_from_stream'] = self.cellobject.most_common_unique_axis
-            lat, ua, cell_list = lattice_from_cell([self.cellobject.a_mode, self.cellobject.b_mode,
-                                                    self.cellobject.c_mode, self.cellobject.al_mode,
-                                                    self.cellobject.be_mode, self.cellobject.ga_mode])
+            cellobject = Cell(streampath)
+            cellobject.get_lattices()
+            cellobject.calc_modal_cell()
+            results['cellobject'] = cellobject
             try:
-                self.results['num_indexed_frames'] = self.cellobject.cell_array.shape[0]
-                self.status = True
-            except (IndexError, ValueError) as err:
-                logger.info('Cell_Error:{}'.format(err))
-                self.status = False
-            try:
+                results['centering'] = cellobject.most_common_centering
+                lat, ua, cell_list = lattice_from_cell([cellobject.a_mode, cellobject.b_mode,
+                                                        cellobject.c_mode, cellobject.al_mode,
+                                                        cellobject.be_mode, cellobject.ga_mode])
+
+                results['num_indexed_frames'] = cellobject.cell_array.shape[0]
+
                 assert isinstance(lat, str)
-                self.results['lattice'] = lat
+                results['lattice'] = lat
                 assert isinstance(ua, str)
-                self.results['unique_axis'] = ua
+                results['unique_axis'] = ua
                 assert isinstance(cell_list, list)
-                self.results['unit_cell'] = cell_list
-                pg, sg_str = assign_point_group(self.results['lattice'], self.results['centering'],
-                                                self.results['unique_axis'])
+                results['unit_cell'] = cell_list
+                pg, sg_str = assign_point_group(results['lattice'], results['centering'],
+                                                results['unique_axis'])
                 assert isinstance(pg, str)
-                self.results['point_group'] = pg
-                self.results['space_group'] = sg_str
-                self.status = True
+                results['point_group'] = pg
+                results['space_group'] = sg_str
+
             except AssertionError as err:
+                self.setFailure()
                 logger.info("Cell_Error:{}".format(err))
-                self.status = False
         else:
-            self.status = False
-        return
+            self.setFailure()
+        return results
 
     def report_stats(self, streampath):
+        stats = {}
         try:
-            # streampath = os.path.join(self.crystfel_dir, 'alltogether.stream')
-            self.report_cell(streampath)
-            self.write_cell_file()
-            if not isinstance(self.cellobject, Cell) or self.status is False:
-                err = 'altogether.stream file does not exist or empty'
-                logger.info('Job_Error:'.format(err))
+            stats = self.report_cell(streampath)
+            if not self.is_success():
+                err = 'alltogether.stream file does not exist or empty'
+                logger.error('Job_Error:'.format(err))
                 return
 
             rescut = []
             npeaks = []
 
-            for each_chunk in self.cellobject.stream_handle.stream_data:
+            for each_chunk in stats['cellobject'].stream_handle.stream_data:
                 try:
                     rescut.append(each_chunk['rescut'])
                     npeaks.append(each_chunk['nPeaks'])
                 except KeyError:
-                    # logger.info('Stream_Error:{}'.format(err))
                     pass
             if len(rescut) > 0 and len(npeaks) > 0:
-                self.status = True
-                self.results['resolution_limit'] = Counter(rescut).most_common(1)[0][0]
-                self.results['average_num_spots'] = Counter(npeaks).most_common(1)[0][0]
+                stats['resolution_limit'] = Counter(rescut).most_common(1)[0][0]
+                stats['average_num_spots'] = Counter(npeaks).most_common(1)[0][0]
             else:
-                self.status = False
+                self.setFailure()
                 err = "either nothing detected as hit or indexed in the stream file"
-                logger.info('Job_Error:{}'.format(err))
+                logger.error('Job_Error:{}'.format(err))
 
             # Run partialator and calculate standard stats from crystfel..
-            # self.scale_merge()
+            # self.scale_merge(str(streampath))
 
         except Exception as err:
-            self.status = False
-            logger.info('Job_Error:{}'.format(err))
+            self.setFailure()
+            logger.error('Job_Error:{}'.format(err))
 
-        logger.info('Indexing_Result:{}'.format(self.results))
+        return stats
 
-        return
-
-    def extract_peaklist(self):
+    def extract_peaklist(self, streampath):
+        spots_data = {}
         try:
-            sh = Stream(os.path.join(self.crystfel_dir, 'alltogether.stream'))
+            sh = Stream(streampath)  # streampath is a string, not Path object
             sh.get_chunk_pointers()
             sh.read_chunks()
             sh.get_peaklist()
             sh.close()
-            self.results['peaks_per_pattern'] = sh.image_peaks
-            self.status = True
+            spots_data['peaks_per_pattern'] = sh.image_peaks
         except Exception as err:
+            self.setFailure()
             logger.info('Stream_Error:{}'.format(err))
-            self.status = False
-        return
+        return spots_data
 
 
-def __run__(directory_name, prefix, dataformat, **kwargs):
-    cryst = Utils(directory_name, prefix, dataformat, **kwargs)
-    cryst.run_indexing()
-    cryst.check_oarstat()
-    cryst.report_stats(cryst.outstream)
-    # cryst.extract_peaklist()
-    if cryst.status is True:
-        with open('crystfel_output.json', 'w') as fh:
-            json.dump(cryst.results, fh, sort_keys=True, indent=2)
-    else:
-        msg = "Nothing got indexed by crystfel or someother errors upstream"
-        logger.info('Final_MSG:{}'.format(msg))
-    return cryst.status, cryst.results
+def __run__(inData):
+    crystTask = AutoCrystFEL(inData)
+    results = {}
+    try:
+        crystTask.run_indexing()
+        crystTask.writeInputData(inData)
+
+        if crystTask.is_executable('oarsub'):
+            crystTask.check_oarstat()
+        elif crystTask.is_executable('sbatch'):
+            crystTask.combine_streams()
+        else:
+            crystTask.run_as_command('*.stream >> alltogether.stream')
+
+        streampath = crystTask.getOutputDirectory() / 'alltogether.stream'
+        results['QualityMetrics'] = crystTask.report_stats(str(streampath))
+        if inData.get("GeneratePeaklist", False):
+            results['PeaksDictionary'] = crystTask.extract_peaklist(str(streampath))
+        if crystTask.is_success():
+            crystTask.writeOutputData(results)
+            crystTask.write_cell_file(results['QualityMetrics'])
+            logger.info('Indexing_Results:{}'.format(crystTask.results))
+        else:
+            crystTask.setFailure()
+            logger.error("AutoCrystFEL_ERROR:{}".format("crystfel pipeline upstream error"))
+    except Exception as err:
+        crystTask.setFailure()
+        logger.error("Error:{}".format(err))
+    return results
 
 
 def optparser():
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--meshdir", type=str,
+    parser.add_argument("--image_directory", type=str, required=True,
                         help="provide path MeshScan, containing images in cbf or h5 formats")
-    parser.add_argument("--prefix", type=str,
+    parser.add_argument("--detectorType", type=str, required=True,
+                        help="provide detector type, either pilatus or eiger")
+    parser.add_argument("--prefix", type=str, required=True,
                         help="filename prefix, a wildcard to look for files")
-    parser.add_argument("--format", type=str,
-                        help="image fileformat, either cbf or hdf5")
+    parser.add_argument("--suffix", type=str, required=True,
+                        help="image fileformat, either cbf, h5, or cxi")
+    parser.add_argument("--maxchunksize", type=int, required=True,
+                        help="max number of images per batch")
+    parser.add_argument("--num_processors", type=str, default='20')
     parser.add_argument("--beamline", type=str,
-                        help="optional key, specify only if you the data is collected at ESRF to use OARsub "
-                             "and folder structure")
-    parser.add_argument("--outdir", type=str,
+                        help="optional key, not needed")
+    parser.add_argument("--processing_directory", type=str,
                         help="optional key, if you want to dump at a different folder")
-    parser.add_argument("--indexing", type=str, default="mosflm",
+    parser.add_argument("--GeneratePeaklist", type=bool, default=False)
+    parser.add_argument("--indexing_method", type=str, default="mosflm",
                         help="change to asdf,or dirax or xds if needed")
-    parser.add_argument("--peaks", type=str, default="peakfinder8",
+    parser.add_argument("--peak_search", type=str, default="peakfinder8",
                         help="alternatively, peakfinder9 can be tried")
-    parser.add_argument("--integration", type=str, default='rings-grad-rescut')
+    parser.add_argument("--peak_info", type=str, default="/data/peakinfo")
+    parser.add_argument("--int_method", type=str, default='rings-grad-rescut')
     parser.add_argument("--int_radius", type=str, default='3,4,6')
     parser.add_argument("--min_peaks", type=str, default='30')
     parser.add_argument("--peak_radius", type=str, default='3,4,6')
     parser.add_argument("--min_snr", type=str, default='4.0')
     parser.add_argument("--threshold", type=str, default='10')
     parser.add_argument("--local_bg_radius", type=str, default='10')
-    parser.add_argument("--min-res", type=str, default='50',
+    parser.add_argument("--min_res", type=str, default='70',
                         help="Applied to avoid regions near beamstop in peak search")
-    parser.add_argument("--unitcell", type=str,
+    parser.add_argument("--unit_cell_file", type=str,
                         help="optional key, if you want to index with a given unit-cell")
+    parser.add_argument("--geometry_file", type=str,
+                        help="optional key, only if you have a better detector geometry file")
 
     args = parser.parse_args()
     return args
@@ -583,43 +686,10 @@ if __name__ == '__main__':
                         filename='autoCryst.log',
                         filemode='a+')
     op = optparser()
-
-    if op.meshdir is None:
-        sys.exit("Need at least one directory path containing mesh scans")
-    if op.prefix is None:
-        sys.exit("Need filename prefix for searching")
-    if op.format is None:
-        sys.exit("Need fileformat, either cbf or hdf5")
-
-    keywords = {}
-
-    if op.beamline is not None:
-        keywords['beamline'] = op.beamline
-    if op.outdir is not None:
-        keywords['outdir'] = op.outdir
-    if op.indexing is not None:
-        keywords['indexing_method'] = op.indexing
-    if op.peaks is not None:
-        keywords['peak_search'] = op.peaks
-    if op.integration is not None:
-        keywords['int_method'] = op.integration
-    if op.peak_radius is not None:
-        keywords['peak_radius'] = op.peak_radius
-    if op.int_radius is not None:
-        keywords['int_radius'] = op.int_radius
-    if op.min_peaks is not None:
-        keywords['min_peaks'] = op.min_peaks
-    if op.min_snr is not None:
-        keywords['min_snr'] = op.min_snr
-    if op.threshold is not None:
-        keywords['threshold'] = op.threshold
-    if op.local_bg_radius is not None:
-        keywords['local_bg_radius'] = op.local_bg_radius
-    if op.min_res is not None:
-        keywords['min_res'] = op.min_res
-    if op.unitcell is not None:
-        keywords['unitcell'] = op.unitcell
-    else:
-        pass
-
-    __run__(op.meshdir, op.prefix, op.format, **keywords)
+    input_Dict = dict()
+    for k, v in op.__dict__.items():
+        if v is not None:
+            input_Dict[k] = v
+        else:
+            pass
+    output = __run__(input_Dict)

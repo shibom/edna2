@@ -1,20 +1,45 @@
-from __future__ import division, print_function
-import json
-import jsonschema
-import subprocess as sub
-import pathlib
-import sys
-import os
-import multiprocessing as mp
-
+#
+# Copyright (c) European Molecular Biology Laboratory (EMBL)
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
 
 __author__ = ['S. Basu']
 __license__ = 'MIT'
 __date__ = '2019/07/03'
 
+import json
+import jsonschema
+import subprocess as sub
+import pathlib2 as pathlib
+import sys
+import os
+import multiprocessing as mp
+try:
+    from edna2.lib.autocryst.src.run_crystfel import AutoCrystFEL
+    autocrystImportFail = False
+except (ImportError, NameError):
+    autocrystImportFail = True
+
 
 class ExeCrystFEL(object):
-    def __init__(self, jsonfile=None, jstr=None):
+    def __init__(self, inJson):
+        self._inDict = json.dumps(inJson, default=str)
         self.success = False
         self.filelist = []
         self.all_jobs = []
@@ -25,21 +50,15 @@ class ExeCrystFEL(object):
         self.suffix = '*cbf'
         self.prefix = None
 
-        if os.path.exists(jsonfile) and jstr is None:
-            fh = open(jsonfile, 'r')
-            self.jshandle = json.load(fh)
-            fh.close()
-            self.success = True
-        elif jstr is not None and jsonfile is None:
-            self.jshandle = json.loads(jstr, default=str)
-            self.success = True
-        else:
-            error = "input json file does not exist, Quit!"
-            print('Error:{}'.format(error))
-            self.success = False
-            sys.exit()
-
         return
+
+    def get_inJson(self):
+        return json.loads(self._inDict)
+
+    def set_inJson(self, inJson):
+        self._inDict = json.dumps(inJson, default=str)
+
+    jshandle = property(get_inJson, set_inJson)
 
     @staticmethod
     def getInDataSchema():
@@ -159,6 +178,7 @@ class ExeCrystFEL(object):
                         images = self.filelist[start:stop]
                     except IndexError:
                         stop = start + (len(self.filelist) - stop)
+
                         images = self.filelist[start:stop]
 
                     infile = os.path.join(os.getcwd(), ('%d.lst' % jj))
@@ -170,7 +190,10 @@ class ExeCrystFEL(object):
                         ofh.write('\n')
                     ofh.close()
                     cmd = ExeCrystFEL.indexing_cmd(infile, outstream, self.geomfile, self.cellfile)
-                    self.all_jobs.append(mp.Process(target=ExeCrystFEL.run_script, args=(cmd, shellfile)))
+                    if autocrystImportFail is False and AutoCrysFEL.is_executable('oarsub'):
+                        AutoCrysFEL.oarshell_submit(shellfile, cmd)
+                    else:
+                        self.all_jobs.append(mp.Process(target=ExeCrystFEL.run_script, args=(cmd, shellfile)))
             else:
                 infile = os.path.join(os.getcwd(), 'input.lst')
                 outstream = os.path.join(os.getcwd(), 'input.stream')
@@ -214,5 +237,9 @@ class ExeCrystFEL(object):
 
 if __name__ == '__main__':
 
-    cryst = ExeCrystFEL(sys.argv[1])
-    cryst.run_as_mpi()
+    fh = open(sys.argv[1], 'r')
+    cryst = ExeCrystFEL(json.load(fh))
+    if not autocrystImportFail:
+        cryst.run_indexing()
+    else:
+        cryst.run_as_mpi()

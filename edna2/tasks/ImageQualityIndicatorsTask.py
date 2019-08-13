@@ -223,7 +223,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
                         distlTask.start()
                         listDistlTask.append((image, distlTask))
         if not self.isFailure():
-            listIndexing = []
+            # listIndexing = []
             listDistlResult = []
             # Synchronize all image quality indicator plugins and upload to ISPyB
             for (image, distlTask) in listDistlTask:

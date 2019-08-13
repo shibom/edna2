@@ -1,8 +1,28 @@
-"""
-Created on 14-Dec-2018
-Author: S. Basu
-"""
-from __future__ import division, print_function, unicode_literals
+#
+# Copyright (c) European Molecular Biology Laboratory (EMBL)
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+
+__author__ = ['S. Basu']
+__license__ = 'MIT'
+__date__ = '2018/12/14'
+
 from io import open
 import os
 import sys
@@ -10,9 +30,9 @@ import copy
 import re
 import logging
 import numpy as np
-from edna2.lib.autocryst.src.point_group import *
 import json
 
+from edna2.lib.autocryst.src.point_group import *
 
 logger = logging.getLogger('autoCryst')
 
@@ -198,7 +218,6 @@ class Stream(object):
                                cell_this_image['al'], cell_this_image['be'], cell_this_image['ga']]
                 lat, ua, cell_as_lst = lattice_from_cell(cell_as_lst)
                 pg = assign_point_group(lat, cen, ua)
-
                 asciiname = 'xds_%d.HKL' % ii
                 fh = open(asciiname, 'w')
                 fh.write("!FORMAT=XDS_ASCII   MERGE=FALSE   FRIEDEL'S_LAW=TRUE\n")
@@ -221,7 +240,7 @@ class Stream(object):
         else:
             err = "Nothing got indexed, no reflections"
             logger.info('Stream_Error:{}'.format(err))
-            pass
+
         return
 
     def close(self):
@@ -267,8 +286,23 @@ if __name__ == '__main__':
     s = Stream(sys.argv[1])
     s.get_chunk_pointers()
     s.read_chunks()
-    s.get_reflections_list()
+
     s.close()
 
-    Stream.create_reflist_json(s.image_refls)
-    print(s.stream_data)
+    s.get_reflections_list()
+    fh = open('only_indexed_images.lst', 'w')
+    for indexed_image in s.image_refls.keys():
+        fh.write(indexed_image)
+        fh.write('\n')
+    fh.close()
+
+    rescut = []
+    for chunks in s.stream_data:
+        try:
+            rescut.append(chunks['rescut'])
+        except KeyError:
+            pass
+    import matplotlib.pyplot as plt
+
+    plt.hist(rescut, histtype='step')
+    plt.show()

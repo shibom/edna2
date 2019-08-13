@@ -1,8 +1,30 @@
-"""
-Created on 15-May-2019
-Author: S. Basu
-"""
-from __future__ import division, print_function
+#
+# Copyright (c) European Molecular Biology Laboratory (EMBL)
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+
+
+__author__ = ['S. Basu']
+__license__ = 'MIT'
+__date__ = '2019/05/15'
+
+
 import os
 import sys
 import subprocess as sub
@@ -11,7 +33,9 @@ import numpy as np
 import glob
 import h5py
 import json
+import jsonschema
 import base64
+
 import edna2.lib.autocryst.src.dozor_input as di
 from edna2.lib.autocryst.src.Image import CBFreader
 import edna2.lib.autocryst.ext.fast_array_ext as af
@@ -23,8 +47,9 @@ class Dozor(object):
     stacks = dict()
 
     def __init__(self, jdata):
-        self._inDict = json.dumps(jdata, default=str)
-
+        self._ioDict = dict()
+        self._ioDict['inData'] = json.dumps(jdata, default=str)
+        self._ioDict['success'] = True
         self.input_dict = dict()
         self.lst_of_files = []
         self.cbfheader = dict()
@@ -32,23 +57,97 @@ class Dozor(object):
         self.dozor_results = []
         self.max_npeaks = 0
         self.stacklength = 0
-        self.success = True
         return
 
     def getData_as_dict(self):
-        return json.loads(self._inDict)
+        return json.loads(self._ioDict['inData'])
 
     def setData_as_dict(self, jdata):
-        self._inDict = json.dumps(jdata, default=str)
+        self._ioDict['inData'] = json.dumps(jdata, default=str)
 
     jshandle = property(getData_as_dict, setData_as_dict)
+
+    def is_success(self):
+        return self._ioDict['success']
+
+    def setFailure(self):
+        self._ioDict['success'] = False
+
+    @staticmethod
+    def get_jdata_Schema():
+        # This schema is applicable when the Dozor class called to run dozor and pack them into cxi format
+        # A simple class-call will not jsonschema.validate on json string. Thereby, one can call the class
+        # either with a jdata json string or olof's json string
+        return {
+            "type": "object",
+            "required": ["image_folder"],
+            "properties": {
+                "image_folder": {"type": "string"},
+                "dozorfolder": {"type": "string"}
+            }
+        }
+
+    @staticmethod
+    def get_olof_json_Schema():
+        # This schema is only valid if Dozor class called with extract_olof_json method
+        return {
+            "type": "object",
+            "required": ["imageQualityIndicators", "detectorType"],
+            "properties": {
+                "detectorType": {"type": "string"},
+                "hdf5MasterFile": {"type": "string"},
+                "imageQualityIndicators": {
+                    "type": "array",
+                    "required": ["angle", "image", "number",
+                                 "dozorScore", "dozorSpotsResolution",
+                                 "dozorVisibleResolution"],
+                    "properties": {
+                        "angle": {"type": "number"},
+                        "dozorScore": {"type": "number"},
+                        "dozorSpotFile": {"type": "string"},
+                        "dozorSpotList": {"type": "string"},
+                        "dozorSpotListShape": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        },
+                        "dozorSpotsIntAver": {"type": "number"},
+                        "dozorSpotsNumOf": {"type": "number"},
+                        "dozorSpotsResolution": {"type": "number"},
+                        "dozorSpotScore": {"type": "number"},
+                        "dozorVisibleResolution": {"type": "number"},
+                        "binPopCutOffMethod2Res": {"type": "number"},
+                        "goodBraggCandidates": {"type": "integer"},
+                        "iceRings": {"type": "integer"},
+                        "image": {"type": "string"},
+                        "inResTotal": {"type": "integer"},
+                        "inResolutionOvrlSpots": {"type": "integer"},
+                        "maxUnitCell": {"type": "number"},
+                        "method1Res": {"type": "number"},
+                        "method2Res": {"type": "number"},
+                        "number": {"type": "integer"},
+                        "pctSaturationTop50Peaks": {"type": "number"},
+                        "saturationRangeAverage": {"type": "number"},
+                        "saturationRangeMax": {"type": "number"},
+                        "saturationRangeMin": {"type": "number"},
+                        "selectedIndexingSolution": {"type": "number"},
+                        "signalRangeAverage": {"type": "number"},
+                        "signalRangeMax": {"type": "number"},
+                        "signalRangeMin": {"type": "number"},
+                        "spotTotal": {"type": "integer"},
+                        "totalIntegratedSignal": {"type": "number"}
+                    }
+                }
+            }
+        }
 
     def prep_dozorinput(self):
         try:
             self.lst_of_files = sorted(glob.glob(os.path.join(self.jshandle['image_folder'], '*.cbf')))
         except KeyError as kerr:
             logger.info('Dozor-Error:{}'.format(kerr))
-            self.success = False
+            self.setFailure()
         try:
             cbf = CBFreader(self.lst_of_files[0])
             cbf.read_cbfheaders()
@@ -58,7 +157,7 @@ class Dozor(object):
             name_template = os.path.join(self.jshandle['image_folder'], name)
         except (IndexError, ValueError, IOError) as ivio:
             logger.info('DozorHit_Error:{}'.format(ivio))
-            self.success = False
+            self.setFailure()
             return
 
         if cbf.headers['detector_name'][0] == 'PILATUS3':
@@ -84,7 +183,7 @@ class Dozor(object):
 
     def run_dozor(self):
         self.prep_dozorinput()
-        if self.success:
+        if self.is_success():
             if self.input_dict['det'] == 'pilatus2m':
                 dozor_str = di.dozor_input['2m']
             elif self.input_dict['det'] == 'pilatus6m':
@@ -95,11 +194,10 @@ class Dozor(object):
                 dh.write(dozor_str.format(**self.input_dict))
             cmd = 'dozor__v1.3.8 -p dozor.dat > /dev/null'
             sub.call(cmd, shell=True)
-            self.success = True
         else:
             dozor_err = 'dozor could not be run'
             logger.info('DozorHit_Error:{}'.format(dozor_err))
-            self.success = False
+            self.setFailure()
         return
 
     def prep_spot(self):
@@ -109,7 +207,7 @@ class Dozor(object):
             cwd = self.jshandle['dozorfolder']
         spotfiles = glob.glob(os.path.join(cwd, '*.spot'))
 
-        if len(spotfiles) > 0 and self.success is True:
+        if len(spotfiles) > 0 and self.is_success() is True:
             for fname in spotfiles:
                 dozorDict = dict()
                 basename = os.path.basename(fname)
@@ -121,21 +219,19 @@ class Dozor(object):
                     logger.info('image name not found %s' % imgName)
                 data_array, npeaks = Dozor.read_spotfile(fname)
                 if npeaks > 5:
-                    # dozorDict['DozorSpotList'] = spotList
                     dozorDict['nPeaks'] = npeaks
                     dozorDict['PeakXPosRaw'] = data_array[:, 1]
                     dozorDict['PeakYPosRaw'] = data_array[:, 2]
                     dozorDict['PeakTotalIntensity'] = data_array[:, 3]
                     self.dozor_results.append(dozorDict)
-                    self.success = True
                     if dozorDict['nPeaks'] > self.max_npeaks:
                         self.max_npeaks = dozorDict['nPeaks']
                 else:
                     pass
         else:
             logger.info("No spot files found")
-            self.success = False
-        if self.success:
+            self.setFailure()
+        if self.is_success():
             self.stacklength = len(self.dozor_results)
             cbf_unicode = self.dozor_results[0]['image_name']
             c = CBFreader(cbf_unicode)
@@ -173,10 +269,9 @@ class Dozor(object):
 
     def extract_olof_json(self, olof_json):  # Olof's json string
         try:
-            js = olof_json
-            # js = json.loads(olof_json)
+            jsonschema.validate(instance=olof_json, schema=self.get_olof_json_Schema())
 
-            for image in js["imageQualityIndicators"]:
+            for image in olof_json["imageQualityIndicators"]:
                 if len(image['dozorSpotListShape']) > 0 and image['dozorSpotListShape'][0] > 5:
                     dozorDict = dict()
                     dozorDict['image_name'] = image['image']
@@ -194,11 +289,11 @@ class Dozor(object):
                     self.workingDir = os.getcwd()
                 else:
                     pass
-                self.success = True
+
         except KeyError as e:
             logger.info('DozorHit_Error:{}'.format(e))
-            self.success = False
-        if self.success:
+            self.setFailure()
+        if self.is_success():
             self.stacklength = len(self.dozor_results)
             cbf_unicode = self.dozor_results[0]['image_name']
             c = CBFreader(cbf_unicode)
@@ -234,13 +329,13 @@ class Dozor(object):
         if len(self.dozor_results) == 0:
             msg = "dozor did not work or no hits"
             logger.info('DozorHits_MSG:{}'.format(msg))
-            self.success = False
+            self.setFailure()
             return
 
         if self.stacklength < 100:
             Dozor.get_dozor_peaks(self.dozor_results, self.max_npeaks, tuple(self.cbfheader['dimension']))
             Dozor.save_h5(Dozor.stacks, 'dozor_0.cxi')
-            self.success = True
+
         else:
             nchunk = int(self.stacklength / 100)
 
@@ -256,7 +351,6 @@ class Dozor(object):
                     Dozor.get_dozor_peaks(self.dozor_results[start:stop], self.max_npeaks,
                                           tuple(self.cbfheader['dimension']))
                 Dozor.save_h5(Dozor.stacks, h5name)
-            self.success = True
 
         return
 
@@ -330,7 +424,7 @@ if __name__ == '__main__':
             dd.run_dozor()
         elif os.path.exists(dd.jshandle['dozorfolder']):
             dd.prep_spot()
-    if dd.success:
+    if dd.is_success():
         with open('headers.json', 'w') as jhead:
             json.dump(dd.cbfheader, jhead, sort_keys=True, indent=2)
         dd.mp_stack()
