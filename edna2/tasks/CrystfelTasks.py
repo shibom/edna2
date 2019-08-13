@@ -84,7 +84,6 @@ class ExeCrystFEL(AbstractTask):
 
     def run(self, inData):
         outData = {}
-        print(self.getWorkingDirectory())
         if inData['detectorType'] == 'eiger4m':
             os.chdir(self.getWorkingDirectory())
             outData = self.exeIndexing(inData)
@@ -118,7 +117,8 @@ class ExeCrystFEL(AbstractTask):
         in_for_crystfel['detectorType'] = inData['detectorType']
         in_for_crystfel['maxchunksize'] = 10
         if inData['detectorType'] == 'eiger4m':
-            in_for_crystfel['prefix'] = UtilsImage.getPrefix(inData['listH5FilePath'][0]) + "*"
+            tmp = UtilsImage.getPrefix(inData['listH5FilePath'][0])
+            in_for_crystfel['prefix'] = tmp.strip('data')
             in_for_crystfel['suffix'] = UtilsImage.getSuffix(inData['listH5FilePath'][0])
             in_for_crystfel['image_directory'] = str(pathlib.Path(inData['listH5FilePath'][0]).parent)
 
@@ -145,5 +145,6 @@ if __name__ == '__main__':
     inData = json.load(fh)
     fh.close()
     crystfel = ExeCrystFEL(inData)
-    result = crystfel.run(inData)
-    print(result)
+    
+    crystfel.executeRun()
+    print(crystfel.outData)

@@ -292,9 +292,12 @@ class AutoCrystFEL(object):
     def datafinder(self):
         datadir = pathlib.Path(self.jshandle['image_directory'])
         if datadir.exists():
-            listofimagefiles = list(datadir.glob(self.jshandle['prefix'] + self.jshandle['suffix']))
+            listofimagefiles = list(datadir.glob(self.jshandle['prefix'] + '*' + self.jshandle['suffix']))
             for fname in listofimagefiles:
-                self.filelist.append(fname.as_posix())
+                if 'master' not in str(fname):
+                    self.filelist.append(fname.as_posix())
+                else:
+                    pass
         else:
             self.setFailure()
             logger.error('dataError:{}'.format('no data found'))
@@ -648,7 +651,7 @@ def optparser():
                         help="filename prefix, a wildcard to look for files")
     parser.add_argument("--suffix", type=str, required=True,
                         help="image fileformat, either cbf, h5, or cxi")
-    parser.add_argument("--maxchunksize", type=int, required=True,
+    parser.add_argument("--maxchunksize", type=int,
                         help="max number of images per batch")
     parser.add_argument("--num_processors", type=str, default='20')
     parser.add_argument("--beamline", type=str,
