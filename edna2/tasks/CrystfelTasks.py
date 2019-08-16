@@ -145,6 +145,6 @@ if __name__ == '__main__':
     inData = json.load(fh)
     fh.close()
     crystfel = ExeCrystFEL(inData)
-    
+
     crystfel.executeRun()
     print(crystfel.outData)

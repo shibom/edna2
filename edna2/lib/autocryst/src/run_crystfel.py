@@ -39,6 +39,7 @@ from edna2.lib.autocryst.src.cell_analysis import Cell
 from edna2.lib.autocryst.src.geom import Geom
 from edna2.lib.autocryst.src.point_group import *
 from edna2.lib.autocryst.src.stream import Stream
+from edna2.lib.autocryst.src.parser import ResultParser
 
 logger = logging.getLogger('autoCryst')
 
@@ -122,6 +123,7 @@ class AutoCrystFEL(object):
                 "prefix": {"type": "string"},
                 "maxchunksize": {"type": "integer"},
                 "processing_directory": {"type": "string"},
+                "doMerging": {"type": "boolean"},
                 "GeneratePeaklist": {"type": "boolean"},
                 "geometry_file": {"type": "string"},
                 "unit_cell_file": {"type": "string"},
@@ -248,7 +250,7 @@ class AutoCrystFEL(object):
 
     @staticmethod
     def check_hkl_cmd(hklfile, point_group, cellfile, rescut):
-        statfile = hklfile.split('.')[0] + '_stat.dat'
+        statfile = hklfile.split('.')[0] + '_snr.dat'
         command = 'check_hkl -y %s -p %s --nshells=20 --shell-file=%s ' \
                   % (point_group, cellfile, statfile)
         command += '--lowres=20 --highres=%f %s' % (rescut, hklfile)
@@ -258,7 +260,7 @@ class AutoCrystFEL(object):
     @staticmethod
     def compare_hkl_cmd(hkl1, hkl2, cellfile, rescut, fom='CCstar'):
         base_str = hkl1.split('.')[0]
-        statout = fom + '_' + base_str + '.dat'
+        statout = base_str + '_' + fom + '.dat'
 
         command = 'compare_hkl -p %s --nshells=20 --shell-file=%s ' % (cellfile, statout)
         command += '--fom=%s --lowres=20 --highres=%s ' % (fom, rescut)
@@ -407,9 +409,10 @@ class AutoCrystFEL(object):
         return command
 
     def scale_merge(self, streamfile):
+        stat = dict()
         try:
-            self.setOutputDirectory()
-            os.chdir(str(self.getOutputDirectory()))
+            # self.setOutputDirectory()
+            # os.chdir(str(self.getOutputDirectory()))
             nproc = self.jshandle.get('num_processors', '20')
             final_stream = pathlib.Path(streamfile)
             base_str = str(final_stream.name)  # type: str
@@ -417,6 +420,10 @@ class AutoCrystFEL(object):
             ohkl = base_str[0] + '.hkl'  # type: str
             ohkl1 = base_str[0] + '.hkl1'  # type: str
             ohkl2 = base_str[0] + '.hkl2'  # type: str
+            snrfile = ohkl.split('.')[0] + '_snr.dat'
+            ccfile = ohkl.split('.')[0] + '_CCstar.dat'
+            rsplitfile = ohkl.split('.')[0] + '_Rsplit.dat'
+
             cmd = self.partialator_cmd(str(final_stream), self.results['point_group'], nproc)
             cmd += '\n\n'
 
@@ -426,17 +433,25 @@ class AutoCrystFEL(object):
             cmd += self.compare_hkl_cmd(ohkl1, ohkl2, 'auto.cell', self.results['resolution_limit'])
             cmd += '\n\n'
 
-            cmd += self.compare_hkl_cmd(ohkl1, ohkl2, 'auto.cell', self.results['resolution_limit'], fom='CCstar')
+            cmd += self.compare_hkl_cmd(ohkl1, ohkl2, 'auto.cell', self.results['resolution_limit'], fom='Rsplit')
             cmd += '\n\n'
+            shellfile = str(self.getOutputDirectory() / 'merge.sh')
             if self.is_executable('oarsub'):
-                self.oarshell_submit('merge.sh', cmd)
+                self.oarshell_submit(shellfile, cmd)
+            elif self.is_executable('sbatch'):
+                self.slurm_submit(shellfile, cmd)
             else:
                 self.run_as_command(cmd)
+
+            statparser = ResultParser()
+            for statfile, fom in zip([snrfile, ccfile, rsplitfile], ['snr', 'ccstar', 'rsplit']):
+                statparser.getstats(statfile, fom=fom)
+                stat[fom] = statparser.results['DataQuality']
 
         except (IOError, KeyError) as err:
             self.setFailure()
             logger.info('Merging_Error:{}'.format(err))
-        return
+        return stat
 
     def run_indexing(self):
 
@@ -554,7 +569,7 @@ class AutoCrystFEL(object):
 
             except AssertionError as err:
                 self.setFailure()
-                logger.info("Cell_Error:{}".format(err))
+                logger.error("Cell_Error:{}".format(err))
         else:
             self.setFailure()
         return results
@@ -586,7 +601,7 @@ class AutoCrystFEL(object):
                 logger.error('Job_Error:{}'.format(err))
 
             # Run partialator and calculate standard stats from crystfel..
-            # self.scale_merge(str(streampath))
+            # self.scale_merge(streampath)
 
         except Exception as err:
             self.setFailure()
@@ -605,7 +620,7 @@ class AutoCrystFEL(object):
             spots_data['peaks_per_pattern'] = sh.image_peaks
         except Exception as err:
             self.setFailure()
-            logger.info('Stream_Error:{}'.format(err))
+            logger.error('Stream_Error:{}'.format(err))
         return spots_data
 
 
@@ -625,11 +640,18 @@ def __run__(inData):
 
         streampath = crystTask.getOutputDirectory() / 'alltogether.stream'
         results['QualityMetrics'] = crystTask.report_stats(str(streampath))
+        crystTask.write_cell_file(results['QualityMetrics'])
+
+        if inData.get("doMerging", False):
+            crystTask.set_outData(results)
+            merging_stats = crystTask.scale_merge(str(streampath))
+            results['QualityMetrics'].update(merging_stats)
+
         if inData.get("GeneratePeaklist", False):
             results['PeaksDictionary'] = crystTask.extract_peaklist(str(streampath))
+
         if crystTask.is_success():
             crystTask.writeOutputData(results)
-            crystTask.write_cell_file(results['QualityMetrics'])
             logger.info('Indexing_Results:{}'.format(crystTask.results))
         else:
             crystTask.setFailure()
@@ -658,6 +680,7 @@ def optparser():
                         help="optional key, not needed")
     parser.add_argument("--processing_directory", type=str,
                         help="optional key, if you want to dump at a different folder")
+    parser.add_argument("--doMerging", type=bool, default=False)
     parser.add_argument("--GeneratePeaklist", type=bool, default=False)
     parser.add_argument("--indexing_method", type=str, default="mosflm",
                         help="change to asdf,or dirax or xds if needed")
