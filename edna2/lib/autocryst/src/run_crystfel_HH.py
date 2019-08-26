@@ -26,7 +26,7 @@ __date__ = '2019/07/03'
 import json
 import jsonschema
 import subprocess as sub
-import pathlib2 as pathlib
+import pathlib
 import sys
 import os
 import multiprocessing as mp
@@ -190,8 +190,8 @@ class ExeCrystFEL(object):
                         ofh.write('\n')
                     ofh.close()
                     cmd = ExeCrystFEL.indexing_cmd(infile, outstream, self.geomfile, self.cellfile)
-                    if autocrystImportFail is False and AutoCrysFEL.is_executable('oarsub'):
-                        AutoCrysFEL.oarshell_submit(shellfile, cmd)
+                    if autocrystImportFail is False and AutoCrystFEL.is_executable('oarsub'):
+                        AutoCrystFEL.oarshell_submit(shellfile, cmd)
                     else:
                         self.all_jobs.append(mp.Process(target=ExeCrystFEL.run_script, args=(cmd, shellfile)))
             else:

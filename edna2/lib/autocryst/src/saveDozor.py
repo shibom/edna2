@@ -291,7 +291,7 @@ class Dozor(object):
                     pass
 
         except KeyError as e:
-            logger.info('DozorHit_Error:{}'.format(e))
+            logger.error('DozorHit_Error:{}'.format(e))
             self.setFailure()
         if self.is_success():
             self.stacklength = len(self.dozor_results)

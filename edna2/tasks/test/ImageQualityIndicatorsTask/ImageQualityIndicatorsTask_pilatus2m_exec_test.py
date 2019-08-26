@@ -41,8 +41,6 @@ class ImageQualityIndicatorsPilatus2MExecTest(unittest.TestCase):
 
     def setUp(self):
         self.dataPath = UtilsTest.prepareTestDataPath(__file__)
-        # self.dataPath = pathlib.Path(os.getcwd()) / 'data'
-
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run ImageQualityIndicatorsExecTest ' +
@@ -55,6 +53,7 @@ class ImageQualityIndicatorsPilatus2MExecTest(unittest.TestCase):
         self.assertFalse(task.isFailure())
         outData = task.outData
         self.assertTrue('imageQualityIndicators' in outData)
+
 
 if __name__ == '__main__':
     unittest.main()

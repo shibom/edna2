@@ -63,7 +63,7 @@ centering = {centering}
 unique_axis = {unique_axis}
 profile_radius = {profile_radius}
 predict_refine/final_residual = {residual}
-diffraction_resolution_limit = 2.33 nm^-1 or 4.28 A
+diffraction_resolution_limit = {rescut} 
 num_reflections = {nRefs}
 num_saturated_reflections = 0
 num_implausible_reflections = 0
@@ -109,6 +109,7 @@ class Stream(object):
 
             # patterns search to extract useful infos from each image..
             self.rx_dict = dict(image=re.compile(r'Image\sfilename:\s(?P<image>.*)\n'),
+                                event=re.compile(r"Event:\s(?P<event>.*)\n"),
                                 serial_number=re.compile(r'Image\sserial\snumber:\s(?P<serial_number>[0-9]+)\n'),
                                 nPeaks=re.compile(r'num_peaks\s=\s(?P<nPeaks>[0-9]+)\n'),
                                 nSat=re.compile(r'num_saturated_peaks\s=\s(?P<nSat>[0-9]+)\n'),
@@ -193,8 +194,8 @@ class Stream(object):
                     if match:
                         if k == 'image':
                             each_chunk_dict[k] = match.group('image')
-                        if k == 'serial_number':
-                            each_chunk_dict[k] = match.group('serial_number')
+                        if k == 'event':
+                            each_chunk_dict[k] = match.group('event')
                         if k == 'nPeaks':
                             each_chunk_dict[k] = int(match.group('nPeaks'))
                         if k == 'nSat':
@@ -244,6 +245,11 @@ class Stream(object):
                         if k == 'z_shift':
                             each_chunk_dict['z_shift'] = float(match.group('z_shift').split()[0])
 
+            event = each_chunk_dict.get('event', 'x')
+            if event != 'x':
+                each_chunk_dict['image'] = each_chunk_dict['image'] + each_chunk_dict['event']
+            else:
+                pass
             # store everything as a list of dictionaries ..
             self.stream_data.append(each_chunk_dict)
 
@@ -285,12 +291,13 @@ class Stream(object):
         return
 
     @staticmethod
-    def create_reflist_json(reflist_dict_stream_class):
-        if not reflist_dict_stream_class:
+    def create_reflist_json(reflist_stream_class):
+        if not reflist_stream_class:
             pass
         else:
-            with open('Reflections.json', 'w') as js:
-                json.dump(reflist_dict_stream_class, js, sort_keys=True, indent=2)
+            outdata = 'reflections_Stream.json'
+            with open(outdata, 'w') as js:
+                json.dump({"ReflectionDictionary": reflist_stream_class}, js, sort_keys=True, indent=2)
         return
 
     @staticmethod
@@ -319,6 +326,7 @@ class Stream(object):
     def convert_chunk_to_xdsascii(self):
         num_ascii_total = len(self.image_refls)
         if num_ascii_total > 0:
+            tracker = open('chunktrack.txt', 'w')
             for ii in range(num_ascii_total):
                 image = self.image_refls[ii]  # type list
                 cell_this_image = image['cell']
@@ -326,11 +334,12 @@ class Stream(object):
                 cell_as_lst = [cell_this_image['a'], cell_this_image['b'], cell_this_image['c'],
                                cell_this_image['al'], cell_this_image['be'], cell_this_image['ga']]
                 lat, ua, cell_as_lst = lattice_from_cell(cell_as_lst)
-                pg = assign_point_group(lat, cen, ua)
+                pg, sg, sgn = assign_point_group(lat, cen, ua)
                 asciiname = 'xds_%d.HKL' % ii
+                tracker.write("ImageFile: %s --> %s\n" % (image['image'], asciiname))
                 fh = open(asciiname, 'w')
                 fh.write("!FORMAT=XDS_ASCII   MERGE=FALSE   FRIEDEL'S_LAW=TRUE\n")
-                fh.write("!SPACE_GROUP_NUMBER=%s\n" % pg)
+                fh.write("!SPACE_GROUP_NUMBER=%s\n" % sgn)
                 fh.write("!UNIT_CELL_CONSTANTS=%f %f %f %f %f %f\n" % (cell_as_lst[0], cell_as_lst[1], cell_as_lst[2],
                                                                        cell_as_lst[3], cell_as_lst[4], cell_as_lst[5]))
                 fh.write("!NUMBER_OF_ITEMS_IN_EACH_DATA_RECORD=5\n")
@@ -341,11 +350,12 @@ class Stream(object):
                 fh.write("!ITEM_IOBS=4\n")
                 fh.write("!ITEM_SIGMA(IOBS)=5\n")
                 fh.write("!END_OF_HEADER\n")
-                for reflection in self.image_refls[image]['refList']:
+                for reflection in image['refList']:
                     fh.write("%6i %6i %5i %9.2f %9.2f\n" % (int(reflection[0]), int(reflection[1]), int(reflection[2]),
                                                             reflection[3], reflection[5]))
                 fh.write("!END_OF_DATA")
                 fh.close()
+            tracker.close()
         else:
             err = "Nothing got indexed, no reflections"
             logger.info('Stream_Error:{}'.format(err))
@@ -388,6 +398,31 @@ class Stream(object):
         self.mean_xshift = sum(x_shift) / len(x_shift)
         self.mean_yshift = sum(y_shift) / len(y_shift)
         return
+
+
+def stream2xdslist(streamlist):
+    if len(streamlist) == 0:
+        print("No streamfile provided\n")
+        return
+    else:
+        current = os.getcwd()
+        for streamfile in streamlist:
+            try:
+                folder = os.path.basename(streamfile).split('.')[0]
+                os.path.join(current, folder)
+                os.makedirs(folder, exist_ok=True)
+                os.chdir(folder)
+                s = Stream(streamfile)
+                s.get_chunk_pointers()
+                s.read_chunks()
+                s.get_reflections_list()
+                s.close()
+                s.convert_chunk_to_xdsascii()
+                print("%d HKLs were written from %s into %s folder" % (len(s.image_refls), streamfile, folder))
+                os.chdir(current)
+            except Exception as err:
+                logger.error('Stream_Error: {}'.format(err))
+    return
 
 
 if __name__ == '__main__':

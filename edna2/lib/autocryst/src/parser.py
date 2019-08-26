@@ -24,7 +24,7 @@ __license__ = 'MIT'
 __date__ = '2019/08/16'
 
 import logging
-import pathlib2 as pathlib
+import pathlib
 import json
 import sys
 

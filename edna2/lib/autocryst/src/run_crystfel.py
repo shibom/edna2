@@ -25,7 +25,7 @@ __date__ = '2019/08/08'
 
 
 import os
-import pathlib2 as pathlib
+import pathlib
 import json
 import jsonschema
 import logging
@@ -214,7 +214,7 @@ class AutoCrystFEL(object):
         oar_handle.close()
         sub.call('chmod +x %s' % shellfile, shell=True)
 
-        sub.call('oarsub -S %s' % shellfile, shell=True)
+        AutoCrystFEL.run_as_command('oarsub -S %s' % shellfile)
         return
 
     @staticmethod
@@ -244,7 +244,7 @@ class AutoCrystFEL(object):
         outhkl = base_str[0] + '.hkl'
         command = 'partialator -i %s -o %s -y %s ' \
                   % (stream_name, outhkl, point_group)
-        command += ' --model=xsphere --push-res=1.5 --iterations=1 -j %s --no-deltacchalf --no-logs' % nproc
+        command += ' --model=unity --push-res=1.5 --iterations=1 -j %s --no-deltacchalf --no-logs' % nproc
 
         return command
 
@@ -314,7 +314,7 @@ class AutoCrystFEL(object):
         outname = datetime.now().strftime('autoCryst_%Y-%m-%d_%H-%M-%S')
         crystfel_dir = procdir / outname
         crystfel_dir.mkdir(parents=True, exist_ok=True)
-        os.chdir(crystfel_dir)
+        os.chdir(str(crystfel_dir))
         self.setOutputDirectory(str(crystfel_dir))
         return
 
@@ -325,7 +325,7 @@ class AutoCrystFEL(object):
             if self.jshandle['detectorType'] == 'pilatus2m' or self.jshandle['detectorType'] == 'pilatus6m':
                 image1 = Im(self.filelist[0])
             elif self.jshandle['detectorType'] == 'eiger4m':
-                master_str = self.jshandle['prefix'] + 'master.h5'
+                master_str = self.jshandle['prefix'] + '*master.h5'
                 masterfile = list(pathlib.Path(self.jshandle['image_directory']).glob(master_str))[0]
                 image1 = Im(str(masterfile))
             else:
@@ -411,15 +411,13 @@ class AutoCrystFEL(object):
     def scale_merge(self, streamfile):
         stat = dict()
         try:
-            # self.setOutputDirectory()
-            # os.chdir(str(self.getOutputDirectory()))
             nproc = self.jshandle.get('num_processors', '20')
             final_stream = pathlib.Path(streamfile)
             base_str = str(final_stream.name)  # type: str
             base_str = base_str.split('.')  # type: list
-            ohkl = base_str[0] + '.hkl'  # type: str
-            ohkl1 = base_str[0] + '.hkl1'  # type: str
-            ohkl2 = base_str[0] + '.hkl2'  # type: str
+            ohkl = str(final_stream.parent / (base_str[0] + '.hkl'))  # type: str
+            ohkl1 = str(final_stream.parent / (base_str[0] + '.hkl1'))  # type: str
+            ohkl2 = str(final_stream.parent / (base_str[0] + '.hkl2'))  # type: str
             snrfile = ohkl.split('.')[0] + '_snr.dat'
             ccfile = ohkl.split('.')[0] + '_CCstar.dat'
             rsplitfile = ohkl.split('.')[0] + '_Rsplit.dat'
@@ -438,19 +436,23 @@ class AutoCrystFEL(object):
             shellfile = str(self.getOutputDirectory() / 'merge.sh')
             if self.is_executable('oarsub'):
                 self.oarshell_submit(shellfile, cmd)
+                self.check_oarstat(wait_count=6000)
             elif self.is_executable('sbatch'):
                 self.slurm_submit(shellfile, cmd)
             else:
                 self.run_as_command(cmd)
 
-            statparser = ResultParser()
-            for statfile, fom in zip([snrfile, ccfile, rsplitfile], ['snr', 'ccstar', 'rsplit']):
-                statparser.getstats(statfile, fom=fom)
-                stat[fom] = statparser.results['DataQuality']
+            if self.is_success():
+                statparser = ResultParser()
+                for statfile, fom in zip([snrfile, ccfile, rsplitfile], ['snr', 'ccstar', 'rsplit']):
+                    statparser.getstats(statfile, fom=fom)
+                    stat[fom] = statparser.results['DataQuality']
+            else:
+                logger.error('Merging did not run')
 
         except (IOError, KeyError) as err:
             self.setFailure()
-            logger.info('Merging_Error:{}'.format(err))
+            logger.error('Merging_Error:{}'.format(err))
         return stat
 
     def run_indexing(self):
@@ -514,10 +516,10 @@ class AutoCrystFEL(object):
             logger.error('Error:{}'.format(err))
         return
 
-    def check_oarstat(self):
+    def check_oarstat(self, wait_count=200):
         wait = 0
         njobs = sub.check_output('oarstat -u $USER | wc -l', shell=True)[:-1]
-        wait_max = int(njobs) * 200
+        wait_max = int(njobs) * wait_count
         while int(njobs) > 2:
             time.sleep(1)
             msg = "all jobs are not yet finished"
@@ -531,12 +533,13 @@ class AutoCrystFEL(object):
                 break
             else:
                 pass
-
+        '''
         if self.is_success():
             cmd = 'cat *.stream >> alltogether.stream'
             self.run_as_command(cmd)
         else:
             pass
+        '''
         return
 
     def report_cell(self, streampath):
@@ -561,11 +564,12 @@ class AutoCrystFEL(object):
                 results['unique_axis'] = ua
                 assert isinstance(cell_list, list)
                 results['unit_cell'] = cell_list
-                pg, sg_str = assign_point_group(results['lattice'], results['centering'],
-                                                results['unique_axis'])
+                pg, sg_str, sg_num = assign_point_group(results['lattice'], results['centering'],
+                                                        results['unique_axis'])
                 assert isinstance(pg, str)
                 results['point_group'] = pg
                 results['space_group'] = sg_str
+                results['space_group_number'] = sg_num
 
             except AssertionError as err:
                 self.setFailure()
@@ -633,23 +637,26 @@ def __run__(inData):
 
         if crystTask.is_executable('oarsub'):
             crystTask.check_oarstat()
+
         elif crystTask.is_executable('sbatch'):
             crystTask.combine_streams()
         else:
-            crystTask.run_as_command('*.stream >> alltogether.stream')
-
+            pass
+        if crystTask.is_success():
+            crystTask.run_as_command('cat *.stream >> alltogether.stream')
+        else:
+            pass
         streampath = crystTask.getOutputDirectory() / 'alltogether.stream'
         results['QualityMetrics'] = crystTask.report_stats(str(streampath))
         crystTask.write_cell_file(results['QualityMetrics'])
 
         if inData.get("doMerging", False):
-            crystTask.set_outData(results)
+            crystTask.set_outData(results['QualityMetrics'])
             merging_stats = crystTask.scale_merge(str(streampath))
             results['QualityMetrics'].update(merging_stats)
 
         if inData.get("GeneratePeaklist", False):
             results['PeaksDictionary'] = crystTask.extract_peaklist(str(streampath))
-
         if crystTask.is_success():
             crystTask.writeOutputData(results)
             logger.info('Indexing_Results:{}'.format(crystTask.results))
@@ -673,7 +680,7 @@ def optparser():
                         help="filename prefix, a wildcard to look for files")
     parser.add_argument("--suffix", type=str, required=True,
                         help="image fileformat, either cbf, h5, or cxi")
-    parser.add_argument("--maxchunksize", type=int,
+    parser.add_argument("--maxchunksize", type=int, required=True,
                         help="max number of images per batch")
     parser.add_argument("--num_processors", type=str, default='20')
     parser.add_argument("--beamline", type=str,

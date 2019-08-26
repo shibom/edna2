@@ -29,6 +29,6 @@ setup(name="edna2",
       version='0.1',
       packages=['edna2'],
       install_requires=['matplotlib', 'suds-jurko', 'xmltodict', 'jsonschema',
-                        'graypy', 'h5py', 'fabio', 'numpy'],
+                        'graypy', 'h5py', 'fabio', 'numpy', 'scipy'],
       )
 

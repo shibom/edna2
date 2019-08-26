@@ -24,6 +24,7 @@ __license__ = 'MIT'
 __date__ = '2018/12/17'
 
 import sys
+import os
 from collections import Counter
 import numpy as np
 # import scipy.cluster.vq as cvq
@@ -31,6 +32,7 @@ import numpy as np
 from scipy import stats
 import math
 import logging
+from edna2.lib.autocryst.src.point_group import *
 from edna2.lib.autocryst.src.stream import Stream
 
 logger = logging.getLogger('autoCryst')
@@ -55,6 +57,7 @@ class Cell(object):
         self.stream_handle = Stream(streamfile)
         self.stream_handle.get_chunk_pointers()
         self.stream_handle.read_chunks()
+        self.stream_handle.get_reflections_list()
         self.stream_handle.close()
         self.stream_handle.get_indexed_only()
         if self.stream_handle.cells_only:
@@ -69,7 +72,7 @@ class Cell(object):
             self.al_mode = self.be_mode = self.ga_mode = 0.0
         else:
             err = "Nothing is indexed in stream file"
-            logger.info('Cell_Error:{}'.format(err))
+            logger.error('Cell_Error:{}'.format(err))
             self.status = False
         return
 
@@ -101,7 +104,7 @@ class Cell(object):
 
         else:
             err = "Nothing is indexed in stream file, returning empty cell_array"
-            logger.info('Cell_Error:{}'.format(err))
+            logger.error('Cell_Error:{}'.format(err))
             self.status = False
         return
 
@@ -120,7 +123,7 @@ class Cell(object):
             self.status = True
         except (IndexError, ValueError) as err:
             self.status = False
-            logger.info('Cell_Error:{}'.format(err))
+            logger.error('Cell_Error:{}'.format(err))
         return
 
     @staticmethod
@@ -160,8 +163,78 @@ class Cell(object):
             self.status = True
         except Exception as err:
             self.status = False
-            logger.info('Cell_Error:{}'.format(err))
+            logger.error('Cell_Error:{}'.format(err))
         return
+
+    def convert_indexed_to_xdsascii(self):
+
+        # Call this method after calling self.get_lattices(), self.get_cells(), and self.calc_modal_cell() methods
+
+        if len(self.stream_handle.image_refls) == 0:
+            logger.error('Cell_Error:{}'.format('Nothing is indexed'))
+        else:
+            num_ascii_total = len(self.stream_handle.image_refls)
+            cell_as_lst = [self.a_mode, self.b_mode, self.c_mode, self.al_mode, self.be_mode, self.ga_mode]
+            lat, ua, cell_as_lst = lattice_from_cell(cell_as_lst)
+            pg, sg, sgn = assign_point_group(lat, self.most_common_centering, ua)
+            print("No. of indexed chunks found: %d" % num_ascii_total)
+            tracker = open('chunktrack.txt', 'w')
+            for ii in range(num_ascii_total):
+                image = self.stream_handle.image_refls[ii]  # type list
+
+                asciiname = 'xds_%d.HKL' % ii
+                tracker.write("ImageFile: %s --> %s\n" % (image['image'], asciiname))
+                fh = open(asciiname, 'w')
+                fh.write("!FORMAT=XDS_ASCII   MERGE=FALSE   FRIEDEL'S_LAW=TRUE\n")
+                fh.write("!SPACE_GROUP_NUMBER=%s\n" % sgn)
+                fh.write(
+                    "!UNIT_CELL_CONSTANTS=%f %f %f %f %f %f\n" % (cell_as_lst[0], cell_as_lst[1], cell_as_lst[2],
+                                                                  cell_as_lst[3], cell_as_lst[4], cell_as_lst[5]))
+                fh.write("!NUMBER_OF_ITEMS_IN_EACH_DATA_RECORD=5\n")
+                fh.write("!X-RAY_WAVELENGTH= -1.0\n")
+                fh.write("!ITEM_H=1\n")
+                fh.write("!ITEM_K=2\n")
+                fh.write("!ITEM_L=3\n")
+                fh.write("!ITEM_IOBS=4\n")
+                fh.write("!ITEM_SIGMA(IOBS)=5\n")
+                fh.write("!END_OF_HEADER\n")
+                for reflection in image['refList']:
+                    fh.write(
+                        "%6i %6i %5i %9.2f %9.2f\n" % (int(reflection[0]), int(reflection[1]), int(reflection[2]),
+                                                       reflection[3], reflection[5]))
+                fh.write("!END_OF_DATA")
+                fh.close()
+            tracker.close()
+
+        return
+
+
+def stream2xdslist(streamlist):
+    if len(streamlist) == 0:
+        print("No streamfile provided\n")
+        return
+    else:
+        current = os.getcwd()
+        for streamfile in streamlist:
+            try:
+                folder = os.path.basename(streamfile).split('.')[0]
+                folder = os.path.join(current, folder)
+                s = Cell(streamfile)
+                if s.status:
+                    os.makedirs(folder, exist_ok=True)
+                    os.chdir(folder)
+                    s.get_lattices()
+                    s.get_cells()
+                    s.calc_modal_cell()
+                    s.convert_indexed_to_xdsascii()
+                    print("%d HKLs were written from %s into %s folder" % (len(s.stream_handle.image_refls),
+                                                                           streamfile, folder))
+                else:
+                    pass
+                os.chdir(current)
+            except Exception as err:
+                logger.error('Cell_Error: {}'.format(err))
+    return
 
 
 if __name__ == '__main__':
@@ -170,7 +243,6 @@ if __name__ == '__main__':
     c.get_lattices()
     c.get_cells()
     c.calc_modal_cell()
+    c.convert_indexed_to_xdsascii()
 
-    print(c.a_mode, c.b_mode, c.c_mode, c.al_mode, c.be_mode, c.ga_mode)
-    print(c.most_common_lattice_type)
-    print(c.most_common_centering)
+

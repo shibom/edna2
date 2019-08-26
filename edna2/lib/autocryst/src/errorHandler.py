@@ -31,7 +31,7 @@ def add_gray_handler(loggername):
     logger = logging.getLogger(loggername)
     logger.setLevel(logging.DEBUG)
 
-    handler = graypy.GELFHandler('graylog-dau.esrf.fr', 12206)
+    handler = graypy.GELFHTTPHandler('graylog-dau.esrf.fr', 12206)
     logger.addHandler(handler)
 
     logger.debug('Message:{}'.format('Gray Logger is running for esrf'))
