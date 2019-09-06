@@ -8,5 +8,6 @@ jsonschema
 graypy
 h5py
 fabio
+requests
 
 
