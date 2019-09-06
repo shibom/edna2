@@ -100,7 +100,7 @@ class AbstractTask(object):
             self._workingDirectory = UtilsPath.getWorkingDirectory(self, inData)
             self.writeInputData(inData)
             self._oldDir = os.getcwd()
-            os.chdir(self._workingDirectory)
+            os.chdir(str(self._workingDirectory))
             outData = self.run(inData)
             os.chdir(self._oldDir)
         else:
@@ -119,8 +119,8 @@ class AbstractTask(object):
             self.writeOutputData(outData)
         else:
             raise RuntimeError("Schema validation error for outData")
-        if not os.listdir(self._workingDirectory):
-            os.rmdir(self._workingDirectory)
+        if not os.listdir(str(self._workingDirectory)):
+            os.rmdir(str(self._workingDirectory))
 
     def getInData(self):
         return json.loads(self._dictInOut['inData'])
