@@ -55,5 +55,6 @@ class CrystfelTaskExecTest(unittest.TestCase):
         task.execute()
         self.assertFalse(task.isFailure())
         outData = task.outData
-        self.assertTrue('resolution_limit' in outData)
+        self.assertTrue('QualityMetrics' in outData)
+        self.assertTrue('resolution_limit' in outData['QualityMetrics'])
         return
