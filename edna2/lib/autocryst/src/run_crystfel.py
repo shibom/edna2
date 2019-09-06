@@ -369,7 +369,7 @@ class AutoCrystFEL(object):
         unitcell = self.jshandle.get('unit_cell_file', None)
         indexing_method = self.jshandle.get('indexing_method', 'mosflm')
         peak_search = self.jshandle.get('peak_search', 'peakfinder8')
-        int_method = self.jshandle.get('int_method', 'rings-cen-rescut')
+        int_method = self.jshandle.get('int_method', 'rings-grad-rescut')
         int_radius = self.jshandle.get('int_radius', '3,4,6')
         highres = self.jshandle.get('highres', '0.0')
         nproc = self.jshandle.get('num_processors', '20')
@@ -444,9 +444,11 @@ class AutoCrystFEL(object):
 
             if self.is_success():
                 statparser = ResultParser()
-                for statfile, fom in zip([snrfile, ccfile, rsplitfile], ['snr', 'ccstar', 'rsplit']):
+                for statfile, fom in zip([ccfile, rsplitfile, snrfile], ['ccstar', 'rsplit', 'snr']):
                     statparser.getstats(statfile, fom=fom)
                     stat[fom] = statparser.results['DataQuality']
+                    stat['overall_' + fom] = statparser.results.get('overall_' + fom, 0.0)
+                    stat['overall_multiplicity'] = statparser.results.get('overall_multiplicity', 0.0)
             else:
                 logger.error('Merging did not run')
 

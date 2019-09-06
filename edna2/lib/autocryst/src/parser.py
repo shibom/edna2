@@ -101,6 +101,27 @@ class ResultParser(object):
 
     def getstats(self, statfile, fom):
         stat = self.stat_parser(statfile, fom)
+        overall_fom = 0.0
+        total_unique_refls = 0
+        total_meas = 0
+        if fom == 'snr':
+            for item in stat['DataQuality']:
+                overall_fom += item['snr'] * item['unique_refs']
+                total_unique_refls += item['unique_refs']
+                total_meas += float(item['total_refs'])
+
+            overall_fom /= total_unique_refls
+            total_meas /= total_unique_refls
+            stat['overall_snr'] = round(overall_fom, 4)
+            stat['overall_multiplicity'] = round(total_meas, 4)
+        else:
+            for item in stat['DataQuality']:
+                overall_fom += item[fom] * item['refs_common']
+                total_unique_refls += item['refs_common']
+
+            overall_fom /= total_unique_refls
+            stat['overall_' + fom] = round(overall_fom, 5)
+
         self.set_outData(stat)
         return
 
