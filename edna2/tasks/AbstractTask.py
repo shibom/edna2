@@ -23,6 +23,7 @@ __authors__ = ["O. Svensson"]
 __license__ = "MIT"
 __date__ = "21/04/2019"
 
+import os
 import json
 import pathlib
 import traceback
@@ -75,6 +76,8 @@ class AbstractTask(object):
         self._workingDirectory = None
         self._logFileName = None
         self._schemaPath = pathlib.Path(__file__).parents[1] / 'schema'
+        self._persistInOutData = True
+        self._oldDir = os.getcwd()
 
     def getSchemaUrl(self, schemaName):
         return 'file://' + str(self._schemaPath / schemaName)
@@ -96,7 +99,10 @@ class AbstractTask(object):
         if hasValidInDataSchema:
             self._workingDirectory = UtilsPath.getWorkingDirectory(self, inData)
             self.writeInputData(inData)
+            self._oldDir = os.getcwd()
+            os.chdir(self._workingDirectory)
             outData = self.run(inData)
+            os.chdir(self._oldDir)
         else:
             raise RuntimeError("Schema validation error for inData")
         if self.getOutDataSchema() is not None:
@@ -113,6 +119,8 @@ class AbstractTask(object):
             self.writeOutputData(outData)
         else:
             raise RuntimeError("Schema validation error for outData")
+        if not os.listdir(self._workingDirectory):
+            os.rmdir(self._workingDirectory)
 
     def getInData(self):
         return json.loads(self._dictInOut['inData'])
@@ -130,14 +138,14 @@ class AbstractTask(object):
 
     def writeInputData(self, inData):
         # Write input data
-        if self._workingDirectory is not None:
+        if self._persistInOutData and self._workingDirectory is not None:
             jsonName = "inData" + self.__class__.__name__ + ".json"
             with open(str(self._workingDirectory / jsonName), 'w') as f:
                 f.write(json.dumps(inData, default=str, indent=4))
 
     def writeOutputData(self, outData):
         self.setOutData(outData)
-        if self._workingDirectory is not None:
+        if self._persistInOutData and self._workingDirectory is not None:
             jsonName = "outData" + self.__class__.__name__ + ".json"
             with open(str(self._workingDirectory / jsonName), 'w') as f:
                 f.write(json.dumps(outData, default=str, indent=4))
@@ -232,10 +240,12 @@ class AbstractTask(object):
 
     def setWorkingDirectory(self, inData):
         self._workingDirectory = UtilsPath.getWorkingDirectory(self, inData)
-        return
 
     def getInDataSchema(self):
         return None
 
     def getOutDataSchema(self):
         return None
+
+    def setPersistInOutData(self, value):
+        self._persistInOutData = value

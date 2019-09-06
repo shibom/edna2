@@ -81,6 +81,7 @@ class FindDataForMerge(AbstractTask):
             getListAutoprocIntegration = GetListAutoprocIntegration(
                 inData=inDataGetListIntegration
             )
+            getListAutoprocIntegration.setPersistInOutData(False)
             getListAutoprocIntegration.execute()
             listAutoprocIntegration = getListAutoprocIntegration.outData
             # Get v_datacollection_summary_phasing_autoProcProgramId
@@ -97,6 +98,7 @@ class FindDataForMerge(AbstractTask):
                     getListAutoprocAttachment = GetListAutoprocAttachment(
                         inData=inDataGetListAttachment
                     )
+                    getListAutoprocAttachment.setPersistInOutData(False)
                     getListAutoprocAttachment.execute()
                     listAutoprocAttachment = getListAutoprocAttachment.outData
                     for attachment in listAutoprocAttachment:
