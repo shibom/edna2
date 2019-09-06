@@ -164,6 +164,8 @@ def substitueTestData(inData, loadTestImages=True,
         searchString = "$EDNA2_TMP_DATA"
         substituteString = str(tmpDir)
         newInData = substitute(newInData, searchString, substituteString)
+    # Any other environment variables...
+    newInData = json.loads(os.path.expandvars(json.dumps(newInData)))
     return newInData
 
 

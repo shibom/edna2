@@ -17,39 +17,35 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+__authors__ = ["O. Svensson"]
+__license__ = "MIT"
+__date__ = "05/09/2019"
+
 import os
 import unittest
 
 from edna2.utils import UtilsTest
 from edna2.utils import UtilsConfig
 
-from edna2.tasks.ISPyBTasks import ISPyBRetrieveDataCollection
+from edna2.tasks.ISPyBTasks import GetListAutoprocIntegration
 
 
-class ISPyBRetrieveDataCollectionExecTest(unittest.TestCase):
+class GetListAutoprocIntegrationExecTest(unittest.TestCase):
 
     def setUp(self):
         self.dataPath = UtilsTest.prepareTestDataPath(__file__)
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run ispyb test with default config')
-    def test_execute_ISPyBRetrieveDataCollection_image(self):
+    @unittest.skipIf('ISPyB_token' not in os.environ,
+                     'No ISPyB_token found in environment')
+    def test_execute_getListAutoprocIntegration(self):
         referenceDataPath = self.dataPath / \
-            "ISPyBRetrieveDataCollection_image.json"
+            "GetListAutoprocIntegration.json"
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
-        iSPyBRetrieveDataCollection = ISPyBRetrieveDataCollection(inData=inData)
-        iSPyBRetrieveDataCollection.execute()
-        outData = iSPyBRetrieveDataCollection.outData
-        self.assertEqual(outData['imagePrefix'], 'ref-ednatest')
-
-    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
-                     'Cannot run ispyb test with default config')
-    def test_execute_ISPyBRetrieveDataCollection_dataCollectionId(self):
-        referenceDataPath = self.dataPath / \
-            "ISPyBRetrieveDataCollection_dataCollectionId.json"
-        inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
-        iSPyBRetrieveDataCollection = ISPyBRetrieveDataCollection(inData=inData)
-        iSPyBRetrieveDataCollection.execute()
-        outData = iSPyBRetrieveDataCollection.outData
-        self.assertEqual(outData['imagePrefix'], 'ref-ednatest')
+        getListAutoprocIntegration = GetListAutoprocIntegration(inData=inData)
+        getListAutoprocIntegration.execute()
+        self.assertTrue(getListAutoprocIntegration.isSuccess())
+        outData = getListAutoprocIntegration.outData
+        self.assertEqual(21, len(outData))
 

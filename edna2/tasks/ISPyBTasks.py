@@ -32,10 +32,12 @@ __date__ = '21/04/2019'
 from suds.client import Client
 from suds.transport.http import HttpAuthenticated
 
+import os
 import pathlib
 
 from edna2.utils import UtilsConfig
 from edna2.utils import UtilsLogging
+from edna2.utils import UtilsIspyb
 
 from edna2.tasks.AbstractTask import AbstractTask
 
@@ -50,7 +52,7 @@ class ISPyBRetrieveDataCollection(AbstractTask):
         password = dictConfig['password']
         httpAuthenticated = HttpAuthenticated(username=username,
                                               password=password)
-        wdsl = dictConfig['wdslroot'] + '/ToolsForCollectionWebService?wsdl'
+        wdsl = dictConfig['ispyb_ws_url'] + '/ispybWS/ToolsForCollectionWebService?wsdl'
         client = Client(wdsl, transport=httpAuthenticated, cache=None)
         if 'image' in inData:
             path = pathlib.Path(inData['image'])
@@ -74,4 +76,77 @@ class ISPyBRetrieveDataCollection(AbstractTask):
         return outData
 
 
+class GetListAutoprocIntegration(AbstractTask):
 
+    def getInDataSchema(self):
+        return {
+            "type": "object",
+            "properties": {
+                "token": {"type": "string"},
+                "proposal": {"type": "string"},
+                "dataCollectionId": {"type": "integer"}
+            }
+        }
+
+    def getOutDataSchema(self):
+        return {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "AutoProcIntegration_autoProcIntegrationId": {"type": "integer"}
+                }
+            }
+        }
+
+    def run(self, inData):
+        # urlExtISPyB, token, proposal, dataCollectionId
+        token = inData['token']
+        proposal = inData['proposal']
+        dataCollectionId = inData['dataCollectionId']
+        dictConfig = UtilsConfig.getTaskConfig('ISPyB')
+        restUrl = dictConfig['ispyb_ws_url'] + '/rest'
+        ispybWebServiceURL = os.path.join(
+            restUrl, token, 'proposal', str(proposal), 'mx',
+            'autoprocintegration', 'datacollection', str(dataCollectionId),
+            'view')
+        outData = UtilsIspyb.getJsonFromURL(ispybWebServiceURL)
+        return outData
+
+
+class GetListAutoprocAttachment(AbstractTask):
+
+    def getInDataSchema(self):
+        return {
+            "type": "object",
+            "properties": {
+                "token": {"type": "string"},
+                "proposal": {"type": "string"},
+                "autoProcProgramId": {"type": "integer"}
+            }
+        }
+
+    def getOutDataSchema(self):
+        return {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "AutoProcIntegration_autoProcIntegrationId": {"type": "integer"}
+                }
+            }
+        }
+
+    def run(self, inData):
+        # urlExtISPyB, token, proposal, autoProcProgramId
+        token = inData['token']
+        proposal = inData['proposal']
+        autoProcProgramId = inData['autoProcProgramId']
+        dictConfig = UtilsConfig.getTaskConfig('ISPyB')
+        restUrl = dictConfig['ispyb_ws_url'] + '/rest'
+        ispybWebServiceURL = os.path.join(
+            restUrl, token, 'proposal', str(proposal), 'mx',
+            'autoprocintegration', 'attachment', 'autoprocprogramid',
+            str(autoProcProgramId), 'list')
+        outData = UtilsIspyb.getJsonFromURL(ispybWebServiceURL)
+        return outData
