@@ -1,0 +1,16 @@
+{
+	"listHklLp": [
+		{
+			"hkl": "/scisoft/pxsoft/data/EDNA2_TEST_DATA/xa_14_run2_noanom_XDS_ASCII.HKL",
+			"lp": "/scisoft/pxsoft/data/EDNA2_TEST_DATA/xa_14_run2_noanom_CORRECT.LP"
+		},
+		{
+			"hkl": "/scisoft/pxsoft/data/EDNA2_TEST_DATA/xa_14_run4_noanom_XDS_ASCII.HKL",
+			"lp": "/scisoft/pxsoft/data/EDNA2_TEST_DATA/xa_14_run4_noanom_CORRECT.LP"
+		},
+		{
+			"hkl": "/scisoft/pxsoft/data/EDNA2_TEST_DATA/xa_14_run5_noanom_XDS_ASCII.HKL",
+			"lp": "/scisoft/pxsoft/data/EDNA2_TEST_DATA/xa_14_run5_noanom_CORRECT.LP"
+		}
+	]
+}

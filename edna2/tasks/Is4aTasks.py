@@ -23,7 +23,8 @@ __authors__ = ["O. Svensson"]
 __license__ = "MIT"
 __date__ = "10/05/2019"
 
-import pprint
+import shutil
+import pathlib
 
 from edna2.tasks.AbstractTask import AbstractTask
 from edna2.tasks.ISPyBTasks import GetListAutoprocIntegration
@@ -115,3 +116,26 @@ class FindDataForMerge(AbstractTask):
                             })
         outData = {'dataForMerge': dataForMerge}
         return outData
+
+
+class MergeUtls(AbstractTask):
+    """
+    This task will run the Merge_utls.py program written by Shibom Basu
+    """
+
+    def run(self, inData):
+        listHklLp = inData['listHklLp']
+        workingDir = self.getWorkingDirectory()
+        index = 1
+        for hklLp in listHklLp:
+            dataDir = workingDir / "data{0}".format(index)
+            dataDir.mkdir(exist_ok=True)
+            shutil.copy(hklLp['hkl'], str(dataDir / 'XDS_ASCII.HKL'))
+            shutil.copy(hklLp['lp'], str(dataDir / 'CORRECT.LP'))
+            index += 1
+        commandLine = 'Merge_utls.py {0} serial-xtal'.format(str(workingDir))
+        self.runCommandLine(commandLine, logPath=None)
+        outData = {}
+        return outData
+
+

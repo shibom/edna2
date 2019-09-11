@@ -23,30 +23,30 @@ __authors__ = ["O. Svensson"]
 __license__ = "MIT"
 __date__ = "05/09/2019"
 
+import os
 import unittest
 
 from edna2.utils import UtilsTest
-from edna2.utils import UtilsConfig
 from edna2.utils import UtilsLogging
 
-from edna2.tasks.Is4aTasks import FindDataForMerge
+from edna2.tasks.Is4aTasks import MergeUtls
 
 logger = UtilsLogging.getLogger()
 
 
-class FindDataForMergeExecTest(unittest.TestCase):
+class MergeUtlsExecTest(unittest.TestCase):
 
     def setUp(self):
         self.dataPath = UtilsTest.prepareTestDataPath(__file__)
 
-    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
-                     'Cannot run ImageQualityIndicatorsExecTest ' +
-                     'test with default config')
+    @unittest.skipIf(not os.path.exists(
+        '/scisoft/pxsoft/data/EDNA2_TEST_DATA/xa_14_run2_noanom_XDS_ASCII.HKL'),
+        'Cannot find XDS_ASCII.HKL file')
     def test_execute(self):
-        referenceDataPath = self.dataPath / 'findDataForMerge.json'
+        referenceDataPath = self.dataPath / 'mergeUtls.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
-        findDataForMerge = FindDataForMerge(inData=inData)
-        findDataForMerge.execute()
-        self.assertTrue(findDataForMerge.isSuccess())
-        outData = findDataForMerge.outData
-        self.assertTrue('dataForMerge' in outData)
+        mergeUtls = MergeUtls(inData=inData)
+        mergeUtls.execute()
+        self.assertTrue(mergeUtls.isSuccess())
+        # outData = mergeUtls.outData
+        # self.assertTrue('' in outData)
