@@ -150,3 +150,86 @@ class GetListAutoprocAttachment(AbstractTask):
             str(autoProcProgramId), 'list')
         outData = UtilsIspyb.getJsonFromURL(ispybWebServiceURL)
         return outData
+
+
+class GetListAutoprocessingResults(AbstractTask):
+    """
+    This task receives a list of data collection IDs and returns a list
+    of dictionaries with all the auto-processing results and file attachments
+    """
+
+    def getInDataSchema(self):
+        return {
+            "type": "object",
+            "properties": {
+                "token": {"type": "string"},
+                "proposal": {"type": "string"},
+                "dataCollectionId": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                    }
+                }
+            }
+        }
+
+    # def getOutDataSchema(self):
+    #     return {
+    #         "type": "object",
+    #         "required": ["dataForMerge"],
+    #         "properties": {
+    #             "dataForMerge": {
+    #                 "type": "object",
+    #                 "items": {
+    #                     "type": "object",
+    #                     "properties": {
+    #                         "spaceGroup": {"type": "string"}
+    #                     }
+    #                 }
+    #             }
+    #         }
+    #     }
+
+    def run(self, inData):
+        token = inData['token']
+        proposal = inData['proposal']
+        listDataCollectionId = inData['dataCollectionId']
+        dictForMerge = {}
+        dictForMerge['dataCollection'] = []
+        for dataCollectionId in listDataCollectionId:
+            dictDataCollection = {}
+            dictDataCollection['dataCollectionId'] = dataCollectionId
+            inDataGetListIntegration = {
+                'token': token,
+                'proposal': proposal,
+                'dataCollectionId': dataCollectionId
+            }
+            getListAutoprocIntegration = GetListAutoprocIntegration(
+                inData=inDataGetListIntegration
+            )
+            getListAutoprocIntegration.setPersistInOutData(False)
+            getListAutoprocIntegration.execute()
+            listAutoprocIntegration = getListAutoprocIntegration.outData
+            # Get v_datacollection_summary_phasing_autoProcProgramId
+            for autoprocIntegration in listAutoprocIntegration:
+                if 'v_datacollection_summary_phasing_autoProcProgramId' in autoprocIntegration:
+                    autoProcProgramId = autoprocIntegration[
+                        'v_datacollection_summary_phasing_autoProcProgramId'
+                    ]
+                    inDataGetListAttachment = {
+                        'token': token,
+                        'proposal': proposal,
+                        'autoProcProgramId': autoProcProgramId
+                    }
+                    getListAutoprocAttachment = GetListAutoprocAttachment(
+                        inData=inDataGetListAttachment
+                    )
+                    getListAutoprocAttachment.setPersistInOutData(False)
+                    getListAutoprocAttachment.execute()
+                    listAutoprocAttachment = getListAutoprocAttachment.outData
+                    autoprocIntegration['autoprocAttachment'] = listAutoprocAttachment
+            dictDataCollection['autoprocIntegration'] = listAutoprocIntegration
+            dictForMerge['dataCollection'].append(dictDataCollection)
+            dictForMerge[dataCollectionId] = dictDataCollection
+        outData = dictForMerge
+        return outData

@@ -29,12 +29,12 @@ from edna2.utils import UtilsTest
 from edna2.utils import UtilsConfig
 from edna2.utils import UtilsLogging
 
-from edna2.tasks.Is4aTasks import FindDataForMerge
+from edna2.tasks.Is4aTasks import FindHklAsciiForMerge
 
 logger = UtilsLogging.getLogger()
 
 
-class FindDataForMergeExecTest(unittest.TestCase):
+class FindHklAsciiForMergeExecTest(unittest.TestCase):
 
     def setUp(self):
         self.dataPath = UtilsTest.prepareTestDataPath(__file__)
@@ -45,8 +45,8 @@ class FindDataForMergeExecTest(unittest.TestCase):
     def test_execute(self):
         referenceDataPath = self.dataPath / 'findDataForMerge.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
-        findDataForMerge = FindDataForMerge(inData=inData)
-        findDataForMerge.execute()
-        self.assertTrue(findDataForMerge.isSuccess())
-        outData = findDataForMerge.outData
-        self.assertTrue('dataForMerge' in outData)
+        findHklAsciiForMerge = FindHklAsciiForMerge(inData=inData)
+        findHklAsciiForMerge.execute()
+        self.assertTrue(findHklAsciiForMerge.isSuccess())
+        outData = findHklAsciiForMerge.outData
+        self.assertTrue('schema' in outData)

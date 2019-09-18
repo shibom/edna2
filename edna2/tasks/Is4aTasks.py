@@ -24,16 +24,16 @@ __license__ = "MIT"
 __date__ = "10/05/2019"
 
 import shutil
-import pathlib
+import pprint
 
 from edna2.tasks.AbstractTask import AbstractTask
-from edna2.tasks.ISPyBTasks import GetListAutoprocIntegration
-from edna2.tasks.ISPyBTasks import GetListAutoprocAttachment
+from edna2.tasks.ISPyBTasks import GetListAutoprocessingResults
 
-class FindDataForMerge(AbstractTask):
+
+class FindHklAsciiForMerge(AbstractTask):
     """
-    This task receives a list of data collection IDs and returns a list
-    of dictionaries with all the XDS.ASCII results
+    This task receives a list of data collection IDs and returns a
+    json schema for EXI2
     """
 
     def getInDataSchema(self):
@@ -72,49 +72,75 @@ class FindDataForMerge(AbstractTask):
         token = inData['token']
         proposal = inData['proposal']
         listDataCollectionId = inData['dataCollectionId']
-        dataForMerge = {}
-        for dataCollectionId in listDataCollectionId:
-            inDataGetListIntegration = {
-                'token': token,
-                'proposal': proposal,
-                'dataCollectionId': dataCollectionId
-            }
-            getListAutoprocIntegration = GetListAutoprocIntegration(
-                inData=inDataGetListIntegration
+        inDataGetListAutoprocessingResults = {
+            'token': token,
+            'proposal': proposal,
+            'dataCollectionId': listDataCollectionId
+        }
+        getListAutoprocessingResults = GetListAutoprocessingResults(
+            inData=inDataGetListAutoprocessingResults
+        )
+        getListAutoprocessingResults.execute()
+        outDataGetListAutoprocessingResults = getListAutoprocessingResults.outData
+        index = 1
+        properties = {}
+        listOrder = []
+        for dataCollection in outDataGetListAutoprocessingResults['dataCollection']:
+            dataCollectionId = dataCollection['dataCollectionId']
+            dictEntry = {}
+            listEnumNames = []
+            listEnumValues = []
+            proteinAcronym = None
+            blSampleName = None
+            for autoProcResult in dataCollection['autoprocIntegration']:
+                if proteinAcronym is None:
+                    proteinAcronym = autoProcResult['Protein_acronym']
+                    blSampleName = autoProcResult['BLSample_name']
+                for autoProcAttachment in autoProcResult['autoprocAttachment']:
+                    if 'XDS_ASCII' in autoProcAttachment['fileName']:
+                        fileName = autoProcAttachment['fileName']
+                        program = autoProcResult['v_datacollection_processingPrograms']
+                        attachmentId = autoProcAttachment['autoProcProgramAttachmentId']
+                        enumName = '{0:30s} {1}'.format(program, fileName)
+                        listEnumNames.append(enumName)
+                        enumValue = attachmentId
+                        listEnumValues.append(enumValue)
+            dictEntry['title'] = 'Select HKL for data Collection #{0} {2} {1}-{2}'.format(
+                index,
+                proteinAcronym,
+                blSampleName
             )
-            getListAutoprocIntegration.setPersistInOutData(False)
-            getListAutoprocIntegration.execute()
-            listAutoprocIntegration = getListAutoprocIntegration.outData
-            # Get v_datacollection_summary_phasing_autoProcProgramId
-            for autoprocIntegration in listAutoprocIntegration:
-                if 'v_datacollection_summary_phasing_autoProcProgramId' in autoprocIntegration:
-                    autoProcProgramId = autoprocIntegration[
-                        'v_datacollection_summary_phasing_autoProcProgramId'
-                    ]
-                    inDataGetListAttachment = {
-                        'token': token,
-                        'proposal': proposal,
-                        'autoProcProgramId': autoProcProgramId
-                    }
-                    getListAutoprocAttachment = GetListAutoprocAttachment(
-                        inData=inDataGetListAttachment
-                    )
-                    getListAutoprocAttachment.setPersistInOutData(False)
-                    getListAutoprocAttachment.execute()
-                    listAutoprocAttachment = getListAutoprocAttachment.outData
-                    for attachment in listAutoprocAttachment:
-                        fileName = attachment['fileName']
-                        if 'XDS_ASCII.HKL' in fileName:
-                            program = autoprocIntegration[
-                                'v_datacollection_processingPrograms'
-                            ]
-                            if program not in dataForMerge:
-                                dataForMerge[program] = []
-                            dataForMerge[program].append({
-                                'autoprocIntegration': autoprocIntegration,
-                                'attachment': attachment
-                            })
-        outData = {'dataForMerge': dataForMerge}
+            dictEntry['enum'] = listEnumValues
+            dictEntry['enumNames'] = listEnumNames
+            entryKey = 'hkl_'+str(dataCollectionId)
+            properties[entryKey] = dictEntry
+            listOrder.append(entryKey)
+            # Minimum sigma
+            entryKey = 'minimum_I/SIGMA_' + str(dataCollectionId)
+            dictEntry = {
+                'integer': 'string',
+                'type': 'string',
+                'title': 'minimum_I/SIGMA for data Collection #{0} {2} {1}-{2}'.format(
+                    index,
+                    proteinAcronym,
+                    blSampleName
+                )
+            }
+            properties[entryKey] = dictEntry
+            listOrder.append(entryKey)
+            index += 1
+        schema = {
+            'properties': properties,
+            'type': 'object',
+            'title': 'User input needed'
+        }
+        uiSchema = {
+            'ui:order': listOrder
+        }
+        outData = {
+            "schema": schema,
+            "uiSchema": uiSchema
+        }
         return outData
 
 
@@ -131,9 +157,8 @@ class MergeUtls(AbstractTask):
             dataDir = workingDir / "data{0}".format(index)
             dataDir.mkdir(exist_ok=True)
             shutil.copy(hklLp['hkl'], str(dataDir / 'XDS_ASCII.HKL'))
-            shutil.copy(hklLp['lp'], str(dataDir / 'CORRECT.LP'))
             index += 1
-        commandLine = 'Merge_utls.py {0} serial-xtal'.format(str(workingDir))
+        commandLine = 'Merge_utls.py --root {0} --expt serial-xtal'.format(str(workingDir))
         self.runCommandLine(commandLine, logPath=None)
         outData = {}
         return outData
