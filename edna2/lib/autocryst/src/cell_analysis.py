@@ -56,8 +56,10 @@ class Cell(object):
         self.status = False
         self.stream_handle = Stream(streamfile)
         self.stream_handle.get_chunk_pointers()
-        self.stream_handle.read_chunks()
-        self.stream_handle.get_reflections_list()
+        self.stream_handle.read_chunks(self.stream_handle.codgas_lookup['begin_chunk'],
+                                       self.stream_handle.codgas_lookup['end_chunk'])
+        self.stream_handle.get_reflections_list(self.stream_handle.codgas_lookup['begin_chunk'],
+                                                self.stream_handle.codgas_lookup['end_chunk'])
         self.stream_handle.close()
         self.stream_handle.get_indexed_only()
         if self.stream_handle.cells_only:

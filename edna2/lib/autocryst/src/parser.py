@@ -26,6 +26,7 @@ __date__ = '2019/08/16'
 import logging
 import pathlib
 import json
+import math
 import sys
 
 logger = logging.getLogger('autoCryst')
@@ -66,7 +67,7 @@ class ResultParser(object):
             logger.error('IOError:{}'.format('%s File not found' % statfile))
             return output
         for lines in _all:
-            if 'd(A)' in lines:
+            if '1/nm' in lines:
                 pass
             else:
                 line = lines.split()
@@ -106,9 +107,12 @@ class ResultParser(object):
         total_meas = 0
         if fom == 'snr':
             for item in stat['DataQuality']:
-                overall_fom += item['snr'] * item['unique_refs']
-                total_unique_refls += item['unique_refs']
-                total_meas += float(item['total_refs'])
+                if math.isnan(item[fom]) or math.isnan(item['unique_refs']):
+                    pass
+                else:
+                    overall_fom += item[fom] * item['unique_refs']
+                    total_unique_refls += item['unique_refs']
+                    total_meas += float(item['total_refs'])
 
             overall_fom /= total_unique_refls
             total_meas /= total_unique_refls
@@ -116,8 +120,11 @@ class ResultParser(object):
             stat['overall_multiplicity'] = round(total_meas, 4)
         else:
             for item in stat['DataQuality']:
-                overall_fom += item[fom] * item['refs_common']
-                total_unique_refls += item['refs_common']
+                if math.isnan(item[fom]) or math.isnan(item['refs_common']):
+                    pass
+                else:
+                    overall_fom += item[fom] * item['refs_common']
+                    total_unique_refls += item['refs_common']
 
             overall_fom /= total_unique_refls
             stat['overall_' + fom] = round(overall_fom, 5)
@@ -135,5 +142,5 @@ class ResultParser(object):
 
 if __name__ == '__main__':
     statparse = ResultParser()
-    statparse.getstats(sys.argv[1], fom='snr')
+    statparse.getstats(sys.argv[1], fom='ccano')
     print(statparse.results)

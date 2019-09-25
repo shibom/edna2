@@ -39,6 +39,7 @@ logger = logging.getLogger('autoCryst')
 chunk_template = """\
 ----- Begin chunk -----
 Image filename: {image} 
+Event: {event}
 Image serial number: {serial_number}
 hit = {hit}
 indexed_by = 'mosflm-nolatt-nocell' 
@@ -63,7 +64,7 @@ centering = {centering}
 unique_axis = {unique_axis}
 profile_radius = {profile_radius}
 predict_refine/final_residual = {residual}
-diffraction_resolution_limit = {rescut} 
+diffraction_resolution_limit = 2.33 nm^-1 or 4.28 A
 num_reflections = {nRefs}
 num_saturated_reflections = 0
 num_implausible_reflections = 0
@@ -92,13 +93,9 @@ class Stream(object):
             length = sum(1 for line in self.fobject)
 
             self.store_line_lengths = np.zeros(length)
-            self.begin_chunk_id = []
-            self.end_chunk_id = []
             self.header_index = []
-            self.begin_peak_list = []
-            self.end_peak_list = []
-            self.begin_reflist = []
-            self.end_reflist = []
+            self.is_indexed = []
+            self.codgas_lookup = dict()
             # attributes owing to the output data...
             self.header = []
             self.stream_data = []
@@ -147,8 +144,17 @@ class Stream(object):
         chunk2 = re.compile("----- End chunk")
         peak_start = re.compile("Peaks from peak search")
         peak_end = re.compile("End of peak list")
+        ind1 = re.compile("^indexed_by")
+        ind2 = re.compile("none")
         refls_start = re.compile("Reflections measured after indexing")
         refls_end = re.compile("End of reflections")
+
+        self.codgas_lookup['begin_chunk_all'] = []
+        self.codgas_lookup['end_chunk_all'] = []
+        self.codgas_lookup['begin_peak_list_all'] = []
+        self.codgas_lookup['end_peak_list_all'] = []
+        self.codgas_lookup['begin_reflist'] = []
+        self.codgas_lookup['end_reflist'] = []
 
         len_each_line = 0
         with open(self.streamfile, 'r') as f:
@@ -160,21 +166,49 @@ class Stream(object):
                     self.header_index.append(index)
                 if header_end.search(line):
                     self.header_index.append(index)
+
                 if chunk1.search(line):
-                    self.begin_chunk_id.append(index)
+                    self.codgas_lookup['begin_chunk_all'].append(index)
+
                 if chunk2.search(line):
-                    self.end_chunk_id.append(index)
+                    self.codgas_lookup['end_chunk_all'].append(index)
+
                 if peak_start.search(line):
-                    self.begin_peak_list.append(index)
+                    self.codgas_lookup['begin_peak_list_all'].append(index)
+
                 if peak_end.search(line):
-                    self.end_peak_list.append(index)
+                    self.codgas_lookup['end_peak_list_all'].append(index)
+
+                if ind1.search(line):
+                    if ind2.search(line):
+                        indexed = False
+                    else:
+                        indexed = True
+                    self.is_indexed.append(indexed)
+
                 if refls_start.search(line):
-                    self.begin_reflist.append(index)
+                    self.codgas_lookup['begin_reflist'].append(index)
+
                 if refls_end.search(line):
-                    self.end_reflist.append(index)
+                    self.codgas_lookup['end_reflist'].append(index)
+
+        self.codgas_lookup['begin_chunk'] = []
+        self.codgas_lookup['end_chunk'] = []
+        self.codgas_lookup['begin_peaklist'] = []
+        self.codgas_lookup['end_peaklist'] = []
+
+        for ii in range(len(self.is_indexed)):
+            if self.is_indexed[ii]:
+                self.codgas_lookup['begin_chunk'].append(self.codgas_lookup['begin_chunk_all'][ii])
+                self.codgas_lookup['end_chunk'].append(self.codgas_lookup['end_chunk_all'][ii])
+                self.codgas_lookup['begin_peaklist'].append(self.codgas_lookup['begin_peak_list_all'][ii])
+                self.codgas_lookup['end_peaklist'].append(self.codgas_lookup['end_peak_list_all'][ii])
+            else:
+                pass
+
         return
 
-    def read_chunks(self):
+    def read_chunks(self, begin_chunk_id, end_chunk_id):
         self.fobject.seek(0)  # set the file pointer at the start position..
 
         for jj in range(self.header_index[0], self.header_index[1]):
@@ -183,7 +217,7 @@ class Stream(object):
             self.header.append(line)
 
         self.fobject.seek(0)
-        for start, end in zip(self.begin_chunk_id, self.end_chunk_id):
+        for start, end in zip(begin_chunk_id, end_chunk_id):
             each_chunk_dict = copy.deepcopy({})  # store info from each chunk as dictionary..
             for ii in range(start, end+1):
                 self.fobject.seek(self.store_line_lengths[ii])  # bring the pointer to the correct line number..
@@ -196,6 +230,8 @@ class Stream(object):
                             each_chunk_dict[k] = match.group('image')
                         if k == 'event':
                             each_chunk_dict[k] = match.group('event')
+                        if k == 'serial_number':
+                            each_chunk_dict[k] = match.group('serial_number')
                         if k == 'nPeaks':
                             each_chunk_dict[k] = int(match.group('nPeaks'))
                         if k == 'nSat':
@@ -245,19 +281,20 @@ class Stream(object):
                         if k == 'z_shift':
                             each_chunk_dict['z_shift'] = float(match.group('z_shift').split()[0])
 
-            event = each_chunk_dict.get('event', 'x')
-            if event != 'x':
+            event = each_chunk_dict.get('event', '0')
+            if event != '0':
                 each_chunk_dict['image'] = each_chunk_dict['image'] + each_chunk_dict['event']
             else:
-                pass
+                each_chunk_dict['event'] = event
             # store everything as a list of dictionaries ..
             self.stream_data.append(each_chunk_dict)
 
         return
 
-    def get_peaklist(self):
+    def get_peaklist(self, begin_peak_list, end_peak_list):
         try:
-            for start, end, each_chunk in zip(self.begin_peak_list, self.end_peak_list, self.stream_data):
+            for start, end, each_chunk in zip(begin_peak_list, end_peak_list, self.stream_data):
+
                 self.image_peaks[each_chunk['image']] = []
                 for jj in range(start+2, end):
                     self.fobject.seek(self.store_line_lengths[jj])
@@ -269,12 +306,12 @@ class Stream(object):
             logger.info('Stream_Error:{}'.format(err))
         return
 
-    def get_reflections_list(self):
+    def get_reflections_list(self, begin_reflist, end_reflist):
         # Method to return a list of dictionaries, each of which contains indexed chunks
         # along with reflection list..
         self.fobject.seek(0)
         try:
-            for start, end, each_chunk in zip(self.begin_reflist, self.end_reflist, self.stream_data):
+            for start, end, each_chunk in zip(begin_reflist, end_reflist, self.stream_data):
                 if 'cell' in each_chunk.keys():
                     each_chunk['refList'] = []
 
@@ -414,8 +451,8 @@ def stream2xdslist(streamlist):
                 os.chdir(folder)
                 s = Stream(streamfile)
                 s.get_chunk_pointers()
-                s.read_chunks()
-                s.get_reflections_list()
+                s.read_chunks(s.codgas_lookup['begin_chunk'], s.codgas_lookup['end_chunk'])
+                s.get_reflections_list(s.codgas_lookup['begin_reflist'], s.codgas_lookup['end_reflist'])
                 s.close()
                 s.convert_chunk_to_xdsascii()
                 print("%d HKLs were written from %s into %s folder" % (len(s.image_refls), streamfile, folder))
@@ -429,10 +466,13 @@ if __name__ == '__main__':
 
     s = Stream(sys.argv[1])
     s.get_chunk_pointers()
-    s.read_chunks()
-    s.get_peaklist()
-    s.get_reflections_list()
+
+    s.read_chunks(s.codgas_lookup['begin_chunk'][:100], s.codgas_lookup['end_chunk'])
+    s.get_peaklist(s.codgas_lookup['begin_peaklist'][:100], s.codgas_lookup['end_peaklist'][:100])
+    s.get_reflections_list(s.codgas_lookup['begin_reflist'][:100], s.codgas_lookup['end_reflist'][:100])
+
     s.close()
+
     s.write_stream(s.image_refls, s.image_peaks, s.header, 'tst1.stream')
     '''
     fh = open('only_indexed_images.lst', 'w')
@@ -440,15 +480,5 @@ if __name__ == '__main__':
         fh.write(indexed_image)
         fh.write('\n')
     fh.close()
-
-    rescut = []
-    for chunks in s.stream_data:
-        try:
-            rescut.append(chunks['rescut'])
-        except KeyError:
-            pass
-    import matplotlib.pyplot as plt
-
-    plt.hist(rescut, histtype='step')
-    plt.show()
+    
     '''

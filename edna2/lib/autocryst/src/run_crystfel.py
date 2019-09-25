@@ -377,7 +377,7 @@ class AutoCrystFEL(object):
         if self.is_executable('indexamajig'):
             command = 'indexamajig -i %s -o %s -g %s' \
                       % (infile, streamfile, geometryfile)
-            command += ' --indexing=%s --multi --no-cell-combinations --peaks=%s' \
+            command += ' --indexing=%s --no-cell-combinations --peaks=%s' \
                        % (indexing_method, peak_search)
             command += ' --integration=%s --int-radius=%s -j %s --no-check-peaks --highres=%s' \
                        % (int_method, int_radius, nproc, highres)
@@ -620,8 +620,8 @@ class AutoCrystFEL(object):
         try:
             sh = Stream(streampath)  # streampath is a string, not Path object
             sh.get_chunk_pointers()
-            sh.read_chunks()
-            sh.get_peaklist()
+            sh.read_chunks(sh.codgas_lookup['begin_chunk'], sh.codgas_lookup['end_chunk'])
+            sh.get_peaklist(sh.codgas_lookup['begin_peaklist'], sh.codgas_lookup['end_peaklist'])
             sh.close()
             spots_data['peaks_per_pattern'] = sh.image_peaks
         except Exception as err:
