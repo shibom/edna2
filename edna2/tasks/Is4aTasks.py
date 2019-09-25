@@ -23,6 +23,7 @@ __authors__ = ["O. Svensson"]
 __license__ = "MIT"
 __date__ = "10/05/2019"
 
+import json
 import shutil
 import pprint
 
@@ -160,7 +161,12 @@ class MergeUtls(AbstractTask):
             index += 1
         commandLine = 'Merge_utls.py --root {0} --expt serial-xtal'.format(str(workingDir))
         self.runCommandLine(commandLine, logPath=None)
-        outData = {}
+        # Find Mergeing_results.json
+        resultPath = self.getWorkingDirectory() / 'adm_serial-xtal' / 'adm_3' / 'Mergeing_results.json'
+        if resultPath.exists():
+            with open(str(resultPath)) as f:
+                mergeResult = json.loads(f.read())
+        outData = {'mergeResult': mergeResult}
         return outData
 
 
