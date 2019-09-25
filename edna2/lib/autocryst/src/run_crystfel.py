@@ -369,7 +369,7 @@ class AutoCrystFEL(object):
         unitcell = self.jshandle.get('unit_cell_file', None)
         indexing_method = self.jshandle.get('indexing_method', 'mosflm')
         peak_search = self.jshandle.get('peak_search', 'peakfinder8')
-        int_method = self.jshandle.get('int_method', 'rings-cen-rescut')
+        int_method = self.jshandle.get('int_method', 'rings-grad-rescut')
         int_radius = self.jshandle.get('int_radius', '3,4,6')
         highres = self.jshandle.get('highres', '0.0')
         nproc = self.jshandle.get('num_processors', '20')
@@ -377,7 +377,7 @@ class AutoCrystFEL(object):
         if self.is_executable('indexamajig'):
             command = 'indexamajig -i %s -o %s -g %s' \
                       % (infile, streamfile, geometryfile)
-            command += ' --indexing=%s --multi --no-cell-combinations --peaks=%s' \
+            command += ' --indexing=%s --no-cell-combinations --peaks=%s' \
                        % (indexing_method, peak_search)
             command += ' --integration=%s --int-radius=%s -j %s --no-check-peaks --highres=%s' \
                        % (int_method, int_radius, nproc, highres)
@@ -444,9 +444,11 @@ class AutoCrystFEL(object):
 
             if self.is_success():
                 statparser = ResultParser()
-                for statfile, fom in zip([snrfile, ccfile, rsplitfile], ['snr', 'ccstar', 'rsplit']):
+                for statfile, fom in zip([ccfile, rsplitfile, snrfile], ['ccstar', 'rsplit', 'snr']):
                     statparser.getstats(statfile, fom=fom)
                     stat[fom] = statparser.results['DataQuality']
+                    stat['overall_' + fom] = statparser.results.get('overall_' + fom, 0.0)
+                    stat['overall_multiplicity'] = statparser.results.get('overall_multiplicity', 0.0)
             else:
                 logger.error('Merging did not run')
 
@@ -618,8 +620,8 @@ class AutoCrystFEL(object):
         try:
             sh = Stream(streampath)  # streampath is a string, not Path object
             sh.get_chunk_pointers()
-            sh.read_chunks()
-            sh.get_peaklist()
+            sh.read_chunks(sh.codgas_lookup['begin_chunk'], sh.codgas_lookup['end_chunk'])
+            sh.get_peaklist(sh.codgas_lookup['begin_peaklist'], sh.codgas_lookup['end_peaklist'])
             sh.close()
             spots_data['peaks_per_pattern'] = sh.image_peaks
         except Exception as err:
