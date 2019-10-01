@@ -32,14 +32,18 @@ from edna2.utils import UtilsLogging
 logger = UtilsLogging.getLogger()
 
 
-def getJsonFromURL(url):
-    listResponse = None
+def getDataFromURL(url):
     if "http_proxy" in os.environ:
         os.environ["http_proxy"] = ""
     response = requests.get(url)
+    data = {
+        'statusCode': response.status_code
+    }
     if response.status_code == 200:
-        listResponse = json.loads(response.text)[0]
-    return listResponse
+        data['data'] = json.loads(response.text)[0]
+    else:
+        data['text'] = response.text
+    return data
 
 
 def getRawFromURL(url):

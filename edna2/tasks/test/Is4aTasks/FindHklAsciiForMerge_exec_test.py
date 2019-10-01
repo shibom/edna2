@@ -50,3 +50,15 @@ class FindHklAsciiForMergeExecTest(unittest.TestCase):
         self.assertTrue(findHklAsciiForMerge.isSuccess())
         outData = findHklAsciiForMerge.outData
         self.assertTrue('schema' in outData)
+
+    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
+                     'Cannot run ImageQualityIndicatorsExecTest ' +
+                     'test with default config')
+    def test_execute_invalidToken(self):
+        referenceDataPath = self.dataPath / 'findDataForMerge_invalidToken.json'
+        inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
+        findHklAsciiForMerge = FindHklAsciiForMerge(inData=inData)
+        findHklAsciiForMerge.execute()
+        self.assertTrue(findHklAsciiForMerge.isSuccess())
+        outData = findHklAsciiForMerge.outData
+        self.assertTrue('error' in outData)

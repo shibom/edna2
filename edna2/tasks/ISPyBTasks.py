@@ -88,16 +88,16 @@ class GetListAutoprocIntegration(AbstractTask):
             }
         }
 
-    def getOutDataSchema(self):
-        return {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "AutoProcIntegration_autoProcIntegrationId": {"type": "integer"}
-                }
-            }
-        }
+    # def getOutDataSchema(self):
+    #     return {
+    #         "type": "array",
+    #         "items": {
+    #             "type": "object",
+    #             "properties": {
+    #                 "AutoProcIntegration_autoProcIntegrationId": {"type": "integer"}
+    #             }
+    #         }
+    #     }
 
     def run(self, inData):
         # urlExtISPyB, token, proposal, dataCollectionId
@@ -110,7 +110,12 @@ class GetListAutoprocIntegration(AbstractTask):
             restUrl, token, 'proposal', str(proposal), 'mx',
             'autoprocintegration', 'datacollection', str(dataCollectionId),
             'view')
-        outData = UtilsIspyb.getJsonFromURL(ispybWebServiceURL)
+        dataFromUrl = UtilsIspyb.getDataFromURL(ispybWebServiceURL)
+        outData = {}
+        if dataFromUrl['statusCode'] == 200:
+            outData['autoprocIntegration'] = dataFromUrl['data']
+        else:
+            outData['error'] = dataFromUrl
         return outData
 
 
@@ -126,16 +131,16 @@ class GetListAutoprocAttachment(AbstractTask):
             }
         }
 
-    def getOutDataSchema(self):
-        return {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "AutoProcIntegration_autoProcIntegrationId": {"type": "integer"}
-                }
-            }
-        }
+    # def getOutDataSchema(self):
+    #     return {
+    #         "type": "array",
+    #         "items": {
+    #             "type": "object",
+    #             "properties": {
+    #                 "AutoProcIntegration_autoProcIntegrationId": {"type": "integer"}
+    #             }
+    #         }
+    #     }
 
     def run(self, inData):
         # urlExtISPyB, token, proposal, autoProcProgramId
@@ -148,7 +153,12 @@ class GetListAutoprocAttachment(AbstractTask):
             restUrl, token, 'proposal', str(proposal), 'mx',
             'autoprocintegration', 'attachment', 'autoprocprogramid',
             str(autoProcProgramId), 'list')
-        outData = UtilsIspyb.getJsonFromURL(ispybWebServiceURL)
+        dataFromUrl = UtilsIspyb.getDataFromURL(ispybWebServiceURL)
+        outData = {}
+        if dataFromUrl['statusCode'] == 200:
+            outData['autoprocAttachment'] = dataFromUrl['data']
+        else:
+            outData['error'] = dataFromUrl
         return outData
 
 
@@ -191,6 +201,7 @@ class GetListAutoprocessingResults(AbstractTask):
     #     }
 
     def run(self, inData):
+        urlError = None
         token = inData['token']
         proposal = inData['proposal']
         listDataCollectionId = inData['dataCollectionId']
@@ -209,27 +220,40 @@ class GetListAutoprocessingResults(AbstractTask):
             )
             getListAutoprocIntegration.setPersistInOutData(False)
             getListAutoprocIntegration.execute()
-            listAutoprocIntegration = getListAutoprocIntegration.outData
-            # Get v_datacollection_summary_phasing_autoProcProgramId
-            for autoprocIntegration in listAutoprocIntegration:
-                if 'v_datacollection_summary_phasing_autoProcProgramId' in autoprocIntegration:
-                    autoProcProgramId = autoprocIntegration[
-                        'v_datacollection_summary_phasing_autoProcProgramId'
-                    ]
-                    inDataGetListAttachment = {
-                        'token': token,
-                        'proposal': proposal,
-                        'autoProcProgramId': autoProcProgramId
-                    }
-                    getListAutoprocAttachment = GetListAutoprocAttachment(
-                        inData=inDataGetListAttachment
-                    )
-                    getListAutoprocAttachment.setPersistInOutData(False)
-                    getListAutoprocAttachment.execute()
-                    listAutoprocAttachment = getListAutoprocAttachment.outData
-                    autoprocIntegration['autoprocAttachment'] = listAutoprocAttachment
-            dictDataCollection['autoprocIntegration'] = listAutoprocIntegration
-            dictForMerge['dataCollection'].append(dictDataCollection)
-            dictForMerge[dataCollectionId] = dictDataCollection
-        outData = dictForMerge
+            resultAutoprocIntegration = getListAutoprocIntegration.outData
+            if 'error' in resultAutoprocIntegration:
+                urlError = resultAutoprocIntegration['error']
+                break
+            else:
+                listAutoprocIntegration = resultAutoprocIntegration['autoprocIntegration']
+                # Get v_datacollection_summary_phasing_autoProcProgramId
+                for autoprocIntegration in listAutoprocIntegration:
+                    if 'v_datacollection_summary_phasing_autoProcProgramId' in autoprocIntegration:
+                        autoProcProgramId = autoprocIntegration[
+                            'v_datacollection_summary_phasing_autoProcProgramId'
+                        ]
+                        inDataGetListAttachment = {
+                            'token': token,
+                            'proposal': proposal,
+                            'autoProcProgramId': autoProcProgramId
+                        }
+                        getListAutoprocAttachment = GetListAutoprocAttachment(
+                            inData=inDataGetListAttachment
+                        )
+                        getListAutoprocAttachment.setPersistInOutData(False)
+                        getListAutoprocAttachment.execute()
+                        resultAutoprocAttachment = getListAutoprocAttachment.outData
+                        if 'error' in resultAutoprocAttachment:
+                            urlError = resultAutoprocAttachment['error']
+                        else:
+                            autoprocIntegration['autoprocAttachment'] = resultAutoprocAttachment['autoprocAttachment']
+                    dictDataCollection['autoprocIntegration'] = listAutoprocIntegration
+                    dictForMerge['dataCollection'].append(dictDataCollection)
+                # dictForMerge[dataCollectionId] = dictDataCollection
+        if urlError is None:
+            outData = dictForMerge
+        else:
+            outData = {
+                'error': urlError
+            }
         return outData

@@ -72,19 +72,19 @@ class ImageQualityIndicatorsEiger4MExecTest(unittest.TestCase):
         referenceDataPath = self.dataPath / 'eiger4m_h5_10images.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         directory = pathlib.Path(inData['directory'])
-        # tmpDirectory = tempfile.mkdtemp(prefix='eiger4m_h5_100images_')
-        # shutil.copy(str(directory / 'mesh-opid30a3_1_1_master.h5'),
-        #            tmpDirectory)
-        # shutil.copy(str(directory / 'mesh-opid30a3_1_1_data_000001.h5'),
-        #            tmpDirectory)
-        # inData['directory'] = tmpDirectory
+        tmpDirectory = tempfile.mkdtemp(prefix='eiger4m_h5_100images_')
+        shutil.copy(str(directory / 'mesh-opid30a3_1_1_master.h5'),
+                   tmpDirectory)
+        shutil.copy(str(directory / 'mesh-opid30a3_1_1_data_000001.h5'),
+                   tmpDirectory)
+        inData['directory'] = tmpDirectory
         task = ImageQualityIndicatorsTask(inData=inData)
         task.execute()
+        shutil.rmtree(tmpDirectory)
         self.assertFalse(task.isFailure())
         outData = task.outData
         self.assertTrue('imageQualityIndicators' in outData)
         self.assertEqual(len(outData['imageQualityIndicators']), 10)
-        # shutil.rmtree(tmpDirectory)
 
 
 if __name__ == '__main__':

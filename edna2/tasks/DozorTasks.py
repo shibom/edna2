@@ -45,7 +45,7 @@ from edna2.utils import UtilsLogging
 # mxPluginExec/plugins/EDPluginDozor-v1.0/plugins/EDPluginDozorv1_0.py
 # mxv1/plugins/EDPluginControlDozor-v1.0/plugins/EDPluginControlDozorv1_0.py
 
-matplotlib.use('Agg')
+# matplotlib.use('Agg')
 
 logger = UtilsLogging.getLogger()
 

@@ -49,9 +49,9 @@ def getLogger(level=None):
             hasStreamHandler = True
     if not hasGraylogHandler:
         server = UtilsConfig.get('Logging', 'graylog_server')
-        port = int(UtilsConfig.get('Logging', 'graylog_port'))
+        port = UtilsConfig.get('Logging', 'graylog_port')
         if server is not None and port is not None:
-            graylogHandler = graypy.GELFUDPHandler(server, port)
+            graylogHandler = graypy.GELFUDPHandler(server, int(port))
             logger.addHandler(graylogHandler)
     if not hasStreamHandler:
         streamHandler = logging.StreamHandler()

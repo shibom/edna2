@@ -47,5 +47,17 @@ class GetListAutoprocIntegrationExecTest(unittest.TestCase):
         getListAutoprocIntegration.execute()
         self.assertTrue(getListAutoprocIntegration.isSuccess())
         outData = getListAutoprocIntegration.outData
-        self.assertEqual(21, len(outData))
+        self.assertEqual(21, len(outData['autoprocIntegration']))
 
+    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
+                     'Cannot run ispyb test with default config')
+    def test_execute_getListAutoprocIntegration_invalidToken(self):
+        referenceDataPath = self.dataPath / \
+            "GetListAutoprocIntegration.json"
+        inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
+        inData['token'] = 'abcdefghijklmnopqrstuvwxyz'
+        getListAutoprocIntegration = GetListAutoprocIntegration(inData=inData)
+        getListAutoprocIntegration.execute()
+        self.assertTrue(getListAutoprocIntegration.isSuccess())
+        outData = getListAutoprocIntegration.outData
+        self.assertTrue('error' in outData)

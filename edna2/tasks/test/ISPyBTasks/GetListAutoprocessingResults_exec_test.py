@@ -27,10 +27,10 @@ import unittest
 from edna2.utils import UtilsTest
 from edna2.utils import UtilsConfig
 
-from edna2.tasks.ISPyBTasks import GetListAutoprocAttachment
+from edna2.tasks.ISPyBTasks import GetListAutoprocessingResults
 
 
-class GetListAutoprocAttachmentExecTest(unittest.TestCase):
+class GetListAutoprocessingResultsExecTest(unittest.TestCase):
 
     def setUp(self):
         self.dataPath = UtilsTest.prepareTestDataPath(__file__)
@@ -39,13 +39,26 @@ class GetListAutoprocAttachmentExecTest(unittest.TestCase):
                      'Cannot run ispyb test with default config')
     @unittest.skipIf('ISPyB_token' not in os.environ,
                      'No ISPyB_token found in environment')
-    def test_execute_getListAutoprocAttachment(self):
+    def test_execute_getListAutoprocIntegration(self):
         referenceDataPath = self.dataPath / \
-            "GetListAutoprocAttachment.json"
+            "GetListAutoprocessingResults.json"
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
-        getListAutoprocAttachment = GetListAutoprocAttachment(inData=inData)
-        getListAutoprocAttachment.execute()
-        self.assertTrue(getListAutoprocAttachment.isSuccess())
-        outData = getListAutoprocAttachment.outData
-        self.assertEqual(4, len(outData['autoprocAttachment']))
+        getListAutoprocessingResults = GetListAutoprocessingResults(inData=inData)
+        getListAutoprocessingResults.execute()
+        self.assertTrue(getListAutoprocessingResults.isSuccess())
+        outData = getListAutoprocessingResults.outData
+        self.assertEqual(46, len(outData['dataCollection']))
 
+
+    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
+                     'Cannot run ispyb test with default config')
+    def test_execute_getListAutoprocIntegration_invalidToken(self):
+        referenceDataPath = self.dataPath / \
+            "GetListAutoprocessingResults.json"
+        inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
+        inData['token'] = 'abcdefghijklmnopqrstuvwxyz'
+        getListAutoprocessingResults = GetListAutoprocessingResults(inData=inData)
+        getListAutoprocessingResults.execute()
+        self.assertTrue(getListAutoprocessingResults.isSuccess())
+        outData = getListAutoprocessingResults.outData
+        self.assertTrue('error' in outData)

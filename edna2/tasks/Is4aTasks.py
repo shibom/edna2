@@ -70,6 +70,7 @@ class FindHklAsciiForMerge(AbstractTask):
     #     }
 
     def run(self, inData):
+        urlError = None
         token = inData['token']
         proposal = inData['proposal']
         listDataCollectionId = inData['dataCollectionId']
@@ -82,66 +83,78 @@ class FindHklAsciiForMerge(AbstractTask):
             inData=inDataGetListAutoprocessingResults
         )
         getListAutoprocessingResults.execute()
-        outDataGetListAutoprocessingResults = getListAutoprocessingResults.outData
-        index = 1
-        properties = {}
-        listOrder = []
-        for dataCollection in outDataGetListAutoprocessingResults['dataCollection']:
-            dataCollectionId = dataCollection['dataCollectionId']
-            dictEntry = {}
-            listEnumNames = []
-            listEnumValues = []
-            proteinAcronym = None
-            blSampleName = None
-            for autoProcResult in dataCollection['autoprocIntegration']:
-                if proteinAcronym is None:
-                    proteinAcronym = autoProcResult['Protein_acronym']
-                    blSampleName = autoProcResult['BLSample_name']
-                for autoProcAttachment in autoProcResult['autoprocAttachment']:
-                    if 'XDS_ASCII' in autoProcAttachment['fileName']:
-                        fileName = autoProcAttachment['fileName']
-                        program = autoProcResult['v_datacollection_processingPrograms']
-                        attachmentId = autoProcAttachment['autoProcProgramAttachmentId']
-                        enumName = '{0:30s} {1}'.format(program, fileName)
-                        listEnumNames.append(enumName)
-                        enumValue = attachmentId
-                        listEnumValues.append(enumValue)
-            dictEntry['title'] = 'Select HKL for data Collection #{0} {2} {1}-{2}'.format(
-                index,
-                proteinAcronym,
-                blSampleName
-            )
-            dictEntry['enum'] = listEnumValues
-            dictEntry['enumNames'] = listEnumNames
-            entryKey = 'hkl_'+str(dataCollectionId)
-            properties[entryKey] = dictEntry
-            listOrder.append(entryKey)
-            # Minimum sigma
-            entryKey = 'minimum_I/SIGMA_' + str(dataCollectionId)
-            dictEntry = {
-                'integer': 'string',
-                'type': 'string',
-                'title': 'minimum_I/SIGMA for data Collection #{0} {2} {1}-{2}'.format(
-                    index,
-                    proteinAcronym,
-                    blSampleName
-                )
+        outDataAutoprocessing = getListAutoprocessingResults.outData
+        if 'error' in outDataAutoprocessing:
+            urlError = outDataAutoprocessing['error']
+        else:
+            index = 1
+            properties = {}
+            listOrder = []
+            for dataCollection in outDataAutoprocessing['dataCollection']:
+                dataCollectionId = dataCollection['dataCollectionId']
+                dictEntry = {}
+                listEnumNames = []
+                listEnumValues = []
+                proteinAcronym = None
+                blSampleName = None
+                if 'error' in dataCollection['autoprocIntegration']:
+                    urlError = dataCollection['autoprocIntegration']['error']
+                else:
+                    for autoProcResult in dataCollection['autoprocIntegration']:
+                        if proteinAcronym is None:
+                            proteinAcronym = autoProcResult['Protein_acronym']
+                            blSampleName = autoProcResult['BLSample_name']
+                        for autoProcAttachment in autoProcResult['autoprocAttachment']:
+                            if 'XDS_ASCII' in autoProcAttachment['fileName']:
+                                fileName = autoProcAttachment['fileName']
+                                program = autoProcResult['v_datacollection_processingPrograms']
+                                attachmentId = autoProcAttachment['autoProcProgramAttachmentId']
+                                enumName = '{0:30s} {1}'.format(program, fileName)
+                                listEnumNames.append(enumName)
+                                enumValue = attachmentId
+                                listEnumValues.append(enumValue)
+                if urlError is None:
+                    dictEntry['title'] = 'Select HKL for data Collection #{0} {2} {1}-{2}'.format(
+                        index,
+                        proteinAcronym,
+                        blSampleName
+                    )
+                    dictEntry['enum'] = listEnumValues
+                    dictEntry['enumNames'] = listEnumNames
+                    entryKey = 'hkl_'+str(dataCollectionId)
+                    properties[entryKey] = dictEntry
+                    listOrder.append(entryKey)
+                    # Minimum sigma
+                    entryKey = 'minimum_I/SIGMA_' + str(dataCollectionId)
+                    dictEntry = {
+                        'integer': 'string',
+                        'type': 'string',
+                        'title': 'minimum_I/SIGMA for data Collection #{0} {2} {1}-{2}'.format(
+                            index,
+                            proteinAcronym,
+                            blSampleName
+                        )
+                    }
+                    properties[entryKey] = dictEntry
+                    listOrder.append(entryKey)
+                    index += 1
+        if urlError is None:
+            schema = {
+                'properties': properties,
+                'type': 'object',
+                'title': 'User input needed'
             }
-            properties[entryKey] = dictEntry
-            listOrder.append(entryKey)
-            index += 1
-        schema = {
-            'properties': properties,
-            'type': 'object',
-            'title': 'User input needed'
-        }
-        uiSchema = {
-            'ui:order': listOrder
-        }
-        outData = {
-            "schema": schema,
-            "uiSchema": uiSchema
-        }
+            uiSchema = {
+                'ui:order': listOrder
+            }
+            outData = {
+                "schema": schema,
+                "uiSchema": uiSchema
+            }
+        else:
+            outData = {
+                'error': urlError
+            }
         return outData
 
 
