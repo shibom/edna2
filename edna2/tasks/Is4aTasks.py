@@ -114,30 +114,32 @@ class FindHklAsciiForMerge(AbstractTask):
                                 enumValue = attachmentId
                                 listEnumValues.append(enumValue)
                 if urlError is None:
-                    dictEntry['title'] = 'Select HKL for data Collection #{0} {2} {1}-{2}'.format(
-                        index,
-                        proteinAcronym,
-                        blSampleName
-                    )
-                    dictEntry['enum'] = listEnumValues
-                    dictEntry['enumNames'] = listEnumNames
                     entryKey = 'hkl_'+str(dataCollectionId)
-                    properties[entryKey] = dictEntry
-                    listOrder.append(entryKey)
-                    # Minimum sigma
-                    entryKey = 'minimum_I/SIGMA_' + str(dataCollectionId)
-                    dictEntry = {
-                        'integer': 'string',
-                        'type': 'string',
-                        'title': 'minimum_I/SIGMA for data Collection #{0} {2} {1}-{2}'.format(
+                    if entryKey not in properties:
+                        dictEntry['title'] = 'Select HKL for data Collection #{0} {2} {1}-{2}'.format(
                             index,
                             proteinAcronym,
                             blSampleName
                         )
-                    }
-                    properties[entryKey] = dictEntry
-                    listOrder.append(entryKey)
-                    index += 1
+                        dictEntry['enum'] = listEnumValues
+                        dictEntry['enumNames'] = listEnumNames
+                        properties[entryKey] = dictEntry
+                        listOrder.append(entryKey)
+                    entryKey = 'minimum_I/SIGMA_' + str(dataCollectionId)
+                    if entryKey not in properties:
+                        # Minimum sigma
+                        dictEntry = {
+                            'integer': 'string',
+                            'type': 'string',
+                            'title': 'minimum_I/SIGMA for data Collection #{0} {2} {1}-{2}'.format(
+                                index,
+                                proteinAcronym,
+                                blSampleName
+                            )
+                        }
+                        properties[entryKey] = dictEntry
+                        listOrder.append(entryKey)
+                        index += 1
         if urlError is None:
             schema = {
                 'properties': properties,
