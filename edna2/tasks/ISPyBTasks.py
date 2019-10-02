@@ -208,8 +208,9 @@ class GetListAutoprocessingResults(AbstractTask):
         dictForMerge = {}
         dictForMerge['dataCollection'] = []
         for dataCollectionId in listDataCollectionId:
-            dictDataCollection = {}
-            dictDataCollection['dataCollectionId'] = dataCollectionId
+            dictDataCollection = {
+                'dataCollectionId': dataCollectionId
+            }
             inDataGetListIntegration = {
                 'token': token,
                 'proposal': proposal,
@@ -248,8 +249,8 @@ class GetListAutoprocessingResults(AbstractTask):
                         else:
                             autoprocIntegration['autoprocAttachment'] = resultAutoprocAttachment['autoprocAttachment']
                     dictDataCollection['autoprocIntegration'] = listAutoprocIntegration
-                    dictForMerge['dataCollection'].append(dictDataCollection)
-                # dictForMerge[dataCollectionId] = dictDataCollection
+            dictForMerge['dataCollection'].append(dictDataCollection)
+            # dictForMerge[dataCollectionId] = dictDataCollection
         if urlError is None:
             outData = dictForMerge
         else:

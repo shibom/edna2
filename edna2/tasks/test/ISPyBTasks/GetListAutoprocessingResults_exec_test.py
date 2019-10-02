@@ -47,7 +47,7 @@ class GetListAutoprocessingResultsExecTest(unittest.TestCase):
         getListAutoprocessingResults.execute()
         self.assertTrue(getListAutoprocessingResults.isSuccess())
         outData = getListAutoprocessingResults.outData
-        self.assertEqual(46, len(outData['dataCollection']))
+        self.assertEqual(2, len(outData['dataCollection']))
 
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
