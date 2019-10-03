@@ -46,11 +46,15 @@ def getDataFromURL(url):
     return data
 
 
-def getRawFromURL(url):
-    rawResponse = None
+def getRawDataFromURL(url):
     if "http_proxy" in os.environ:
         os.environ["http_proxy"] = ""
     response = requests.get(url)
+    data = {
+        'statusCode': response.status_code
+    }
     if response.status_code == 200:
-        rawResponse = response.content
-    return rawResponse
+        data['content'] = response.content
+    else:
+        data['text'] = response.text
+    return data

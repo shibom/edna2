@@ -248,24 +248,25 @@ class FindPipelineForMerge(AbstractTask):
                                         entryKey = program + '_noanom'
                                     if not entryKey in dictEntry:
                                         dictEntry[entryKey] = []
-                                    dictEntry[entryKey].append(attachmentId)
-                print('a')
+                                    dictEntry[entryKey].append('{0} {1}'.format(attachmentId, fileName))
         if urlError is None:
             listEnumNames = []
             listOfListId = []
             for entryKey, listId in dictEntry.items():
                 if len(listId) == len(outDataAutoprocessing['dataCollection']):
                     listEnumNames.append(entryKey)
-                    listOfListId.append(listId)
+                    listOfListId.append(','.join(listId))
             if len(listEnumNames) > 0:
                 dictSchema = {
                     'title': 'Select processing pipeline for data Collection {0}-{1}'.format(
                         proteinAcronym,
                         blSampleName
                     ),
-                    'enum': listOfListId, 'enumNames': listEnumNames
+                    'type': 'string',
+                    'enum': listOfListId,
+                    'enumNames': listEnumNames
                 }
-                key = "pipeline"
+                key = "attachments"
                 properties[key] = dictSchema
                 listOrder.append(key)
                 # Minimum sigma
