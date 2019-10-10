@@ -160,6 +160,147 @@ class FindHklAsciiForMerge(AbstractTask):
         return outData
 
 
+class FindPipelineForMerge(AbstractTask):
+    """
+    This task receives a list of data collection IDs and returns a
+    json schema for EXI2
+    """
+
+    def getInDataSchema(self):
+        return {
+            "type": "object",
+            "properties": {
+                "token": {"type": "string"},
+                "proposal": {"type": "string"},
+                "dataCollectionId": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                    }
+                }
+            }
+        }
+
+    # def getOutDataSchema(self):
+    #     return {
+    #         "type": "object",
+    #         "required": ["dataForMerge"],
+    #         "properties": {
+    #             "dataForMerge": {
+    #                 "type": "object",
+    #                 "items": {
+    #                     "type": "object",
+    #                     "properties": {
+    #                         "spaceGroup": {"type": "string"}
+    #                     }
+    #                 }
+    #             }
+    #         }
+    #     }
+
+    def run(self, inData):
+        urlError = None
+        token = inData['token']
+        proposal = inData['proposal']
+        listDataCollectionId = inData['dataCollectionId']
+        inDataGetListAutoprocessingResults = {
+            'token': token,
+            'proposal': proposal,
+            'dataCollectionId': listDataCollectionId
+        }
+        getListAutoprocessingResults = GetListAutoprocessingResults(
+            inData=inDataGetListAutoprocessingResults
+        )
+        getListAutoprocessingResults.execute()
+        outDataAutoprocessing = getListAutoprocessingResults.outData
+        if 'error' in outDataAutoprocessing:
+            urlError = outDataAutoprocessing['error']
+        else:
+            index = 1
+            properties = {}
+            listOrder = []
+            dictEntry = {}
+            for dataCollection in outDataAutoprocessing['dataCollection']:
+                dataCollectionId = dataCollection['dataCollectionId']
+                listEnumValues = []
+                proteinAcronym = None
+                blSampleName = None
+                if 'error' in dataCollection['autoprocIntegration']:
+                    urlError = dataCollection['autoprocIntegration']['error']
+                else:
+                    for autoProcResult in dataCollection['autoprocIntegration']:
+                        if len(autoProcResult['autoprocAttachment']) > 0:
+                            if proteinAcronym is None:
+                                proteinAcronym = autoProcResult['Protein_acronym']
+                                blSampleName = autoProcResult['BLSample_name']
+                            if '1' in autoProcResult['anomalous']:
+                                anom = True
+                            else:
+                                anom = False
+                            for autoProcAttachment in autoProcResult['autoprocAttachment']:
+                                if 'XDS_ASCII' in autoProcAttachment['fileName']:
+                                    fileName = autoProcAttachment['fileName']
+                                    program = autoProcResult['v_datacollection_processingPrograms']
+                                    attachmentId = autoProcAttachment['autoProcProgramAttachmentId']
+                                    if anom:
+                                        entryKey = program + '_anom'
+                                    else:
+                                        entryKey = program + '_noanom'
+                                    if not entryKey in dictEntry:
+                                        dictEntry[entryKey] = []
+                                    dictEntry[entryKey].append('{0} {1}'.format(attachmentId, fileName))
+        if urlError is None:
+            listEnumNames = []
+            listOfListId = []
+            for entryKey, listId in dictEntry.items():
+                if len(listId) == len(outDataAutoprocessing['dataCollection']):
+                    listEnumNames.append(entryKey)
+                    listOfListId.append(','.join(listId))
+            if len(listEnumNames) > 0:
+                dictSchema = {
+                    'title': 'Select processing pipeline for data Collection {0}-{1}'.format(
+                        proteinAcronym,
+                        blSampleName
+                    ),
+                    'type': 'string',
+                    'enum': listOfListId,
+                    'enumNames': listEnumNames
+                }
+                key = "attachments"
+                properties[key] = dictSchema
+                listOrder.append(key)
+                # Minimum sigma
+                dictSchema = {
+                    'integer': 'string',
+                    'type': 'string',
+                    'title': 'minimum_I/SIGMA for data Collection {0}-{1}'.format(
+                        proteinAcronym,
+                        blSampleName
+                    )
+                }
+                key = 'minimum_I/SIGMA'
+                properties[key] = dictSchema
+                listOrder.append(key)
+        if urlError is None:
+            schema = {
+                'properties': properties,
+                'type': 'object',
+                'title': 'User input needed'
+            }
+            uiSchema = {
+                'ui:order': listOrder
+            }
+            outData = {
+                "schema": schema,
+                "uiSchema": uiSchema
+            }
+        else:
+            outData = {
+                'error': urlError
+            }
+        return outData
+
+
 class MergeUtls(AbstractTask):
     """
     This task will run the Merge_utls.py program written by Shibom Basu

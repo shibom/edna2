@@ -33,6 +33,7 @@ from suds.client import Client
 from suds.transport.http import HttpAuthenticated
 
 import os
+import gzip
 import pathlib
 
 from edna2.utils import UtilsConfig
@@ -208,8 +209,9 @@ class GetListAutoprocessingResults(AbstractTask):
         dictForMerge = {}
         dictForMerge['dataCollection'] = []
         for dataCollectionId in listDataCollectionId:
-            dictDataCollection = {}
-            dictDataCollection['dataCollectionId'] = dataCollectionId
+            dictDataCollection = {
+                'dataCollectionId': dataCollectionId
+            }
             inDataGetListIntegration = {
                 'token': token,
                 'proposal': proposal,
@@ -248,10 +250,86 @@ class GetListAutoprocessingResults(AbstractTask):
                         else:
                             autoprocIntegration['autoprocAttachment'] = resultAutoprocAttachment['autoprocAttachment']
                     dictDataCollection['autoprocIntegration'] = listAutoprocIntegration
-                    dictForMerge['dataCollection'].append(dictDataCollection)
-                # dictForMerge[dataCollectionId] = dictDataCollection
+            dictForMerge['dataCollection'].append(dictDataCollection)
+            # dictForMerge[dataCollectionId] = dictDataCollection
         if urlError is None:
             outData = dictForMerge
+        else:
+            outData = {
+                'error': urlError
+            }
+        return outData
+
+
+class RetrieveAttachmentFiles(AbstractTask):
+    """
+    This task receives a list of data collection IDs and returns a list
+    of dictionaries with all the auto-processing results and file attachments
+    """
+
+    # def getInDataSchema(self):
+    #     return {
+    #         "type": "object",
+    #         "properties": {
+    #             "token": {"type": "string"},
+    #             "proposal": {"type": "string"},
+    #             "dataCollectionId": {
+    #                 "type": "array",
+    #                 "items": {
+    #                     "type": "integer",
+    #                 }
+    #             }
+    #         }
+    #     }
+
+    # def getOutDataSchema(self):
+    #     return {
+    #         "type": "object",
+    #         "required": ["dataForMerge"],
+    #         "properties": {
+    #             "dataForMerge": {
+    #                 "type": "object",
+    #                 "items": {
+    #                     "type": "object",
+    #                     "properties": {
+    #                         "spaceGroup": {"type": "string"}
+    #                     }
+    #                 }
+    #             }
+    #         }
+    #     }
+
+    def run(self, inData):
+        urlError = None
+        listPath = []
+        token = inData['token']
+        proposal = inData['proposal']
+        listAttachment = inData['attachment']
+        dictConfig = UtilsConfig.getTaskConfig('ISPyB')
+        restUrl = dictConfig['ispyb_ws_url'] + '/rest'
+        # proposal/MX2112/mx/autoprocintegration/autoprocattachmentid/21494689/get
+        for dictAttachment in listAttachment:
+            attachmentId = dictAttachment['id']
+            fileName = dictAttachment['fileName']
+            ispybWebServiceURL = os.path.join(
+                restUrl, token, 'proposal', str(proposal), 'mx',
+                'autoprocintegration', 'autoprocattachmentid', str(attachmentId),
+                'get')
+            rawDataFromUrl = UtilsIspyb.getRawDataFromURL(ispybWebServiceURL)
+            if rawDataFromUrl['statusCode'] == 200:
+                rawData = rawDataFromUrl['content']
+                if fileName.endswith('.gz'):
+                    rawData = gzip.decompress(rawData)
+                    fileName = fileName.split('.gz')[0]
+                with open(fileName, "wb") as f:
+                    f.write(rawData)
+                listPath.append(str(self.getWorkingDirectory() / fileName))
+            else:
+                urlError = rawDataFromUrl
+        if urlError is None:
+            outData = {
+                'filePath': listPath
+            }
         else:
             outData = {
                 'error': urlError

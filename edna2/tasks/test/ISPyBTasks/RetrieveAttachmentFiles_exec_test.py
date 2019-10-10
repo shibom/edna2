@@ -27,10 +27,10 @@ import unittest
 from edna2.utils import UtilsTest
 from edna2.utils import UtilsConfig
 
-from edna2.tasks.ISPyBTasks import GetListAutoprocessingResults
+from edna2.tasks.ISPyBTasks import RetrieveAttachmentFiles
 
 
-class GetListAutoprocessingResultsExecTest(unittest.TestCase):
+class RetrieveAttachmentFilesExecTest(unittest.TestCase):
 
     def setUp(self):
         self.dataPath = UtilsTest.prepareTestDataPath(__file__)
@@ -39,26 +39,26 @@ class GetListAutoprocessingResultsExecTest(unittest.TestCase):
                      'Cannot run ispyb test with default config')
     @unittest.skipIf('ISPyB_token' not in os.environ,
                      'No ISPyB_token found in environment')
-    def test_execute_getListAutoprocIntegration(self):
+    def test_execute_retrieveAttachmentFiles(self):
         referenceDataPath = self.dataPath / \
-            "GetListAutoprocessingResults.json"
+            'RetrieveAttachmentFiles.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
-        getListAutoprocessingResults = GetListAutoprocessingResults(inData=inData)
-        getListAutoprocessingResults.execute()
-        self.assertTrue(getListAutoprocessingResults.isSuccess())
-        outData = getListAutoprocessingResults.outData
-        self.assertEqual(2, len(outData['dataCollection']))
-
+        retrieveAttachmentFiles = RetrieveAttachmentFiles(inData=inData)
+        retrieveAttachmentFiles.execute()
+        self.assertTrue(retrieveAttachmentFiles.isSuccess())
+        outData = retrieveAttachmentFiles.outData
+        self.assertEqual(2, len(outData['filePath']))
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run ispyb test with default config')
     def test_execute_getListAutoprocIntegration_invalidToken(self):
         referenceDataPath = self.dataPath / \
-            "GetListAutoprocessingResults.json"
+            'RetrieveAttachmentFiles.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         inData['token'] = 'abcdefghijklmnopqrstuvwxyz'
-        getListAutoprocessingResults = GetListAutoprocessingResults(inData=inData)
-        getListAutoprocessingResults.execute()
-        self.assertTrue(getListAutoprocessingResults.isSuccess())
-        outData = getListAutoprocessingResults.outData
+        retrieveAttachmentFiles = RetrieveAttachmentFiles(inData=inData)
+        retrieveAttachmentFiles.execute()
+        self.assertTrue(retrieveAttachmentFiles.isSuccess())
+        outData = retrieveAttachmentFiles.outData
         self.assertTrue('error' in outData)
+

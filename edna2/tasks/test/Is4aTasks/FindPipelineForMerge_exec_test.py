@@ -1,3 +1,4 @@
+#
 # Copyright (c) European Synchrotron Radiation Facility (ESRF)
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -16,49 +17,48 @@
 # COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
 
 __authors__ = ["O. Svensson"]
 __license__ = "MIT"
 __date__ = "05/09/2019"
 
-import os
 import unittest
 
 from edna2.utils import UtilsTest
 from edna2.utils import UtilsConfig
+from edna2.utils import UtilsLogging
 
-from edna2.tasks.ISPyBTasks import GetListAutoprocessingResults
+from edna2.tasks.Is4aTasks import FindPipelineForMerge
+
+logger = UtilsLogging.getLogger()
 
 
-class GetListAutoprocessingResultsExecTest(unittest.TestCase):
+class FindPipelineForMergeExecTest(unittest.TestCase):
 
     def setUp(self):
         self.dataPath = UtilsTest.prepareTestDataPath(__file__)
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
-                     'Cannot run ispyb test with default config')
-    @unittest.skipIf('ISPyB_token' not in os.environ,
-                     'No ISPyB_token found in environment')
-    def test_execute_getListAutoprocIntegration(self):
-        referenceDataPath = self.dataPath / \
-            "GetListAutoprocessingResults.json"
+                     'Cannot run ImageQualityIndicatorsExecTest ' +
+                     'test with default config')
+    def test_execute(self):
+        referenceDataPath = self.dataPath / 'findDataForMerge.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
-        getListAutoprocessingResults = GetListAutoprocessingResults(inData=inData)
-        getListAutoprocessingResults.execute()
-        self.assertTrue(getListAutoprocessingResults.isSuccess())
-        outData = getListAutoprocessingResults.outData
-        self.assertEqual(2, len(outData['dataCollection']))
-
+        findPipelineForMerge = FindPipelineForMerge(inData=inData)
+        findPipelineForMerge.execute()
+        self.assertTrue(findPipelineForMerge.isSuccess())
+        outData = findPipelineForMerge.outData
+        self.assertTrue('schema' in outData)
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
-                     'Cannot run ispyb test with default config')
-    def test_execute_getListAutoprocIntegration_invalidToken(self):
-        referenceDataPath = self.dataPath / \
-            "GetListAutoprocessingResults.json"
+                     'Cannot run ImageQualityIndicatorsExecTest ' +
+                     'test with default config')
+    def test_execute_invalidToken(self):
+        referenceDataPath = self.dataPath / 'findDataForMerge_invalidToken.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
-        inData['token'] = 'abcdefghijklmnopqrstuvwxyz'
-        getListAutoprocessingResults = GetListAutoprocessingResults(inData=inData)
-        getListAutoprocessingResults.execute()
-        self.assertTrue(getListAutoprocessingResults.isSuccess())
-        outData = getListAutoprocessingResults.outData
+        findPipelineForMerge = FindPipelineForMerge(inData=inData)
+        findPipelineForMerge.execute()
+        self.assertTrue(findPipelineForMerge.isSuccess())
+        outData = findPipelineForMerge.outData
         self.assertTrue('error' in outData)
