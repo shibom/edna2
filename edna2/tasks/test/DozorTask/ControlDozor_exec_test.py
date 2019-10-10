@@ -91,13 +91,12 @@ class ControlDozorExecTest(unittest.TestCase):
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run control dozor test with default config')
-    @unittest.skipIf(not os.path.exists('/data/visitor/mx415/id30a2/20180502/' +
-                                        'RAW_DATA/t1/t1_1_0001.cbf'),
-                     'Image /data/visitor/mx415/id30a2/20180502/RAW_DATA/' +
-                     't1/t1_1_0001.cbf doesn\'t exist')
+    @unittest.skipIf(not os.path.exists('/data/id30a2/inhouse/opid30a2/' +
+                                        '20190627/RAW_DATA/t1/t1b_1_0001.cbf'),
+                    'Image /data/id30a2/inhouse/opid30a2/' +
+                    '20190627/RAW_DATA/t1/t1b_1_0001.cbf doesn\'t exist')
     def test_execute_ControlDozor_ispyb(self):
         currentSite = UtilsConfig.getSite()
-        UtilsConfig.setSite('esrf_ispyb_valid')
         referenceDataPath = self.dataPath / 'ControlDozor_ispyb.json'
         self.inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         controlDozor = ControlDozor(inData=self.inData)
@@ -105,7 +104,7 @@ class ControlDozorExecTest(unittest.TestCase):
         self.assertTrue(controlDozor.isSuccess())
         UtilsConfig.setSite(currentSite)
         outData = controlDozor.outData
-        self.assertEqual(len(outData['imageQualityIndicators']), 640)
+        self.assertEqual(len(outData['imageQualityIndicators']), 100)
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run control dozor test with default config')
