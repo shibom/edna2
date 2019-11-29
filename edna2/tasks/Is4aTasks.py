@@ -114,7 +114,7 @@ class FindHklAsciiForMerge(AbstractTask):
                                 enumValue = attachmentId
                                 listEnumValues.append(enumValue)
                 if urlError is None:
-                    entryKey = 'hkl_'+str(dataCollectionId)
+                    entryKey = 'hkl_' + str(dataCollectionId)
                     if entryKey not in properties:
                         dictEntry['title'] = 'Select HKL for data Collection #{0} {2} {1}-{2}'.format(
                             index,
@@ -246,16 +246,17 @@ class FindPipelineForMerge(AbstractTask):
                                         entryKey = program + '_anom'
                                     else:
                                         entryKey = program + '_noanom'
-                                    if not entryKey in dictEntry:
+                                    if entryKey not in dictEntry:
                                         dictEntry[entryKey] = []
-                                    dictEntry[entryKey].append('{0} {1}'.format(attachmentId, fileName))
+                                    dictEntry[entryKey].append({'id': attachmentId, 'fileName': fileName})
         if urlError is None:
             listEnumNames = []
-            listOfListId = []
-            for entryKey, listId in dictEntry.items():
-                if len(listId) == len(outDataAutoprocessing['dataCollection']):
+            dictInput = {}
+            for entryKey, listAttachment in dictEntry.items():
+                if len(listAttachment) == len(outDataAutoprocessing['dataCollection']):
                     listEnumNames.append(entryKey)
-                    listOfListId.append(','.join(listId))
+                    dictInput[entryKey] = listAttachment
+                    index += 1
             if len(listEnumNames) > 0:
                 dictSchema = {
                     'title': 'Select processing pipeline for data Collection {0}-{1}'.format(
@@ -263,10 +264,10 @@ class FindPipelineForMerge(AbstractTask):
                         blSampleName
                     ),
                     'type': 'string',
-                    'enum': listOfListId,
+                    'enum': listEnumNames,
                     'enumNames': listEnumNames
                 }
-                key = "attachments"
+                key = "pipeline"
                 properties[key] = dictSchema
                 listOrder.append(key)
                 # Minimum sigma
@@ -291,8 +292,11 @@ class FindPipelineForMerge(AbstractTask):
                 'ui:order': listOrder
             }
             outData = {
-                "schema": schema,
-                "uiSchema": uiSchema
+                'schema': {
+                    "schema": schema,
+                    "uiSchema": uiSchema
+                },
+                'input': dictInput
             }
         else:
             outData = {
@@ -324,5 +328,3 @@ class MergeUtls(AbstractTask):
                 mergeResult = json.loads(f.read())
         outData = {'mergeResult': mergeResult}
         return outData
-
-
