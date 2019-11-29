@@ -272,7 +272,7 @@ class Dozor(object):
             jsonschema.validate(instance=olof_json, schema=self.get_olof_json_Schema())
 
             for image in olof_json["imageQualityIndicators"]:
-                if len(image['dozorSpotListShape']) > 0 and image['dozorSpotListShape'][0] > 5:
+                if 'dozorSpotListShape' in image and len(image['dozorSpotListShape']) > 0 and image['dozorSpotListShape'][0] > 5:
                     dozorDict = dict()
                     dozorDict['image_name'] = image['image']
                     dozorDict['nPeaks'] = image['dozorSpotListShape'][0]
