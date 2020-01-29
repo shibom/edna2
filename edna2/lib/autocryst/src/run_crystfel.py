@@ -140,7 +140,8 @@ class AutoCrystFEL(object):
                 "threshold": {"type": "string"},
                 "local_bg_radius": {"type": "string"},
                 "min_res": {"type": "string"},
-                "highres": {"type": "string"}
+                "highres": {"type": "string"},
+                "wait_time": {"type": "string"}
             },
         }
 
@@ -373,6 +374,7 @@ class AutoCrystFEL(object):
         int_radius = self.jshandle.get('int_radius', '3,4,6')
         highres = self.jshandle.get('highres', '0.0')
         nproc = self.jshandle.get('num_processors', '20')
+        waiting = self.jshandle.get('wait_time', '0')
 
         if self.is_executable('indexamajig'):
             command = 'indexamajig -i %s -o %s -g %s' \
@@ -397,8 +399,8 @@ class AutoCrystFEL(object):
                 min_res = self.jshandle.get('min_res', '50')
                 threshold = self.jshandle.get('threshold', '10')
 
-                command += ' --peak-radius=%s --min-peaks=%s' \
-                           % (peak_radius, min_peaks)
+                command += ' --peak-radius=%s --min-peaks=%s --wait-for-file=%s' \
+                           % (peak_radius, min_peaks, waiting)
                 command += ' --min-snr=%s --threshold=%s --local-bg-radius=%s --min-res=%s' \
                            % (min_snr, threshold, local_bg_radius, min_res)
                 command += ' --no-non-hits-in-stream'

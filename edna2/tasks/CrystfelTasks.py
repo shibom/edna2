@@ -54,6 +54,7 @@ class ExeCrystFEL(AbstractTask):
                     "type": "array",
                     "items": {"type": "string"}
                     },
+                "doCBFtoH5": {"type": "boolean"},
                 "imageQualityIndicators": {
                     "type": "array",
                     "items": {
@@ -83,8 +84,13 @@ class ExeCrystFEL(AbstractTask):
         }
 
     def run(self, inData):
+        doCBFtoH5 = inData.get('doCBFtoH5', False)
         outData = {}
-        if inData['detectorType'] == 'eiger4m':
+        if inData['detectorType'] == 'eiger4m' and doCBFtoH5 is False:
+            os.chdir(self.getWorkingDirectory())
+            outData = self.exeIndexing(inData)
+
+        elif doCBFtoH5 is False and inData['detectorType'] != 'eiger4m':
             os.chdir(self.getWorkingDirectory())
             outData = self.exeIndexing(inData)
 
@@ -113,14 +119,20 @@ class ExeCrystFEL(AbstractTask):
         return outData
 
     def exeIndexing(self, inData):
+        doCBFtoH5 = inData.get('doCBFtoH5', False)
         in_for_crystfel = dict()
         in_for_crystfel['detectorType'] = inData['detectorType']
         in_for_crystfel['maxchunksize'] = 10
-        if inData['detectorType'] == 'eiger4m':
+        if inData['detectorType'] == 'eiger4m' and doCBFtoH5 is False:
             tmp = UtilsImage.getPrefix(inData['listH5FilePath'][0])
             in_for_crystfel['prefix'] = tmp.strip('data')
             in_for_crystfel['suffix'] = UtilsImage.getSuffix(inData['listH5FilePath'][0])
             in_for_crystfel['image_directory'] = str(pathlib.Path(inData['listH5FilePath'][0]).parent)
+
+        elif inData['detectorType'] != 'eiger4m' and doCBFtoH5 is False:
+            in_for_crystfel['image_directory'] = inData['imageQualityIndicators']['directory']
+            in_for_crystfel['prefix'] = UtilsImage.getPrefix(inData['imageQualityIndicators']['image'][0])
+            in_for_crystfel['suffix'] = 'cbf'
 
         else:
             cxi_all = list(self.getWorkingDirectory().glob('dozor*cxi'))
