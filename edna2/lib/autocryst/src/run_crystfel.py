@@ -121,7 +121,11 @@ class AutoCrystFEL(object):
                 "detectorType": {"type": "string"},
                 "suffix": {"type": "string"},
                 "prefix": {"type": "string"},
-                "ImageRange": {"type": "string"},
+                "ImageRange": {"type": "array",
+                               "items": {
+                                   "type": "integer"
+                                    }
+                               },
                 "maxchunksize": {"type": "integer"},
                 "processing_directory": {"type": "string"},
                 "doMerging": {"type": "boolean"},
@@ -295,20 +299,20 @@ class AutoCrystFEL(object):
 
     def datafinder(self):
         datadir = pathlib.Path(self.jshandle['image_directory'])
+        image_range = self.jshandle.get('ImageRange', ())
         if datadir.exists():
-            try:
-                assert type(self.jshandle['ImageRange']) == tuple
-                for index in range(self.jshandle['ImageRange'][0], self.jshandle['ImageRange'][1]+1):
+            if len(image_range) > 0:
+                for index in range(image_range[0], image_range[1]+1):
                     imageName = self.jshandle['prefix'] + '{0:04d}'.format(index) + '.' + self.jshandle['suffix']
                     imagePath = datadir / imageName
                     self.filelist.append(imagePath.as_posix())
-            except AssertionError:
+            else:
                 listofimagefiles = list(datadir.glob(self.jshandle['prefix'] + '*' + self.jshandle['suffix']))
                 for fname in listofimagefiles:
                     if 'master' not in str(fname):
                         self.filelist.append(fname.as_posix())
-                else:
-                    pass
+                    else:
+                        pass
         else:
             self.setFailure()
             logger.error('dataError:{}'.format('no data found'))
