@@ -129,17 +129,20 @@ class ExeCrystFEL(AbstractTask):
         doCBFtoH5 = inData.get('doCBFtoH5', False)
         in_for_crystfel = dict()
         in_for_crystfel['detectorType'] = inData['detectorType']
-        in_for_crystfel['maxchunksize'] = 10
+
         if inData['detectorType'] == 'eiger4m' and doCBFtoH5 is False:
             tmp = UtilsImage.getPrefix(inData['listH5FilePath'][0])
             in_for_crystfel['prefix'] = tmp.strip('data')
             in_for_crystfel['suffix'] = UtilsImage.getSuffix(inData['listH5FilePath'][0])
             in_for_crystfel['image_directory'] = str(pathlib.Path(inData['listH5FilePath'][0]).parent)
+            in_for_crystfel['maxchunksize'] = 10
 
         elif inData['detectorType'] != 'eiger4m' and doCBFtoH5 is False:
+            in_for_crystfel['maxchunksize'] = inData['cbfFileInfo']['batchSize']
             in_for_crystfel['image_directory'] = inData['cbfFileInfo']['directory']
             in_for_crystfel['prefix'] = inData['cbfFileInfo']['template'].strip('####.cbf')
             in_for_crystfel['suffix'] = UtilsImage.getSuffix(inData['cbfFileInfo']['template'])
+            in_for_crystfel['ImageRange'] = (inData['cbfFileInfo']['startNo'], inData['cbfFileInfo']['endNo'])
 
         else:
             cxi_all = list(self.getWorkingDirectory().glob('dozor*cxi'))
