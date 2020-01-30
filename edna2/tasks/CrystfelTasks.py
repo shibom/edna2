@@ -47,7 +47,7 @@ class ExeCrystFEL(AbstractTask):
     def getInDataSchema(self):
         return {
             "type": "object",
-            "required": ["imageQualityIndicators", "detectorType"],
+            "required": ["detectorType"],
             "properties": {
                 "detectorType": {"type": "string"},
                 "listH5FilePath": {
@@ -55,6 +55,13 @@ class ExeCrystFEL(AbstractTask):
                     "items": {"type": "string"}
                     },
                 "doCBFtoH5": {"type": "boolean"},
+                "cbfFileInfo": {
+                    "directory": {"type": "string"},
+                    "template": {"type": "string"},
+                    "startNo": {"type": "integer"},
+                    "endNo": {"type": "integer"},
+                    "batchSize": {"type": "integer"}
+                },
                 "imageQualityIndicators": {
                     "type": "array",
                     "items": {
@@ -90,7 +97,7 @@ class ExeCrystFEL(AbstractTask):
             os.chdir(self.getWorkingDirectory())
             outData = self.exeIndexing(inData)
 
-        elif doCBFtoH5 is False and inData['detectorType'] != 'eiger4m':
+        elif doCBFtoH5 is False and 'pilatus' in inData['detectorType']:
             os.chdir(self.getWorkingDirectory())
             outData = self.exeIndexing(inData)
 
@@ -130,9 +137,9 @@ class ExeCrystFEL(AbstractTask):
             in_for_crystfel['image_directory'] = str(pathlib.Path(inData['listH5FilePath'][0]).parent)
 
         elif inData['detectorType'] != 'eiger4m' and doCBFtoH5 is False:
-            in_for_crystfel['image_directory'] = inData['imageQualityIndicators']['directory']
-            in_for_crystfel['prefix'] = UtilsImage.getPrefix(inData['imageQualityIndicators']['image'][0])
-            in_for_crystfel['suffix'] = 'cbf'
+            in_for_crystfel['image_directory'] = inData['cbfFileInfo']['directory']
+            in_for_crystfel['prefix'] = inData['cbfFileInfo']['template'].strip('####.cbf')
+            in_for_crystfel['suffix'] = UtilsImage.getSuffix(inData['cbfFileInfo']['template'])
 
         else:
             cxi_all = list(self.getWorkingDirectory().glob('dozor*cxi'))
