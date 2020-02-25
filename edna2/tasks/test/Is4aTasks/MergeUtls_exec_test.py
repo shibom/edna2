@@ -42,6 +42,9 @@ class MergeUtlsExecTest(unittest.TestCase):
     @unittest.skipIf(not os.path.exists(
         '/scisoft/pxsoft/data/EDNA2_TEST_DATA/xa_14_run2_noanom_XDS_ASCII.HKL'),
         'Cannot find XDS_ASCII.HKL file')
+    @unittest.skipIf(
+        'Ubuntu' in open('/etc/issue').read(),
+        'Skipped for Ubuntu')
     def test_execute(self):
         referenceDataPath = self.dataPath / 'mergeUtls.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
