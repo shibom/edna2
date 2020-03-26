@@ -42,7 +42,7 @@ from urllib.request import urlopen, ProxyHandler, build_opener
 logger = UtilsLogging.getLogger()
 
 URL_EDNA_SITE = "http://www.edna-site.org/data/tests/images"
-MAX_DOWNLOAD_TIME = 60
+MAX_DOWNLOAD_TIME = 300
 
 
 def __timeoutDuringDownload():

@@ -2,7 +2,7 @@
 
 # Required dependencies (from setup.py install_requires)
 matplotlib
-suds-jurko
+suds
 xmltodict
 jsonschema
 graypy
