@@ -158,9 +158,9 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
         iyMin = None
         iyMax = None
         nx, ny, pixel = UtilsDetector.getNxNyPixelsize(inData['detectorType'])
-        if 'beamline' in inData and inData['beamline'] is not None:
+        sitePrefix = UtilsConfig.get(self, 'site_prefix')
+        if sitePrefix is not None and 'beamline' in inData and inData['beamline'] is not None:
             # Try to read corresponding config file
-            sitePrefix = UtilsConfig.get(self, 'site_prefix')
             site = sitePrefix + inData['beamline']
             taskConfig = UtilsConfig.getTaskConfig(self.__class__.__name__, site)
             ixMin = int(taskConfig["ix_min"])
