@@ -1,0 +1,16 @@
+{
+    "detectorType": "eiger4m",
+    "beamline": "id30a3",
+    "exposureTime": 0.034,
+    "detectorDistance": 144.56199999999998,
+    "spotSize": 3,
+    "wavelength": 0.9677,
+    "orgx": 1085.0,
+    "orgy": 1024.0,
+    "oscillationRange": 0.0225,
+    "startingAngle": 29.425699,
+    "firstImageNumber": 1,
+    "numberImages": 51,
+    "overlap": 0.0,
+    "nameTemplateImage": "/data/visitor/mx415/id30a3/20171127/RAW_DATA/mx415/1-2-2/MXPressF_01/mesh-mx415_1_1_??????.h5"
+}

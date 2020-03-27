@@ -39,6 +39,7 @@ from edna2.utils import UtilsPath
 from edna2.utils import UtilsImage
 from edna2.utils import UtilsConfig
 from edna2.utils import UtilsLogging
+from edna2.utils import UtilsDetector
 
 # Corresponding EDNA code:
 # https://github.com/olofsvensson/edna-mx
@@ -89,6 +90,7 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
                          "nameTemplateImage"],
             "properties": {
                 "detectorType": {"type": "string"},
+                "beamline": {"type": "string"},
                 "exposureTime": {"type": "number"},
                 "spotSize": {"type": "integer"},
                 "detectorDistance": {"type": "number"},
@@ -134,7 +136,8 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
         with open(str(self.getWorkingDirectory() / 'dozor.dat'), 'w') as f:
             f.write(commands)
         # Create dozor command line
-        commandLine = 'dozor -pall'
+        executable = UtilsConfig.get(self, 'executable', 'dozor')
+        commandLine = executable + ' -pall'
         if 'radiationDamage' in inData:
             commandLine += ' -rd dozor.dat'
         else:
@@ -154,33 +157,35 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
         ixMax = None
         iyMin = None
         iyMax = None
-        nx = None
-        ny = None
-        pixel = None
-        if inData['detectorType'] == 'pilatus2m':
-            nx = 1475
-            ny = 1679
-            pixel = 0.172
+        nx, ny, pixel = UtilsDetector.getNxNyPixelsize(inData['detectorType'])
+        if 'beamline' in inData and inData['beamline'] is not None:
+            # Try to read corresponding config file
+            sitePrefix = UtilsConfig.get(self, 'site_prefix')
+            site = sitePrefix + inData['beamline']
+            taskConfig = UtilsConfig.getTaskConfig(self.__class__.__name__, site)
+            ixMin = int(taskConfig["ix_min"])
+            ixMax = int(taskConfig["ix_max"])
+            iyMin = int(taskConfig["iy_min"])
+            iyMax = int(taskConfig["iy_max"])
+        elif inData['detectorType'] == 'pilatus2m':
             ixMin = IX_MIN_PILATUS_2M
             ixMax = IX_MAX_PILATUS_2M
             iyMin = IY_MIN_PILATUS_2M
             iyMax = IY_MAX_PILATUS_2M
         elif inData['detectorType'] == 'pilatus6m':
-            nx = 2463
-            ny = 2527
-            pixel = 0.172
             ixMin = IX_MIN_PILATUS_6M
             ixMax = IX_MAX_PILATUS_6M
             iyMin = IY_MIN_PILATUS_6M
             iyMax = IY_MAX_PILATUS_6M
         elif inData['detectorType'] == 'eiger4m':
-            nx = 2070
-            ny = 2167
-            pixel = 0.075
             ixMin = IX_MIN_EIGER_4M
             ixMax = IX_MAX_EIGER_4M
             iyMin = IY_MIN_EIGER_4M
             iyMax = IY_MAX_EIGER_4M
+        if inData['detectorType'].startswith('eiger4m'):
+            library = UtilsConfig.get(self, 'library_hdf5')
+        else:
+            library = UtilsConfig.get(self, 'library_cbf')
         processInfo = 'name template: {0}'.format(
             os.path.basename(inData['nameTemplateImage']))
         processInfo += ', first image no: {0}'.format(
@@ -189,6 +194,7 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
             inData['numberImages'])
         command = '!\n'
         command += 'detector %s\n' % inData['detectorType']
+        command += 'library %s\n' % library
         command += 'nx %d\n' % nx
         command += 'ny %d\n' % ny
         command += 'pixel %f\n' % pixel
@@ -459,6 +465,7 @@ class ControlDozor(AbstractTask):
                     "items": {"type": "string"},
                 },
                 "directory": {"type": "string"},
+                "beamline": {"type": "string"},
                 "template": {"type": "string"},
                 "startNo": {"type": "integer"},
                 "endNo": {"type": "integer"},
