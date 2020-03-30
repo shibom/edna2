@@ -182,7 +182,7 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
             ixMax = IX_MAX_EIGER_4M
             iyMin = IY_MIN_EIGER_4M
             iyMax = IY_MAX_EIGER_4M
-        if inData['detectorType'].startswith('eiger4m'):
+        if inData['detectorType'].startswith('eiger'):
             library = UtilsConfig.get(self, 'library_hdf5')
         else:
             library = UtilsConfig.get(self, 'library_cbf')
@@ -508,25 +508,25 @@ class ControlDozor(AbstractTask):
         if 'hdf5BatchSize' in inData:
            hdf5BatchSize = inData['hdf5BatchSize']
         listAllBatches = self.createListOfBatches(dictImage.keys(), batchSize)
-        if dictImage[listAllBatches[0][0]].endswith('h5'):
-            hasHdf5Prefix = True
-            # Convert HDF5 images to CBF
-            logger.debug("HDF5 converter batch size: {0}".format(batchSize))
-            doRadiationDamage = inData.get('doRadiationDamage', False)
-            if doRadiationDamage:
-               cbfTempDir = None
-            else:
-               cbfTempDir = tempfile.mkdtemp(prefix='CbfTemp_')
-            listHdf5Batches = self.createListOfBatches(
-                dictImage.keys(),
-                batchSize
-            )
-            dictImage, hasHdf5Prefix = self.convertToCBF(
-                dictImage,
-                listHdf5Batches,
-                doRadiationDamage=doRadiationDamage,
-                cbfTempDir=cbfTempDir
-            )
+        # if dictImage[listAllBatches[0][0]].endswith('h5'):
+        #     hasHdf5Prefix = True
+        #     # Convert HDF5 images to CBF
+        #     logger.debug("HDF5 converter batch size: {0}".format(batchSize))
+        #     doRadiationDamage = inData.get('doRadiationDamage', False)
+        #     if doRadiationDamage:
+        #        cbfTempDir = None
+        #     else:
+        #        cbfTempDir = tempfile.mkdtemp(prefix='CbfTemp_')
+        #     listHdf5Batches = self.createListOfBatches(
+        #         dictImage.keys(),
+        #         batchSize
+        #     )
+        #     dictImage, hasHdf5Prefix = self.convertToCBF(
+        #         dictImage,
+        #         listHdf5Batches,
+        #         doRadiationDamage=doRadiationDamage,
+        #         cbfTempDir=cbfTempDir
+        #     )
         outData['imageQualityIndicators'] = []
         for listBatch in listAllBatches:
             outDataDozor, detectorType = self.runDozorTask(
@@ -614,6 +614,18 @@ class ControlDozor(AbstractTask):
                      hasHdf5Prefix, hasOverlap):
         outDataDozor = None
         image = dictImage[listBatch[0]]
+        prefix = UtilsImage.getPrefix(image)
+        suffix = UtilsImage.getSuffix(image)
+        if image.endswith('h5'):
+            hasHdf5Prefix = True
+            prefix = UtilsImage.getPrefix(image)
+            directory = pathlib.Path(image).parent
+            hdf5ImageNumber = 1
+            if UtilsConfig.isEMBL():
+                fileName = '{0}_master.h5'.format(prefix)
+            else:
+                fileName = '{0}_{1}_master.h5'.format(prefix, hdf5ImageNumber)
+            image = directory / fileName
         inDataReadHeader = {
             'image': image
         }
@@ -638,13 +650,13 @@ class ControlDozor(AbstractTask):
                        'numberImages': len(listBatch),
                        'workingDirectory': workingDirectory,
                        'overlap': overlap}
+        if 'beamline' in inData:
+            inDataDozor['beamline'] = inData['beamline']
         fileName = os.path.basename(subWedge['image'][0]['path'])
-        prefix = UtilsImage.getPrefix(fileName)
-        suffix = UtilsImage.getSuffix(fileName)
         if UtilsConfig.isEMBL():
             template = '{0}_?????.{1}'.format(prefix, suffix)
         elif hasHdf5Prefix and not hasOverlap:
-            template = '{0}_??????.{1}'.format(prefix, suffix)
+            template = '{0}_1_??????.{1}'.format(prefix, suffix)
         else:
             template = '{0}_????.{1}'.format(prefix, suffix)
         inDataDozor['nameTemplateImage'] = os.path.join(

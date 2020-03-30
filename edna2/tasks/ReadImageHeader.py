@@ -253,7 +253,7 @@ class ReadImageHeader(AbstractTask):
             listDataImage.append({
                 'path': dataFilePath
             })
-            f = h5py.File(dataFilePath)
+            f = h5py.File(dataFilePath, 'r')
             dataShape = f['entry']['data']['data'].shape
             noImages += dataShape[0]
             f.close()
@@ -264,8 +264,8 @@ class ReadImageHeader(AbstractTask):
             'numberPixelY': int(numberPixelY),
             'pixelSizeX': round(dictHeader['x_pixel_size'] * 1000, 3),
             'pixelSizeY': round(dictHeader['y_pixel_size'] * 1000, 3),
-            'beamPositionX': round(float(dictHeader['beam_center_x']), 3),
-            'beamPositionY': round(float(dictHeader['beam_center_y']), 3),
+            'beamPositionX': round(float(dictHeader['beam_center_x'] * dictHeader['x_pixel_size'] * 1000), 3),
+            'beamPositionY': round(float(dictHeader['beam_center_y'] * dictHeader['y_pixel_size'] * 1000), 3),
             'distance': round(float(dictHeader['detector_distance']) * 1000, 3),
             'serialNumber': dictHeader['detector_number'],
             'name': detectorName,
@@ -289,7 +289,8 @@ class ReadImageHeader(AbstractTask):
         # Create the image object
         masterImage = {
             'path': masterImagePath,
-            'date': dictHeader['data_collection_date']
+            'date': dictHeader['data_collection_date'],
+            'number': 1
         }
         # imageNumber = UtilsImage.getImageNumber(imagePath)
         # image['number'] = imageNumber
