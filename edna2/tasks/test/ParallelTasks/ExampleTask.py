@@ -32,7 +32,7 @@ from edna2.tasks.AbstractTask import AbstractTask
 logger = UtilsLogging.getLogger()
 
 
-class TestTask(AbstractTask):
+class ExampleTask(AbstractTask):
     """
     Test task for testing parallel execution
     """
