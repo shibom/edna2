@@ -36,8 +36,8 @@ class H5ToCBFExecTest(unittest.TestCase):
 
     def setUp(self):
         self.dataPath = UtilsTest.prepareTestDataPath(__file__)
-        UtilsTest.loadTestImage('Trx6_19_1_1_master.h5')
-        UtilsTest.loadTestImage('Trx6_19_1_1_data_000001.h5')
+        UtilsTest.loadTestImage('mesh-mx415_1_1_master.h5')
+        UtilsTest.loadTestImage('mesh-mx415_1_1_data_000001.h5')
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run h5ToCbf test with default config')

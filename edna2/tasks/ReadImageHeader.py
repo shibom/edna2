@@ -29,6 +29,7 @@ __date__ = "21/04/2019"
 #      EDPluginControlReadImageHeaderv10.py
 
 import os
+import h5py
 
 from edna2.utils import UtilsLogging
 
@@ -84,33 +85,17 @@ class ReadImageHeader(AbstractTask):
             logger.error(errorMessage)
             raise BaseException(errorMessage)
         imageSuffix = os.path.splitext(imagePath)[1][1:]
-        if imageSuffix != 'cbf':
-            raise BaseException(
-                '{0} cannot read image header from non CBF images'.format(
-                    self.__class__.__name__
+        if imageSuffix == 'cbf':
+            outData = self.createCBFHeaderData(imagePath)
+        elif imageSuffix == 'h5':
+            outData = self.createHdf5HeaderData(imagePath)
+        else:
+            raise RuntimeError(
+                '{0} cannot read image header from images with extension {1}'.format(
+                    self.__class__.__name__,
+                    imageSuffix
                 )
             )
-        dictHeader = self.readCBFHeader(imagePath)
-        detector = dictHeader['Detector:']
-        if 'PILATUS 3M' in detector or 'PILATUS3 2M' in detector or \
-                'PILATUS 2M' in detector or 'PILATUS2 3M' in detector:
-            detectorName = 'PILATUS2 3M'
-            detectorType = 'pilatus2m'
-            numberPixelX = 1475
-            numberPixelY = 1679
-        elif 'PILATUS 6M' in detector or 'PILATUS3 6M' in detector:
-            detectorName = 'PILATUS2 6M'
-            detectorType = 'pilatus6m'
-            numberPixelX = 2463
-            numberPixelY = 2527
-        elif 'Eiger 4M' in detector:
-            detectorName = 'EIGER 4M'
-            detectorType = 'eiger4m'
-            numberPixelX = 2070
-            numberPixelY = 2167
-        outData = self.createCBFHeaderData(imagePath, dictHeader,
-                                           numberPixelX, numberPixelY,
-                                           detectorName, detectorType)
         return outData
 
     @classmethod
@@ -144,9 +129,27 @@ class ReadImageHeader(AbstractTask):
         return dictHeader
 
     @classmethod
-    def createCBFHeaderData(cls, imagePath, dictHeader,
-                            numberPixelX, numberPixelY,
-                            detectorName, detectorType):
+    def createCBFHeaderData(cls, imagePath):
+        dictHeader = cls.readCBFHeader(imagePath)
+        detector = dictHeader['Detector:']
+        if 'PILATUS 3M' in detector or 'PILATUS3 2M' in detector or \
+                'PILATUS 2M' in detector or 'PILATUS2 3M' in detector:
+            detectorName = 'PILATUS2 3M'
+            detectorType = 'pilatus2m'
+            numberPixelX = 1475
+            numberPixelY = 1679
+        elif 'PILATUS 6M' in detector or 'PILATUS3 6M' in detector:
+            detectorName = 'PILATUS2 6M'
+            detectorType = 'pilatus6m'
+            numberPixelX = 2463
+            numberPixelY = 2527
+        else:
+            raise RuntimeError(
+                '{0} cannot read image header from images with dector type {1}'.format(
+                    cls.__class__.__name__,
+                    detector
+                )
+            )
         experimentalCondition = {}
         detector = {
             'numberPixelX': numberPixelX,
@@ -199,3 +202,102 @@ class ReadImageHeader(AbstractTask):
         }
         return imageHeaderData
 
+    @classmethod
+    def readHdf5Header(cls, filePath):
+        """
+        Returns an dictionary with the contents of an Eiger Hdf5 image header.
+        """
+        f = h5py.File(filePath, 'r')
+        dictHeader = {
+            'wavelength': f['entry']['instrument']['beam']['incident_wavelength'][()],
+            'beam_center_x': f['entry']['instrument']['detector']['beam_center_x'][()],
+            'beam_center_y': f['entry']['instrument']['detector']['beam_center_y'][()],
+            'count_time':  f['entry']['instrument']['detector']['count_time'][()],
+            'detector_distance': f['entry']['instrument']['detector']['detector_distance'][()],
+            'orientation': list(f['entry']['instrument']['detector']['geometry']['orientation']['value']),
+            'translation': list(f['entry']['instrument']['detector']['geometry']['translation']['distances']),
+            'x_pixel_size': f['entry']['instrument']['detector']['x_pixel_size'][()],
+            'y_pixel_size': f['entry']['instrument']['detector']['y_pixel_size'][()],
+            'omega_start': f['entry']['sample']['goniometer']['omega_start'][()],
+            'omega_increment': f['entry']['sample']['goniometer']['omega_increment'][()],
+            'detector_number': f['entry']['instrument']['detector']['detector_number'][()].decode('utf-8'),
+            'description': f['entry']['instrument']['detector']['description'][()].decode('utf-8'),
+            'data_collection_date': f['entry']['instrument']['detector']['detectorSpecific']['data_collection_date'][()].decode('utf-8'),
+            'data': list(f['entry']['data'])
+        }
+        f.close()
+        return dictHeader
+
+    @classmethod
+    def createHdf5HeaderData(cls, masterImagePath):
+        dictHeader = cls.readHdf5Header(masterImagePath)
+        description = dictHeader['description']
+        if 'Eiger 4M' in description:
+            detectorName = 'EIGER 4M'
+            detectorType = 'eiger4m'
+            numberPixelX = 2070
+            numberPixelY = 2167
+        else:
+            raise RuntimeError(
+                '{0} cannot read image header from images with detector type {1}'.format(
+                    cls.__class__.__name__,
+                    description
+                )
+            )
+        # Find out size of data set
+        prefix = masterImagePath.split('master')[0]
+        listDataImage = []
+        noImages = 0
+        for data in dictHeader['data']:
+            dataFilePath = prefix + data + '.h5'
+            listDataImage.append({
+                'path': dataFilePath
+            })
+            f = h5py.File(dataFilePath)
+            dataShape = f['entry']['data']['data'].shape
+            noImages += dataShape[0]
+            f.close()
+        experimentalCondition = {}
+        # Pixel size and beam position
+        detector = {
+            'numberPixelX': int(numberPixelX),
+            'numberPixelY': int(numberPixelY),
+            'pixelSizeX': round(dictHeader['x_pixel_size'] * 1000, 3),
+            'pixelSizeY': round(dictHeader['y_pixel_size'] * 1000, 3),
+            'beamPositionX': round(float(dictHeader['beam_center_x']), 3),
+            'beamPositionY': round(float(dictHeader['beam_center_y']), 3),
+            'distance': round(float(dictHeader['detector_distance']) * 1000, 3),
+            'serialNumber': dictHeader['detector_number'],
+            'name': detectorName,
+            'type': detectorType
+        }
+        experimentalCondition['detector'] = detector
+        # Beam object
+        beam = {
+            'wavelength': round(float(dictHeader['wavelength']), 6),
+            'exposureTime': round(float(dictHeader['count_time']), 6)
+        }
+        experimentalCondition['beam'] = beam
+        # Goniostat object
+        goniostat = {}
+        rotationAxisStart = round(float(dictHeader['omega_start']), 4)
+        oscillationWidth = round(float(dictHeader['omega_increment']), 4)
+        goniostat['rotationAxisStart'] = rotationAxisStart
+        goniostat['rotationAxisEnd'] = rotationAxisStart + oscillationWidth * noImages
+        goniostat['oscillationWidth'] = oscillationWidth
+        experimentalCondition['goniostat'] = goniostat
+        # Create the image object
+        masterImage = {
+            'path': masterImagePath,
+            'date': dictHeader['data_collection_date']
+        }
+        # imageNumber = UtilsImage.getImageNumber(imagePath)
+        # image['number'] = imageNumber
+        subWedge = {
+            'experimentalCondition': experimentalCondition,
+            'image': [masterImage] + listDataImage
+        }
+        imageHeaderData = {
+            'subWedge': [subWedge]
+        }
+        return imageHeaderData

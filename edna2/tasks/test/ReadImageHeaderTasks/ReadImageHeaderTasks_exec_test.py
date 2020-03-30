@@ -28,6 +28,8 @@ class ReadImageHeaderTasksExecTest(unittest.TestCase):
 
     def setUp(self):
         self.dataPath = UtilsTest.prepareTestDataPath(__file__)
+        UtilsTest.loadTestImage('mesh-mx415_1_1_master.h5')
+        UtilsTest.loadTestImage('mesh-mx415_1_1_data_000001.h5')
 
     def test_readCBFHeader(self):
         referenceDataPath = self.dataPath / 'ControlReadImageHeader.json'
@@ -38,7 +40,16 @@ class ReadImageHeaderTasksExecTest(unittest.TestCase):
             'PILATUS2 3M, S/N 24-0118, ESRF ID23'
         )
 
-    def test_execute_ReadImageHeader(self):
+    def test_readEiger4mHeader(self):
+        referenceDataPath = self.dataPath / 'ReadImageHeader_Eiger4M.json'
+        inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
+        dictHeader = ReadImageHeader.readHdf5Header(inData['image'])
+        self.assertEqual(
+            dictHeader['description'],
+            'Dectris Eiger 4M'
+        )
+
+    def test_execute_ReadImageHeader_pilatus2m(self):
         referenceDataPath = self.dataPath / 'ControlReadImageHeader.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         readImageHeader = ReadImageHeader(inData=inData)
@@ -47,4 +58,12 @@ class ReadImageHeaderTasksExecTest(unittest.TestCase):
         outData = readImageHeader.outData
         self.assertIsNotNone(outData)
 
+    def test_execute_ReadImageHeader_eiger4m(self):
+        referenceDataPath = self.dataPath / 'ReadImageHeader_Eiger4M.json'
+        inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
+        readImageHeader = ReadImageHeader(inData=inData)
+        readImageHeader.execute()
+        self.assertTrue(readImageHeader.isSuccess())
+        outData = readImageHeader.outData
+        self.assertIsNotNone(outData)
 
