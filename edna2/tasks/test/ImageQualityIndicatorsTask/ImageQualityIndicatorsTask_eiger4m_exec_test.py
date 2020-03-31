@@ -64,27 +64,15 @@ class ImageQualityIndicatorsEiger4MExecTest(unittest.TestCase):
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run ImageQualityIndicatorsExecTest ' +
                      'test with default config')
-    @unittest.skipIf(not os.path.exists(
-        '/scisoft/pxsoft/data/WORKFLOW_TEST_DATA/id30a3/inhouse/opid30a3' +
-        '/20181126/RAW_DATA/tryp3/MXPressA_01/mesh-opid30a3_1_1_master.h5'),
-        'Cannot find h5 master file mesh-opid30a3_1_1_master.h5')
     def test_execute_eiger4m_h5_10images(self):
         referenceDataPath = self.dataPath / 'eiger4m_h5_10images.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
-        directory = pathlib.Path(inData['directory'])
-        tmpDirectory = tempfile.mkdtemp(prefix='eiger4m_h5_100images_')
-        shutil.copy(str(directory / 'mesh-opid30a3_1_1_master.h5'),
-                   tmpDirectory)
-        shutil.copy(str(directory / 'mesh-opid30a3_1_1_data_000001.h5'),
-                   tmpDirectory)
-        inData['directory'] = tmpDirectory
         task = ImageQualityIndicatorsTask(inData=inData)
         task.execute()
-        shutil.rmtree(tmpDirectory)
         self.assertFalse(task.isFailure())
         outData = task.outData
         self.assertTrue('imageQualityIndicators' in outData)
-        self.assertEqual(len(outData['imageQualityIndicators']), 10)
+        self.assertEqual(len(outData['imageQualityIndicators']), 51)
 
 
 if __name__ == '__main__':

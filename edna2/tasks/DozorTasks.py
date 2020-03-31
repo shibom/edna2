@@ -616,6 +616,7 @@ class ControlDozor(AbstractTask):
         image = dictImage[listBatch[0]]
         prefix = UtilsImage.getPrefix(image)
         suffix = UtilsImage.getSuffix(image)
+        imageNumber = UtilsImage.getImageNumber(image)
         if image.endswith('h5'):
             hasHdf5Prefix = True
             prefix = UtilsImage.getPrefix(image)
@@ -646,7 +647,7 @@ class ControlDozor(AbstractTask):
                        'orgy': detector['beamPositionY'] / detector['pixelSizeY'],
                        'oscillationRange': goniostat['oscillationWidth'],
                        'startingAngle': goniostat['rotationAxisStart'],
-                       'firstImageNumber': subWedge['image'][0]['number'],
+                       'firstImageNumber': imageNumber,
                        'numberImages': len(listBatch),
                        'workingDirectory': workingDirectory,
                        'overlap': overlap}
