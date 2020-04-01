@@ -44,6 +44,8 @@ class ExecDozorUnitTest(unittest.TestCase):
             self.inData = json.load(f)
         self.dozor = ExecDozor(inData=self.inData)
 
+    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
+                     'Cannot run dozor test_generateCommands test with default config')
     def test_generateCommands(self):
         dozor = ExecDozor(inData=self.inData)
         strCommandText = dozor.generateCommands(self.inData)
@@ -88,7 +90,7 @@ class ExecDozorUnitTest(unittest.TestCase):
         shutil.rmtree(tmpDir)
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
-                     'Cannot run dozor test with default config')
+                     'Cannot run dozor test_getLibrary test with default config')
     def test_getLibrary(self):
         library = self.dozor.getLibrary('cbf')
         self.assertTrue('xds-zcbf.so' in library)
