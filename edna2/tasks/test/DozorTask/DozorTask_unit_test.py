@@ -32,6 +32,7 @@ import tempfile
 from edna2.tasks.DozorTasks import ExecDozor
 
 from edna2.utils import UtilsTest
+from edna2.utils import UtilsConfig
 
 
 class ExecDozorUnitTest(unittest.TestCase):
@@ -86,4 +87,11 @@ class ExecDozorUnitTest(unittest.TestCase):
             self.assertTrue(os.path.exists(plotFile))
         shutil.rmtree(tmpDir)
 
+    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
+                     'Cannot run dozor test with default config')
+    def test_getLibrary(self):
+        library = self.dozor.getLibrary('cbf')
+        self.assertTrue('xds-zcbf.so' in library)
+        library = self.dozor.getLibrary('hdf5')
+        self.assertTrue('dectris-neggia.so' in library)
 

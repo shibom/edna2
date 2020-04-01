@@ -20,8 +20,11 @@
 
 import os
 import json
+from builtins import RuntimeError
+
 import numpy
 import shlex
+import distro
 import shutil
 import base64
 import pathlib
@@ -183,9 +186,9 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
             iyMin = IY_MIN_EIGER_4M
             iyMax = IY_MAX_EIGER_4M
         if inData['detectorType'].startswith('eiger'):
-            library = UtilsConfig.get(self, 'library_hdf5')
+            library = self.getLibrary('hdf5')
         else:
-            library = UtilsConfig.get(self, 'library_cbf')
+            library =  self.getLibrary('cbf')
         processInfo = 'name template: {0}'.format(
             os.path.basename(inData['nameTemplateImage']))
         processInfo += ', first image no: {0}'.format(
@@ -445,6 +448,21 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
             plt.close()
             listXSFile.append(plotPath)
         return listXSFile
+
+    def getLibrary(self, libraryType):
+        libraryName = 'library_' + libraryType
+        idName, version, codename = distro.linux_distribution()
+        if 'Debian' in idName:
+            libraryName += '_debian_'
+        elif idName == 'Ubuntu':
+            libraryName += '_ubuntu_'
+        else:
+            raise RuntimeError('ExecDozor: unknown os name {0}'.format(idName))
+        libraryName += version
+        library = UtilsConfig.get(self, libraryName)
+        if library is None:
+            raise RuntimeError('ExecDozor: library configuration {0} not found')
+        return library
 
 
 class ControlDozor(AbstractTask):
