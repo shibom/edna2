@@ -95,16 +95,16 @@ class ExeCrystFEL(AbstractTask):
             headerfile = self.getWorkingDirectory() / 'headers.json'
             if dd.is_success():
                 os.chdir(str(self.getWorkingDirectory()))
-                if not headerfile.exists():
-                    with open(str(headerfile), 'w') as jhead:
-                        json.dump(dd.cbfheader, jhead, sort_keys=True, indent=2)
-                else:
-                    pass
-
-                if dd.stacklength <= 100:
-                    dd.create_stack()
-                else:
-                    dd.mp_stack()
+                # if not headerfile.exists():
+                #     with open(str(headerfile), 'w') as jhead:
+                #         json.dump(dd.cbfheader, jhead, sort_keys=True, indent=2)
+                # else:
+                #     pass
+                #
+                # if dd.stacklength <= 100:
+                #     dd.create_stack()
+                # else:
+                #     dd.mp_stack()
 
                 outData = self.exeIndexing(inData)
             else:
