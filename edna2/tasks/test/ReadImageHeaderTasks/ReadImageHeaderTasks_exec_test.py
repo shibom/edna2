@@ -40,6 +40,8 @@ class ReadImageHeaderTasksExecTest(unittest.TestCase):
             'PILATUS2 3M, S/N 24-0118, ESRF ID23'
         )
 
+    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
+                     'Cannot run dozor test_readEiger4mHeader with default config')
     def test_readEiger4mHeader(self):
         referenceDataPath = self.dataPath / 'ReadImageHeader_Eiger4M.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
@@ -58,6 +60,8 @@ class ReadImageHeaderTasksExecTest(unittest.TestCase):
         outData = readImageHeader.outData
         self.assertIsNotNone(outData)
 
+    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
+                     'Cannot run dozor test_execute_ReadImageHeader_eiger4m with default config')
     def test_execute_ReadImageHeader_eiger4m(self):
         referenceDataPath = self.dataPath / 'ReadImageHeader_Eiger4M.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
