@@ -47,23 +47,6 @@ class ImageQualityIndicatorsEiger4MExecTest(unittest.TestCase):
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run ImageQualityIndicatorsExecTest ' +
                      'test with default config')
-    @unittest.skipIf(not os.path.exists(
-        '/scisoft/pxsoft/data/WORKFLOW_TEST_DATA/id30a3/inhouse/opid30a3' +
-        '/20181126/RAW_DATA/tryp3/MXPressA_01/mesh-opid30a3_1_0001.cbf'),
-        'Cannot find CBF file mesh-opid30a3_1_0001.cbf')
-    def test_execute_eiger4m_cbf_10images(self):
-        referenceDataPath = self.dataPath / 'eiger4m_cbf_10images.json'
-        inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
-        task = ImageQualityIndicatorsTask(inData=inData)
-        task.execute()
-        self.assertFalse(task.isFailure())
-        outData = task.outData
-        self.assertTrue('imageQualityIndicators' in outData)
-        self.assertEqual(10, len(outData['imageQualityIndicators']))
-
-    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
-                     'Cannot run ImageQualityIndicatorsExecTest ' +
-                     'test with default config')
     def test_execute_eiger4m_h5_10images(self):
         referenceDataPath = self.dataPath / 'eiger4m_h5_10images.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
