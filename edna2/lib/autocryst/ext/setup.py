@@ -43,7 +43,9 @@ if __name__ == "__main__":
     '''
 
     extensions = [
-        Extension("fast_array_ext", ["pyx/fast_array_ext.pyx"])]
+        Extension("fast_array_ext", ["pyx/fast_array_ext.pyx"],
+                  include_dirs=[numpy.get_include()])
+        ]
     setup(
         name="fast_array_ext",
         ext_modules=cythonize(extensions, include_path=[numpy.get_include()]),
