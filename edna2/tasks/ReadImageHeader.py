@@ -34,8 +34,8 @@ import h5py
 from edna2.utils import UtilsLogging
 
 from edna2.tasks.AbstractTask import AbstractTask
-from edna2.tasks.WaitFileTask import WaitFileTask
 
+from edna2.utils import UtilsPath
 from edna2.utils import UtilsImage
 
 logger = UtilsLogging.getLogger()
@@ -72,15 +72,8 @@ class ReadImageHeader(AbstractTask):
     def run(self, inData):
         imagePath = inData["image"]
         # Waiting for file
-        inDataWaitFile = {
-            "file": imagePath,
-            "size": 100000,
-            "timeOut": DEFAULT_TIME_OUT
-        }
-        waitFile = WaitFileTask(inData=inDataWaitFile)
-        waitFile.execute()
-        outDataWaitFile = waitFile.outData
-        if outDataWaitFile["timedOut"]:
+        timedOut, finalSize = UtilsPath.waitForFile(imagePath, expectedSize=100000, timeOut=DEFAULT_TIME_OUT)
+        if timedOut:
             errorMessage = "Timeout when waiting for image %s" % imagePath
             logger.error(errorMessage)
             raise BaseException(errorMessage)

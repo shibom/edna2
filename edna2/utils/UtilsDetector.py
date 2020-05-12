@@ -27,24 +27,79 @@ DETECTOR_PARAMS = {
     'pilatus2m': {
         'nx': 1475,
         'ny': 1679,
-        'pixel': 0.172
+        'pixel': 0.172,
+        'sensorThickness': 0.32,
+        'xdsUntrustedRectangle':
+            [[487, 495, 0, 1680],
+             [981, 989, 0, 1680],
+             [0, 1476, 195, 213],
+             [0, 1476, 407, 425],
+             [0, 1476, 619, 637],
+             [0, 1476, 831, 849],
+             [0, 1476, 1043, 1061],
+             [0, 1476, 1255, 1273],
+             [0, 1476, 1467, 1485]]
     },
     'pilatus6m': {
         'nx': 2463,
         'ny': 2527,
-        'pixel': 0.172
+        'pixel': 0.172,
+        'sensorThickness': 0.32,
+        'xdsUntrustedRectangle':
+            [[487, 495, 0, 2528],
+             [981, 989, 0, 2528],
+             [1475, 1483, 0, 2528],
+             [1969, 1977, 0, 2528],
+             [0, 2464, 195, 213],
+             [0, 2464, 407, 425],
+             [0, 2464, 619, 637],
+             [0, 2464, 831, 849],
+             [0, 2464, 1043, 1061],
+             [0, 2464, 1255, 1273],
+             [0, 2464, 1467, 1485],
+             [0, 2464, 1679, 1697],
+             [0, 2464, 1891, 1909],
+             [0, 2464, 2103, 2121],
+             [0, 2464, 2315, 2333]]
     },
     'eiger4m': {
         'nx': 2070,
         'ny': 2167,
-        'pixel': 0.075
+        'pixel': 0.075,
+        'sensorThickness': 0.32,
+        'xdsUntrustedRectangle':
+            [[1029, 1040, 0, 2167],
+             [0, 2070, 512, 550],
+             [0, 2070, 1063, 1103],
+             [0, 2070, 1614, 1654],
+             ]
     }
 }
 
 
-def getNxNyPixelsize(detectorType):
+def __getDetectorValue(detectorType, key):
     if detectorType in DETECTOR_PARAMS:
         p = DETECTOR_PARAMS[detectorType]
-        return p['nx'], p['ny'], p['pixel']
+        return p[key]
     else:
         raise RuntimeError('Detector type "{0}" not defined in UtilsDetector.py!')
+
+
+def getNx(detectorType):
+    return __getDetectorValue(detectorType, 'nx')
+
+
+def getNy(detectorType):
+    return __getDetectorValue(detectorType, 'ny')
+
+
+def getPixelsize(detectorType):
+    return __getDetectorValue(detectorType, 'pixel')
+
+
+def getXdsUntrustedRectangle(detectorType):
+    return __getDetectorValue(detectorType, 'xdsUntrustedRectangle')
+
+
+def getSensorThickness(detectorType):
+    return __getDetectorValue(detectorType, 'sensorThickness')

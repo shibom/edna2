@@ -160,7 +160,10 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
         ixMax = None
         iyMin = None
         iyMax = None
-        nx, ny, pixel = UtilsDetector.getNxNyPixelsize(inData['detectorType'])
+        detectorType = inData['detectorType']
+        nx = UtilsDetector.getNx(detectorType)
+        ny = UtilsDetector.getNy(detectorType)
+        pixelSize = UtilsDetector.getPixelsize(detectorType)
         sitePrefix = UtilsConfig.get(self, 'site_prefix')
         if sitePrefix is not None and 'beamline' in inData and inData['beamline'] is not None:
             # Try to read corresponding config file
@@ -170,22 +173,22 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
             ixMax = int(taskConfig["ix_max"])
             iyMin = int(taskConfig["iy_min"])
             iyMax = int(taskConfig["iy_max"])
-        elif inData['detectorType'] == 'pilatus2m':
+        elif detectorType == 'pilatus2m':
             ixMin = IX_MIN_PILATUS_2M
             ixMax = IX_MAX_PILATUS_2M
             iyMin = IY_MIN_PILATUS_2M
             iyMax = IY_MAX_PILATUS_2M
-        elif inData['detectorType'] == 'pilatus6m':
+        elif detectorType == 'pilatus6m':
             ixMin = IX_MIN_PILATUS_6M
             ixMax = IX_MAX_PILATUS_6M
             iyMin = IY_MIN_PILATUS_6M
             iyMax = IY_MAX_PILATUS_6M
-        elif inData['detectorType'] == 'eiger4m':
+        elif detectorType == 'eiger4m':
             ixMin = IX_MIN_EIGER_4M
             ixMax = IX_MAX_EIGER_4M
             iyMin = IY_MIN_EIGER_4M
             iyMax = IY_MAX_EIGER_4M
-        if inData['detectorType'].startswith('eiger'):
+        if detectorType.startswith('eiger'):
             library = self.getLibrary('hdf5')
         else:
             library =  self.getLibrary('cbf')
@@ -196,11 +199,11 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
         processInfo += ', no images: {0}'.format(
             inData['numberImages'])
         command = '!\n'
-        command += 'detector %s\n' % inData['detectorType']
+        command += 'detector %s\n' % detectorType
         command += 'library %s\n' % library
         command += 'nx %d\n' % nx
         command += 'ny %d\n' % ny
-        command += 'pixel %f\n' % pixel
+        command += 'pixel %f\n' % pixelSize
         command += 'exposure %.3f\n' % inData['exposureTime']
         command += 'spot_size %d\n' % inData['spotSize']
         command += 'detector_distance %.3f\n' % \
@@ -227,7 +230,7 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
             inData['oscillationRange']
         imageStep = inData.get('imageStep', DEFAULT_IMAGE_STEP)
         command += 'image_step %.3f\n' % imageStep
-        command += 'starting_angle %.3f\n' % inData['startingAngle']
+        command += 'starting_angle %.3f\n' % (inData['startingAngle'] - (inData['firstImageNumber'] - 1) * inData['oscillationRange'])
         command += 'first_image_number %d\n' % inData['firstImageNumber']
         command += 'number_images %d\n' % inData['numberImages']
         if 'wedgeNumber' in inData:
