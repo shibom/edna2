@@ -23,16 +23,11 @@ __authors__ = ["O. Svensson"]
 __license__ = "MIT"
 __date__ = "14/04/2020"
 
-import json
-import shutil
-import pprint
 
 from edna2.tasks.AbstractTask import AbstractTask
 from edna2.tasks.ReadImageHeader import ReadImageHeader
 from edna2.tasks.DozorTasks import ControlDozor
 from edna2.tasks.XDSTasks import XDSIndexingTask
-
-from edna2.utils import UtilsPath
 
 
 class ControlIndexingTask(AbstractTask):
