@@ -56,6 +56,7 @@ class ControlIndexingTask(AbstractTask):
         }
 
     def run(self, inData):
+        outData = {}
         # First get the list of subWedges
         listSubWedge = self.getListSubWedge(inData)
         # Get list of spots from Dozor
@@ -79,9 +80,11 @@ class ControlIndexingTask(AbstractTask):
         }
         xdsIndexingTask = XDSIndexingTask(inData=xdsIndexinInData)
         xdsIndexingTask.execute()
-        outData = {
-            "subWedge": listSubWedge
-        }
+        if xdsIndexingTask.isSuccess():
+            xdsIndexinOutData = xdsIndexingTask.outData
+            outData = {
+                "xds": xdsIndexinOutData
+            }
         return outData
 
     @staticmethod

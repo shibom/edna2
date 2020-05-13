@@ -41,9 +41,36 @@ class ControlIndexingTaskExecTest(unittest.TestCase):
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run indexing test with default config')
-    def test_execute_ControlIndexingTask(self):
-        referenceDataPath = self.dataPath / 'inDataControlIndexingTask2.json'
+    def test_execute_ControlIndexingTask_opid30a1_4(self):
+        referenceDataPath = self.dataPath / 'opid30a1_4.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         controlIndexingTask = ControlIndexingTask(inData=inData)
         controlIndexingTask.execute()
         self.assertTrue(controlIndexingTask.isSuccess())
+        self.assertEqual(controlIndexingTask.outData["xds"]["spaceGroupNumber"], 143)
+
+    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
+                     'Cannot run indexing test with default config')
+    def test_execute_ControlIndexingTask_TRYP_X1_4(self):
+        referenceDataPath = self.dataPath / 'TRYP-X1_4.json'
+        inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
+        controlIndexingTask = ControlIndexingTask(inData=inData)
+        controlIndexingTask.execute()
+        self.assertTrue(controlIndexingTask.isSuccess())
+        self.assertEqual(controlIndexingTask.outData["xds"]["spaceGroupNumber"], 16)
+
+    def test_execute_ControlIndexingTask_adrcpt_For1_4(self):
+        referenceDataPath = self.dataPath / 'adrcpt-For1_4.json'
+        inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
+        controlIndexingTask = ControlIndexingTask(inData=inData)
+        controlIndexingTask.execute()
+        self.assertTrue(controlIndexingTask.isSuccess())
+        self.assertEqual(controlIndexingTask.outData["xds"]["spaceGroupNumber"], 75)
+
+    def test_execute_ControlIndexingTask_MWB_CD269A_07_4(self):
+        referenceDataPath = self.dataPath / 'MWB-CD269A_07_4.json'
+        inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
+        controlIndexingTask = ControlIndexingTask(inData=inData)
+        controlIndexingTask.execute()
+        self.assertTrue(controlIndexingTask.isSuccess())
+        self.assertEqual(controlIndexingTask.outData["xds"]["spaceGroupNumber"], 75)

@@ -238,8 +238,8 @@ class XDSIndexingTask(XDSTask):
                     if "MOSAICITY" in listLines[indexLine]:
                         resultXDSIndexing['mosaicity'] = float(listLines[indexLine].split()[-1])
                     elif "DETECTOR COORDINATES (PIXELS) OF DIRECT BEAM" in listLines[indexLine]:
-                        resultXDSIndexing['xBeam'] = float(listLines[indexLine].split()[-2])
-                        resultXDSIndexing['yBeam'] = float(listLines[indexLine].split()[-1])
+                        resultXDSIndexing['xBeam'] = float(listLines[indexLine].split()[-1])
+                        resultXDSIndexing['yBeam'] = float(listLines[indexLine].split()[-2])
                     elif "CRYSTAL TO DETECTOR DISTANCE" in listLines[indexLine]:
                         resultXDSIndexing['distance'] = float(listLines[indexLine].split()[-1])
                 elif doParseLattice:
