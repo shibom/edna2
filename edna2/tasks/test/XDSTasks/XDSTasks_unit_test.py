@@ -56,3 +56,8 @@ class XDSTasksUnitTest(unittest.TestCase):
     def test_readIdxrefLp(self):
         idxRefLpPath = self.dataPath / 'IDXREF.LP'
         resultXDSIndexing = XDSIndexingTask.readIdxrefLp(idxRefLpPath)
+
+    def test_parseXparm(self):
+        xparmPath = self.dataPath / 'XPARM.XDS'
+        xparmDict = XDSIndexingTask.parseXparm(xparmPath)
+        pass

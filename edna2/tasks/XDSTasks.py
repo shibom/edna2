@@ -29,6 +29,10 @@ __date__ = "20/04/2020"
 # mxPluginExec/plugins/EDPluginGroupXDS-v1.0/plugins/EDPluginXDSv1_0.py
 # mxPluginExec/plugins/EDPluginGroupXDS-v1.0/plugins/EDPluginXDSIndexingv1_0.py
 
+import math
+import types
+import numpy as np
+
 from edna2.tasks.AbstractTask import AbstractTask
 
 from edna2.utils import UtilsConfig
@@ -166,12 +170,12 @@ class XDSTask(AbstractTask):
                 yPos = yPos - 1
                 index = 0
                 for spotXds in listSpotXds:
-                    xPosOld = spotXds[0]
-                    yPosOld = spotXds[1]
                     frameOld = spotXds[2]
-                    intensityOld = spotXds[3]
                     if abs(frameOld - frame) > 20:
                         break
+                    xPosOld = spotXds[0]
+                    yPosOld = spotXds[1]
+                    intensityOld = spotXds[3]
                     if abs(xPosOld - xPos) <= 6 and abs(yPosOld - yPos) <= 6:
                         new = False
                         intensityNew = intensity + intensityOld
@@ -213,8 +217,13 @@ class XDSIndexingTask(XDSTask):
 
     @staticmethod
     def parseXDSOutput(workingDirectory):
-        pathToIdxrefLp = workingDirectory / 'IDXREF.LP'
-        return XDSIndexingTask.readIdxrefLp(pathToIdxrefLp)
+        idxrefPath = workingDirectory / 'IDXREF.LP'
+        xparmPath = workingDirectory / 'XPARM.XDS'
+        outData = {
+            "idxref":  XDSIndexingTask.readIdxrefLp(idxrefPath),
+            "xparm":   XDSIndexingTask.parseXparm(xparmPath)
+        }
+        return outData
 
 
     @staticmethod
@@ -263,3 +272,128 @@ class XDSIndexingTask(XDSTask):
                         } )
                 indexLine += 1
         return resultXDSIndexing
+
+    @staticmethod
+    def volum(cell):
+        """
+        Calculate the cell volum from either:
+         - the 6 standard cell parameters (a, b, c, alpha, beta, gamma)
+         - or the 3 vectors A, B, C
+        """
+        r2d = 180 / math.pi
+        cosd = lambda a: math.cos(a / r2d)
+        if (len(cell) == 6) and (type(cell[0]) == float):
+            # expect a, b, c, alpha, beta, gamma (angles in degree).
+            ca, cb, cg = map(cosd, cell[3:6])
+            return cell[0] * cell[1] * cell[2] * (1 - ca ** 2 - cb ** 2 - cg ** 2 + 2 * ca * cb * cg) ** 0.5
+        elif (len(cell) == 3) and isinstance(cell[0], vec3):
+            # expect vectors of the 3 cell parameters
+            A, B, C = cell
+            return A * B.cross(C)
+        else:
+            print
+            "error in volum()"
+            return "Can't parse input arguments."
+
+    @staticmethod
+    def reciprocal(cell):
+        "Calculate the 6 reciprocal cell parameters: a*, b*, c*, alpha*, beta*..."
+        r2d = 180 / math.pi
+        cosd = lambda a: math.cos(a / r2d)
+        sind = lambda a: math.sin(a / r2d)
+        sa, sb, sg = map(sind, cell[3:6])
+        ca, cb, cg = map(cosd, cell[3:6])
+        v = XDSIndexingTask.volum(cell)
+        rc = (cell[1] * cell[2] * sa / v,
+              cell[2] * cell[0] * sb / v,
+              cell[0] * cell[1] * sg / v,
+              math.acos((cb * cg - ca) / (sb * sg)) * r2d,
+              math.acos((ca * cg - cb) / (sa * sg)) * r2d,
+              math.acos((ca * cb - cg) / (sa * sb)) * r2d)
+        return rc
+
+    @staticmethod
+    def BusingLevy(rcell):
+        ex = np.array([1,0,0])
+        ey = np.array([0,1,0])
+        ez = np.array([0,0,1])
+        r2d = 180 / math.pi
+        cosd = lambda a: math.cos(a / r2d)
+        sind = lambda a: math.sin(a / r2d)
+        cosr = list(map(cosd, rcell[3:6]))
+        sinr = list(map(sind, rcell[3:6]))
+        Vr = XDSIndexingTask.volum(rcell)
+        BX = ex * rcell[0]
+        BY = rcell[1] * (ex * cosr[2] + ey * sinr[2])
+        c = rcell[0] * rcell[1] * sinr[2] / Vr
+        cosAlpha = (cosr[1] * cosr[2] - cosr[0]) / (sinr[1] * sinr[2])
+        BZ = np.array([rcell[2] * cosr[1],
+                   -1 * rcell[2] * sinr[1] * cosAlpha,
+                   1 / c])
+        return np.array([BX, BY, BZ]).transpose()
+
+    @staticmethod
+    def parseXparm(pathToXparmXds):
+        """
+        Inspired from parse_xparm written by Pierre Legrand:
+        https://github.com/legrandp/xdsme/blob/67001a75f3c363bfe19b8bd7cae999f4fb9ad49d/XOconv/XOconv.py#L372
+        """
+        with open(str(pathToXparmXds)) as f:
+            xparm = f.readlines()
+        xparamDict = {
+            "rot":          list(map(float, xparm[1].split()[3:])),
+            "beam":         list(map(float, xparm[2].split()[1:])),
+            "distance":     float(xparm[8].split()[2]),
+            "originXDS":    list(map(float, xparm[8].split()[:2])),
+            "A":            list(map(float, xparm[4].split())),
+            "B":            list(map(float, xparm[5].split())),
+            "C":            list(map(float, xparm[6].split())),
+            "cell":         list(map(float, xparm[3].split()[1:])),
+            "pixel_size":   list(map(float, xparm[7].split()[3:])),
+            "pixel_numb":   list(map(float, xparm[7].split()[1:])),
+            "symmetry":     int(xparm[3].split()[0]),
+            "num_init":     list(map(float, xparm[1].split()[:3]))[0],
+            "phi_init":     list(map(float, xparm[1].split()[:3]))[1],
+            "delta_phi":    list(map(float, xparm[1].split()[:3]))[2],
+            "detector_X":   list(map(float, xparm[9].split())),
+            "detector_Y":   list(map(float, xparm[10].split()))
+        }
+        A = np.array(xparamDict["A"])
+        B = np.array(xparamDict["B"])
+        C = np.array(xparamDict["C"])
+
+        volum = np.cross(A, B).dot(C)
+        Ar = np.cross(B, C) / volum
+        Br = np.cross(C, A) / volum
+        Cr = np.cross(A, B) / volum
+        UBxds = np.array([Ar, Br, Cr]).transpose()
+
+        BEAM = np.array(xparamDict["beam"])
+        ROT = np.array(xparamDict["rot"])
+        wavelength = 1 / np.linalg.norm(BEAM)
+
+        xparamDict["cell_volum"] = volum
+        xparamDict["wavelength"] = wavelength
+        xparamDict["Ar"] = Ar.tolist()
+        xparamDict["Br"] = Br.tolist()
+        xparamDict["Cr"] = Cr.tolist()
+        xparamDict["UB"] = UBxds.tolist()
+
+        normROT = float(np.linalg.norm(ROT))
+        CAMERA_z = np.true_divide(ROT, normROT)
+        CAMERA_y = np.cross(CAMERA_z, BEAM)
+        normCAMERA_y = float(np.linalg.norm(CAMERA_y))
+        CAMERA_y = np.true_divide(CAMERA_y, normCAMERA_y)
+        CAMERA_x = np.cross(CAMERA_y, CAMERA_z)
+        CAMERA = np.transpose(np.array([CAMERA_x, CAMERA_y, CAMERA_z]))
+
+        mosflmUB = CAMERA.dot(UBxds)*xparamDict["wavelength"]
+        # mosflmUB = UBxds*xparamDict["wavelength"]
+        xparamDict["mosflmUB"] = mosflmUB.tolist()
+
+        reciprocCell = XDSIndexingTask.reciprocal(xparamDict["cell"])
+        B = XDSIndexingTask.BusingLevy(reciprocCell)
+        mosflmU = np.dot(mosflmUB, np.linalg.inv(B)) / xparamDict["wavelength"]
+        xparamDict["mosflmU"] = mosflmU.tolist()
+        return xparamDict
+

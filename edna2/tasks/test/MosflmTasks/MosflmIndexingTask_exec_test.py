@@ -41,10 +41,28 @@ class MosflmTasksExecTest(unittest.TestCase):
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run mosflm test with default config')
-    def test_execute_MosflmIndexingTask(self):
-        UtilsTest.loadTestImage('ref-2m_RNASE_1_0001.cbf')
-        UtilsTest.loadTestImage('ref-2m_RNASE_1_0002.cbf')
-        referenceDataPath = self.dataPath / 'inDataMosflmIndexingTask.json'
+    # def test_execute_MosflmIndexingTask_2m_RNASE_1(self):
+    #     UtilsTest.loadTestImage('ref-2m_RNASE_1_0001.cbf')
+    #     UtilsTest.loadTestImage('ref-2m_RNASE_1_0002.cbf')
+    #     referenceDataPath = self.dataPath / 'mosflm_indexing_2m_RNASE_1.json'
+    #     inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
+    #     mosflmIndexingTask = MosflmIndexingTask(inData=inData)
+    #     mosflmIndexingTask.execute()
+    #     self.assertTrue(mosflmIndexingTask.isSuccess())
+
+    def tes_execute_MosflmIndexingTask_TRYP_X1_4(self):
+        UtilsTest.loadTestImage('ref-TRYP-X1_4_0001.cbf')
+        UtilsTest.loadTestImage('ref-TRYP-X1_4_0002.cbf')
+        UtilsTest.loadTestImage('ref-TRYP-X1_4_0003.cbf')
+        UtilsTest.loadTestImage('ref-TRYP-X1_4_0004.cbf')
+        referenceDataPath = self.dataPath / 'mosflm_indexing_TRYP-X1_4.json'
+        inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
+        mosflmIndexingTask = MosflmIndexingTask(inData=inData)
+        mosflmIndexingTask.execute()
+        self.assertTrue(mosflmIndexingTask.isSuccess())
+
+    def test_execute_MosflmIndexingTask_TRYP_X1_4(self):
+        referenceDataPath = self.dataPath / 'TRYP-X1_4.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         mosflmIndexingTask = MosflmIndexingTask(inData=inData)
         mosflmIndexingTask.execute()

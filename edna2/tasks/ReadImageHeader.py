@@ -70,25 +70,31 @@ DICT_SUFFIX_TO_IMAGE = {
 class ReadImageHeader(AbstractTask):
 
     def run(self, inData):
-        imagePath = inData["image"]
-        # Waiting for file
-        timedOut, finalSize = UtilsPath.waitForFile(imagePath, expectedSize=100000, timeOut=DEFAULT_TIME_OUT)
-        if timedOut:
-            errorMessage = "Timeout when waiting for image %s" % imagePath
-            logger.error(errorMessage)
-            raise BaseException(errorMessage)
-        imageSuffix = os.path.splitext(imagePath)[1][1:]
-        if imageSuffix == 'cbf':
-            outData = self.createCBFHeaderData(imagePath)
-        elif imageSuffix == 'h5':
-            outData = self.createHdf5HeaderData(imagePath)
-        else:
-            raise RuntimeError(
-                '{0} cannot read image header from images with extension {1}'.format(
-                    self.__class__.__name__,
-                    imageSuffix
+        listImagePath = inData["imagePath"]
+        listSubWedge = []
+        for imagePath in listImagePath:
+            # Waiting for file
+            timedOut, finalSize = UtilsPath.waitForFile(imagePath, expectedSize=100000, timeOut=DEFAULT_TIME_OUT)
+            if timedOut:
+                errorMessage = "Timeout when waiting for image %s" % imagePath
+                logger.error(errorMessage)
+                raise BaseException(errorMessage)
+            imageSuffix = os.path.splitext(imagePath)[1][1:]
+            if imageSuffix == 'cbf':
+                subWedge = self.createCBFHeaderData(imagePath)
+            elif imageSuffix == 'h5':
+                subWedge = self.createHdf5HeaderData(imagePath)
+            else:
+                raise RuntimeError(
+                    '{0} cannot read image header from images with extension {1}'.format(
+                        self.__class__.__name__,
+                        imageSuffix
+                    )
                 )
-            )
+            listSubWedge.append(subWedge)
+        outData = {
+            "subWedge": listSubWedge
+        }
         return outData
 
     @classmethod
@@ -190,10 +196,7 @@ class ReadImageHeader(AbstractTask):
             'experimentalCondition': experimentalCondition,
             'image': [image]
         }
-        imageHeaderData = {
-            'subWedge': [subWedge]
-        }
-        return imageHeaderData
+        return subWedge
 
     @classmethod
     def readHdf5Header(cls, filePath):
@@ -291,7 +294,4 @@ class ReadImageHeader(AbstractTask):
             'experimentalCondition': experimentalCondition,
             'image': [masterImage] + listDataImage
         }
-        imageHeaderData = {
-            'subWedge': [subWedge]
-        }
-        return imageHeaderData
+        return subWedge

@@ -23,6 +23,7 @@ __authors__ = ["O. Svensson"]
 __license__ = "MIT"
 __date__ = "14/04/2020"
 
+import os
 
 from edna2.tasks.AbstractTask import AbstractTask
 from edna2.tasks.ReadImageHeader import ReadImageHeader
@@ -81,10 +82,9 @@ class ControlIndexingTask(AbstractTask):
         xdsIndexingTask = XDSIndexingTask(inData=xdsIndexinInData)
         xdsIndexingTask.execute()
         if xdsIndexingTask.isSuccess():
-            xdsIndexinOutData = xdsIndexingTask.outData
-            outData = {
-                "xds": xdsIndexinOutData
-            }
+            xdsIndexingOutData = xdsIndexingTask.outData
+            # Run MOSFLM prediction
+
         return outData
 
     @staticmethod
