@@ -60,4 +60,4 @@ class XDSTasksUnitTest(unittest.TestCase):
     def test_parseXparm(self):
         xparmPath = self.dataPath / 'XPARM.XDS'
         xparmDict = XDSIndexingTask.parseXparm(xparmPath)
-        pass
+        self.assertIsNotNone(xparmDict)

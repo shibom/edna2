@@ -37,3 +37,25 @@ class ReadImageHeaderTasksExecTest(unittest.TestCase):
         readImageHeader.execute()
         self.assertTrue(readImageHeader.isSuccess())
 
+
+    def test_execute_ReadImageHeader_pilatus2m(self):
+        referenceDataPath = self.dataPath / 'ReadImageHeader_Pilatus2M.json'
+        inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
+        readImageHeader = ReadImageHeader(inData=inData)
+        readImageHeader.execute()
+        self.assertTrue(readImageHeader.isSuccess())
+        outData = readImageHeader.outData
+        self.assertIsNotNone(outData)
+
+    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
+                     'Cannot run dozor test_execute_ReadImageHeader_eiger4m with default config')
+    def test_execute_ReadImageHeader_eiger4m(self):
+        referenceDataPath = self.dataPath / 'ReadImageHeader_Eiger4M.json'
+        inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
+        readImageHeader = ReadImageHeader(inData=inData)
+        readImageHeader.execute()
+        self.assertTrue(readImageHeader.isSuccess())
+        outData = readImageHeader.outData
+        self.assertIsNotNone(outData)
+
+

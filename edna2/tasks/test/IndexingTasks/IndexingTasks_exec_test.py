@@ -47,7 +47,7 @@ class ControlIndexingTaskExecTest(unittest.TestCase):
         controlIndexingTask = ControlIndexingTask(inData=inData)
         controlIndexingTask.execute()
         self.assertTrue(controlIndexingTask.isSuccess())
-        self.assertEqual(controlIndexingTask.outData["xds"]["spaceGroupNumber"], 143)
+        self.assertEqual(controlIndexingTask.outData["xdsIndexing"]["idxref"]["spaceGroupNumber"], 143)
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run indexing test with default config')
@@ -57,7 +57,7 @@ class ControlIndexingTaskExecTest(unittest.TestCase):
         controlIndexingTask = ControlIndexingTask(inData=inData)
         controlIndexingTask.execute()
         self.assertTrue(controlIndexingTask.isSuccess())
-        self.assertEqual(controlIndexingTask.outData["xds"]["spaceGroupNumber"], 16)
+        self.assertEqual(controlIndexingTask.outData["xdsIndexing"]["idxref"]["spaceGroupNumber"], 16)
 
     def test_execute_ControlIndexingTask_adrcpt_For1_4(self):
         referenceDataPath = self.dataPath / 'adrcpt-For1_4.json'
@@ -65,7 +65,7 @@ class ControlIndexingTaskExecTest(unittest.TestCase):
         controlIndexingTask = ControlIndexingTask(inData=inData)
         controlIndexingTask.execute()
         self.assertTrue(controlIndexingTask.isSuccess())
-        self.assertEqual(controlIndexingTask.outData["xds"]["spaceGroupNumber"], 75)
+        self.assertEqual(controlIndexingTask.outData["xdsIndexing"]["idxref"]["spaceGroupNumber"], 75)
 
     def test_execute_ControlIndexingTask_MWB_CD269A_07_4(self):
         referenceDataPath = self.dataPath / 'MWB-CD269A_07_4.json'
@@ -73,4 +73,4 @@ class ControlIndexingTaskExecTest(unittest.TestCase):
         controlIndexingTask = ControlIndexingTask(inData=inData)
         controlIndexingTask.execute()
         self.assertTrue(controlIndexingTask.isSuccess())
-        self.assertEqual(controlIndexingTask.outData["xds"]["spaceGroupNumber"], 75)
+        self.assertEqual(controlIndexingTask.outData["xdsIndexing"]["idxref"]["spaceGroupNumber"], 75)

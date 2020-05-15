@@ -35,7 +35,7 @@ class ReadImageHeaderTasksUnitTest(unittest.TestCase):
     def test_readCBFHeader(self):
         referenceDataPath = self.dataPath / 'ReadImageHeader_Pilatus2M.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
-        dictHeader = ReadImageHeader.readCBFHeader(inData['image'])
+        dictHeader = ReadImageHeader.readCBFHeader(inData['imagePath'][0])
         self.assertEqual(
             dictHeader['Detector:'],
             'PILATUS2 3M, S/N 24-0118, ESRF ID23'
@@ -46,29 +46,8 @@ class ReadImageHeaderTasksUnitTest(unittest.TestCase):
     def test_readEiger4mHeader(self):
         referenceDataPath = self.dataPath / 'ReadImageHeader_Eiger4M.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
-        dictHeader = ReadImageHeader.readHdf5Header(inData['image'])
+        dictHeader = ReadImageHeader.readHdf5Header(inData['imagePath'][0])
         self.assertEqual(
             dictHeader['description'],
             'Dectris Eiger 4M'
         )
-
-    def test_execute_ReadImageHeader_pilatus2m(self):
-        referenceDataPath = self.dataPath / 'ReadImageHeader_Pilatus2M.json'
-        inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
-        readImageHeader = ReadImageHeader(inData=inData)
-        readImageHeader.execute()
-        self.assertTrue(readImageHeader.isSuccess())
-        outData = readImageHeader.outData
-        self.assertIsNotNone(outData)
-
-    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
-                     'Cannot run dozor test_execute_ReadImageHeader_eiger4m with default config')
-    def test_execute_ReadImageHeader_eiger4m(self):
-        referenceDataPath = self.dataPath / 'ReadImageHeader_Eiger4M.json'
-        inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
-        readImageHeader = ReadImageHeader(inData=inData)
-        readImageHeader.execute()
-        self.assertTrue(readImageHeader.isSuccess())
-        outData = readImageHeader.outData
-        self.assertIsNotNone(outData)
-

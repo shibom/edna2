@@ -23,7 +23,6 @@ __authors__ = ["O. Svensson"]
 __license__ = "MIT"
 __date__ = "14/04/2020"
 
-import os
 
 from edna2.tasks.AbstractTask import AbstractTask
 from edna2.tasks.ReadImageHeader import ReadImageHeader
@@ -83,6 +82,9 @@ class ControlIndexingTask(AbstractTask):
         xdsIndexingTask.execute()
         if xdsIndexingTask.isSuccess():
             xdsIndexingOutData = xdsIndexingTask.outData
+            outData = {
+                "xdsIndexing": xdsIndexingOutData
+            }
             # Run MOSFLM prediction
 
         return outData
@@ -103,13 +105,10 @@ class ControlIndexingTask(AbstractTask):
     @staticmethod
     def readImageHeaders(listImagePath):
         # Read the header(s)
-        listSubWedge = []
-        for imagePath in listImagePath:
-            inDataReadImageHeader = {
-                "image": imagePath
-            }
-            readImageHeader = ReadImageHeader(inData=inDataReadImageHeader)
-            readImageHeader.execute()
-            subWedge = readImageHeader.outData["subWedge"]
-            listSubWedge += subWedge
+        inDataReadImageHeader = {
+            "imagePath": listImagePath
+        }
+        readImageHeader = ReadImageHeader(inData=inDataReadImageHeader)
+        readImageHeader.execute()
+        listSubWedge = readImageHeader.outData["subWedge"]
         return listSubWedge

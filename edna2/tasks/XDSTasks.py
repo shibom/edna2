@@ -30,7 +30,6 @@ __date__ = "20/04/2020"
 # mxPluginExec/plugins/EDPluginGroupXDS-v1.0/plugins/EDPluginXDSIndexingv1_0.py
 
 import math
-import types
 import numpy as np
 
 from edna2.tasks.AbstractTask import AbstractTask
@@ -282,7 +281,7 @@ class XDSIndexingTask(XDSTask):
         """
         r2d = 180 / math.pi
         cosd = lambda a: math.cos(a / r2d)
-        if (len(cell) == 6) and (type(cell[0]) == float):
+        if (len(cell) == 6) and (isinstance(cell[0]), float):
             # expect a, b, c, alpha, beta, gamma (angles in degree).
             ca, cb, cg = map(cosd, cell[3:6])
             return cell[0] * cell[1] * cell[2] * (1 - ca ** 2 - cb ** 2 - cg ** 2 + 2 * ca * cb * cg) ** 0.5
@@ -291,8 +290,6 @@ class XDSIndexingTask(XDSTask):
             A, B, C = cell
             return A * B.cross(C)
         else:
-            print
-            "error in volum()"
             return "Can't parse input arguments."
 
     @staticmethod
@@ -316,7 +313,6 @@ class XDSIndexingTask(XDSTask):
     def BusingLevy(rcell):
         ex = np.array([1,0,0])
         ey = np.array([0,1,0])
-        ez = np.array([0,0,1])
         r2d = 180 / math.pi
         cosd = lambda a: math.cos(a / r2d)
         sind = lambda a: math.sin(a / r2d)
