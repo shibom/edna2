@@ -278,14 +278,15 @@ class XDSIndexingTask(XDSTask):
         Calculate the cell volum from either:
          - the 6 standard cell parameters (a, b, c, alpha, beta, gamma)
          - or the 3 vectors A, B, C
-        """
+        Inspired from XOconv written by Pierre Legrand:
+        https://github.com/legrandp/xdsme/blob/67001a75f3c363bfe19b8bd7cae999f4fb9ad49d/XOconv/XOconv.py#L758        """
         r2d = 180 / math.pi
         cosd = lambda a: math.cos(a / r2d)
-        if (len(cell) == 6) and (isinstance(cell[0]), float):
+        if len(cell) == 6 and isinstance(cell[0], float):
             # expect a, b, c, alpha, beta, gamma (angles in degree).
             ca, cb, cg = map(cosd, cell[3:6])
             return cell[0] * cell[1] * cell[2] * (1 - ca ** 2 - cb ** 2 - cg ** 2 + 2 * ca * cb * cg) ** 0.5
-        elif (len(cell) == 3) and isinstance(cell[0], vec3):
+        elif len(cell) == 3 and isinstance(cell[0], np.array):
             # expect vectors of the 3 cell parameters
             A, B, C = cell
             return A * B.cross(C)
@@ -294,7 +295,11 @@ class XDSIndexingTask(XDSTask):
 
     @staticmethod
     def reciprocal(cell):
-        "Calculate the 6 reciprocal cell parameters: a*, b*, c*, alpha*, beta*..."
+        """
+        Calculate the 6 reciprocal cell parameters: a*, b*, c*, alpha*, beta*...
+        Inspired from XOconv written by Pierre Legrand:
+        https://github.com/legrandp/xdsme/blob/67001a75f3c363bfe19b8bd7cae999f4fb9ad49d/XOconv/XOconv.py#L776
+        """
         r2d = 180 / math.pi
         cosd = lambda a: math.cos(a / r2d)
         sind = lambda a: math.sin(a / r2d)
@@ -311,6 +316,10 @@ class XDSIndexingTask(XDSTask):
 
     @staticmethod
     def BusingLevy(rcell):
+        """
+        Inspired from XOconv written by Pierre Legrand:
+        https://github.com/legrandp/xdsme/blob/67001a75f3c363bfe19b8bd7cae999f4fb9ad49d/XOconv/XOconv.py#L816
+        """
         ex = np.array([1,0,0])
         ey = np.array([0,1,0])
         r2d = 180 / math.pi
