@@ -59,6 +59,8 @@ class ControlIndexingTaskExecTest(unittest.TestCase):
         self.assertTrue(controlIndexingTask.isSuccess())
         self.assertEqual(controlIndexingTask.outData["xdsIndexing"]["idxref"]["spaceGroupNumber"], 16)
 
+    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
+                     'Cannot run indexing test with default config')
     def test_execute_ControlIndexingTask_adrcpt_For1_4(self):
         referenceDataPath = self.dataPath / 'adrcpt-For1_4.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
@@ -67,6 +69,8 @@ class ControlIndexingTaskExecTest(unittest.TestCase):
         self.assertTrue(controlIndexingTask.isSuccess())
         self.assertEqual(controlIndexingTask.outData["xdsIndexing"]["idxref"]["spaceGroupNumber"], 75)
 
+    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
+                     'Cannot run indexing test with default config')
     def test_execute_ControlIndexingTask_MWB_CD269A_07_4(self):
         referenceDataPath = self.dataPath / 'MWB-CD269A_07_4.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
