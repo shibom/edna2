@@ -20,6 +20,7 @@
 import unittest
 
 from edna2.utils import UtilsTest
+from edna2.utils import UtilsConfig
 
 from edna2.tasks.ReadImageHeader import ReadImageHeader
 
@@ -29,17 +30,27 @@ class ReadImageHeaderTasksExecTest(unittest.TestCase):
     def setUp(self):
         self.dataPath = UtilsTest.prepareTestDataPath(__file__)
 
-    def test_readCBFHeader(self):
+    def test_executeReadImageHeaderTaskk(self):
         referenceDataPath = self.dataPath / 'ControlReadImageHeader.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
-        dictHeader = ReadImageHeader.readCBFHeader(inData['image'])
-        self.assertEqual(
-            dictHeader['Detector:'],
-            'PILATUS2 3M, S/N 24-0118, ESRF ID23'
-        )
+        readImageHeader = ReadImageHeader(inData=inData)
+        readImageHeader.execute()
+        self.assertTrue(readImageHeader.isSuccess())
 
-    def test_execute_ReadImageHeader(self):
-        referenceDataPath = self.dataPath / 'ControlReadImageHeader.json'
+
+    def test_execute_ReadImageHeader_pilatus2m(self):
+        referenceDataPath = self.dataPath / 'ReadImageHeader_Pilatus2M.json'
+        inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
+        readImageHeader = ReadImageHeader(inData=inData)
+        readImageHeader.execute()
+        self.assertTrue(readImageHeader.isSuccess())
+        outData = readImageHeader.outData
+        self.assertIsNotNone(outData)
+
+    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
+                     'Cannot run dozor test_execute_ReadImageHeader_eiger4m with default config')
+    def test_execute_ReadImageHeader_eiger4m(self):
+        referenceDataPath = self.dataPath / 'ReadImageHeader_Eiger4M.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         readImageHeader = ReadImageHeader(inData=inData)
         readImageHeader.execute()

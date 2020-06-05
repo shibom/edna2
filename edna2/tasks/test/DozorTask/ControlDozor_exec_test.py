@@ -115,7 +115,6 @@ class ControlDozorExecTest(unittest.TestCase):
                      '1-2-2/MXPressF_01/mesh-mx415_1_1_master.h5 doesn\'t exist')
     def test_execute_ControlDozor_ispyb_h5(self):
         currentSite = UtilsConfig.getSite()
-        UtilsConfig.setSite('esrf_ispyb_valid')
         referenceDataPath = self.dataPath / 'ControlDozor_ispyb_hdf5.json'
         self.inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         controlDozor = ControlDozor(inData=self.inData)

@@ -61,7 +61,7 @@ class MosflmTasksUnitTest(unittest.TestCase):
     def test_generateMOSFLMCommands(self):
         tempdir = tempfile.mkdtemp(prefix='generateMOSFLMCommands_test_')
         tmpWorkingDir = pathlib.Path(tempdir)
-        referenceDataPath = self.dataPath / 'inDataAbstractMosflmTask.json'
+        referenceDataPath = self.dataPath / 'mosflm_abstract_input.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         abstractMosflmTask = AbstractMosflmTask(inData=inData)
         listCommands = abstractMosflmTask.generateMOSFLMCommands(inData,
@@ -92,7 +92,7 @@ class MosflmTasksUnitTest(unittest.TestCase):
     def test_generateMOSFLMCommands_indexing(self):
         tempdir = tempfile.mkdtemp(prefix='generateMOSFLMCommands_indexing_test_')
         tmpWorkingDir = pathlib.Path(tempdir)
-        referenceDataPath = self.dataPath / 'inDataAbstractMosflmTask.json'
+        referenceDataPath = self.dataPath / 'mosflm_abstract_input.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         task = MosflmIndexingTask(inData)
         listCommands = task.generateMOSFLMCommands(inData, tmpWorkingDir)
@@ -119,7 +119,7 @@ class MosflmTasksUnitTest(unittest.TestCase):
         tempdir = tempfile.mkdtemp(prefix='generateMOSFLMCommands_' +
                                           'generatePrediction_test_')
         tmpWorkingDir = pathlib.Path(tempdir)
-        referenceDataPath = self.dataPath / 'inDataGeneratePrediction.json'
+        referenceDataPath = self.dataPath / 'mosflm_generatePrediction.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         task = MosflmGeneratePredictionTask(inData)
         listCommands = task.generateMOSFLMCommands(inData, tmpWorkingDir)

@@ -19,37 +19,18 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-__authors__ = ['O. Svensson']
-__license__ = 'MIT'
-__date__ = '21/04/2019'
+__authors__ = ["O. Svensson"]
+__license__ = "MIT"
+__date__ = "14/04/2020"
 
-import time
+import unittest
 
 from edna2.utils import UtilsLogging
-
-from edna2.tasks.AbstractTask import AbstractTask
 
 logger = UtilsLogging.getLogger()
 
 
-class TestTask(AbstractTask):
-    """
-    Test task for testing parallel execution
-    """
+class IndexingTasksUnitTest(unittest.TestCase):
 
-    def run(self, inData):
-        taskNumber = inData['taskNumber']
-        logger.info('*'*80)
-        logger.info("Starting test task number {0}".format(taskNumber))
-        time.sleep(1)
-        logger.info("Test task number {0} finished".format(taskNumber))
-        outData = {'status': 'finished'}
-        logger.info('*'*80)
-        return outData
-
-    def onError(self):
-        logger.error('#'*80)
-        logger.error('#'*80)
-        logger.error('#'*80)
-        logger.error('#'*80)
-        logger.error('#'*80)
+    def tes_(self):
+        pass

@@ -1,0 +1,39 @@
+{
+	"beam": {
+		"x": 146.85704,
+		"y": 129.05676
+	},
+	"detector": {
+		"numberPixelX": 1475,
+		"numberPixelY": 1679,
+		"pixelSizeX": 1.720000e-01,
+		"pixelSizeY": 1.720000e-01,
+		"type": "PILATUS"
+	},
+	"directory": "$EDNA2_TESTDATA_IMAGES",
+	"distance": 234.925,
+	"template": "ref-TRYP-X1_4_####.cbf",
+	"wavelength": 0.966,
+	"image": [
+		{
+			"number": 1,
+			"rotationAxisStart": 330.6128,
+			"rotationAxisEnd": 331.6128
+		},
+		{
+			"number": 2,
+			"rotationAxisStart": 420.6128,
+			"rotationAxisEnd": 421.6128
+		},
+		{
+			"number": 3,
+			"rotationAxisStart": 510.6128,
+			"rotationAxisEnd": 511.6128
+		},
+		{
+			"number": 4,
+			"rotationAxisStart": 600.6128,
+			"rotationAxisEnd": 601.6128
+		}
+	]
+}

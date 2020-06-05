@@ -166,44 +166,6 @@ class ImageQualityIndicatorsTask(AbstractTask):
                 )
             if not self.isFailure():
                 pathToFirstImage = listOfImagesInBatch[0]
-                if pathToFirstImage.suffix == '.h5':
-                    directory = pathToFirstImage.parent
-                    firstImage = UtilsImage.getImageNumber(listOfImagesInBatch[0])
-                    lastImage = UtilsImage.getImageNumber(listOfImagesInBatch[-1])
-                    inDataH5ToCBF = {
-                        'hdf5File': listOfImagesInBatch[0],
-                        'hdf5ImageNumber': 1,
-                        'startImageNumber': firstImage,
-                        'endImageNumber': lastImage,
-                        'forcedOutputDirectory': directory
-                    }
-                    h5ToCBFTask = H5ToCBFTask(inData=inDataH5ToCBF)
-                    h5ToCBFTask.execute()
-                    if h5ToCBFTask.isSuccess():
-                        outputCBFFileTemplate = h5ToCBFTask.outData['outputCBFFileTemplate']
-                        if outputCBFFileTemplate is not None:
-                            lastCbfFile = outputCBFFileTemplate.replace("######", "{0:06d}".format(
-                                UtilsImage.getImageNumber(listOfImagesInBatch[-1])))
-                            strPathToImage = os.path.join(directory, lastCbfFile)
-        #                     #                        print(cbfFile.path.value)
-                            if os.path.exists(strPathToImage):
-                                # Rename all images
-                                oldListOfImagesInBatch = listOfImagesInBatch
-                                listOfImagesInBatch = []
-                                for imagePathH5 in oldListOfImagesInBatch:
-                                    imagePathCbf = pathlib.Path(str(imagePathH5).replace('.h5', '.cbf'))
-                                    listOfImagesInBatch.append(imagePathCbf)
-                                    imageNumber = UtilsImage.getImageNumber(imagePathCbf)
-                                    oldPath = directory / outputCBFFileTemplate.replace('######',
-                                                                                        '{0:06d}'.format(imageNumber))
-                                    newPath = directory / outputCBFFileTemplate.replace('######',
-                                                                                        '{0:04d}'.format(imageNumber))
-                                    os.rename(oldPath, newPath)
-                                lastCbfFile = outputCBFFileTemplate.replace(
-                                    '######',
-                                    '{0:04d}'.format(UtilsImage.getImageNumber(listOfImagesInBatch[-1])))
-                                pathToLastImage = directory / lastCbfFile
-                                logger.info("Image has been converted to CBF file: {0}".format(pathToLastImage))
                 # Run Control Dozor
                 inDataControlDozor = {
                     'image': listOfImagesInBatch,

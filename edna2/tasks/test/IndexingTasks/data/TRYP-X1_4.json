@@ -1,0 +1,8 @@
+{
+	"imagePath": [
+		"$EDNA2_TESTDATA_IMAGES/ref-TRYP-X1_4_0001.cbf",
+		"$EDNA2_TESTDATA_IMAGES/ref-TRYP-X1_4_0002.cbf",
+		"$EDNA2_TESTDATA_IMAGES/ref-TRYP-X1_4_0003.cbf",
+		"$EDNA2_TESTDATA_IMAGES/ref-TRYP-X1_4_0004.cbf"
+	]
+}

@@ -44,7 +44,7 @@ class MosflmTasksExecTest(unittest.TestCase):
     def test_execute_MosflmGeneratePredictionTask(self):
         UtilsTest.loadTestImage('ref-2m_RNASE_1_0001.cbf')
         UtilsTest.loadTestImage('ref-2m_RNASE_1_0002.cbf')
-        referenceDataPath = self.dataPath / 'inDataGeneratePrediction.json'
+        referenceDataPath = self.dataPath / 'mosflm_generatePrediction.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         mosflmIndexingTask = MosflmGeneratePredictionTask(inData=inData)
         mosflmIndexingTask.execute()

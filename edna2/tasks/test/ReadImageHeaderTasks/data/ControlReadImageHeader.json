@@ -1,3 +1,6 @@
 {
-	"image": "$EDNA2_TESTDATA_IMAGES/ref-2m_RNASE_1_0001.cbf"
+	"imagePath": [
+		"$EDNA2_TESTDATA_IMAGES/ref-2m_RNASE_1_0001.cbf",
+		"$EDNA2_TESTDATA_IMAGES/ref-2m_RNASE_1_0002.cbf"
+		]
 }

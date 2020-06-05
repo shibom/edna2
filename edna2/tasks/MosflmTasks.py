@@ -28,8 +28,12 @@ __date__ = "10/05/2019"
 # mxPluginExec/plugins/EDPluginGroupMOSFLM-v1.0/plugins/EDPluginMOSFLMv10.py
 # mxPluginExec/plugins/EDPluginGroupMOSFLM-v1.0/plugins/EDPluginMOSFLMIndexingv10.py
 
-from edna2.tasks.AbstractTask import AbstractTask
+import os
 
+from edna2.tasks.AbstractTask import AbstractTask
+from edna2.tasks.ReadImageHeader import ReadImageHeader
+
+from edna2.utils import UtilsImage
 from edna2.utils import UtilsConfig
 from edna2.utils import UtilsDnaTables
 from edna2.utils import UtilsLogging
@@ -48,18 +52,154 @@ class AbstractMosflmTask(AbstractTask):
 
     def run(self, inData):
         commandLine = 'mosflm DNA dnaTables.xml'
-        listCommand = self.generateMOSFLMCommands(inData,
-                                                  self.getWorkingDirectory())
+        # Translate from generic data model to specific MOSFLM data model
+        mosflmInData = self.generateMOSFLMInData(inData)
+        listCommand = self.generateMOSFLMCommands(mosflmInData, self.getWorkingDirectory())
         self.setLogFileName('mosflm.log')
         self.runCommandLine(commandLine, listCommand=listCommand)
         # Work in progress!
         outData = self.parseMosflmOutput(self.getWorkingDirectory())
         return outData
 
+    @classmethod
+    def generateMOSFLMInData(cls, inData):
+        if "imagePath" in inData:
+            inDataReadImageHeader = {
+                "imagePath": inData["imagePath"]
+            }
+            readImageHeader = ReadImageHeader(inData=inDataReadImageHeader)
+            readImageHeader.execute()
+            listSubWedges = readImageHeader.outData["subWedge"]
+        elif "subWedge" in inData:
+            listSubWedges = inData["subWedge"]
+        else:
+            # Here we assume that we have inData in MOSFLM format...
+            return inData
+        firstSubWedge = listSubWedges[0]
+        experimentalCondition = firstSubWedge["experimentalCondition"]
+        detector = experimentalCondition["detector"]
+        beam = experimentalCondition["beam"]
+        goniostat = experimentalCondition["goniostat"]
+        detectorType = detector["type"]
+        if detectorType.startswith("pilatus"):
+            mosflmDetector = "PILATUS"
+        elif detectorType.startswith("eiger"):
+            mosflmDetector = "EIGER"
+        else:
+            raise RuntimeError("Unknown detecor type for MOSFLM: " + detectorType)
+        listImage = firstSubWedge["image"]
+        firstImage = listImage[0]
+        firstPath = firstImage["path"]
+        mosflmInData = {
+            "beam": {
+                "x": detector["beamPositionX"],
+                "y": detector["beamPositionY"]
+            },
+            "detector": {
+                "numberPixelX": detector["numberPixelX"],
+                "numberPixelY": detector["numberPixelY"],
+                "pixelSizeX": detector["pixelSizeX"],
+                "pixelSizeY": detector["pixelSizeY"],
+                "type": mosflmDetector
+            },
+            "directory": os.path.dirname(firstPath),
+            "distance": detector["distance"],
+            "template": UtilsImage.getTemplate(firstPath),
+            "wavelength": beam["wavelength"]
+        }
+        listMosflmImage = []
+        for subWedge in listSubWedges:
+            goniostat = subWedge["experimentalCondition"]["goniostat"]
+            rotationAxisStart = goniostat['rotationAxisStart']
+            oscillationWidth = goniostat['oscillationWidth']
+            imageIndex = 0
+            for image in subWedge["image"]:
+                number = UtilsImage.getImageNumber(image["path"])
+                rotationAxisStart = rotationAxisStart + oscillationWidth * imageIndex
+                rotationAxisEnd = rotationAxisStart + oscillationWidth
+                mosflmImage = {
+                    "number":               number,
+                    "rotationAxisStart":    rotationAxisStart,
+                    "rotationAxisEnd":      rotationAxisEnd
+                }
+                listMosflmImage.append(mosflmImage)
+        mosflmInData["image"] = listMosflmImage
+        return mosflmInData
+        #
+        #                                                          "pixelSizeY"],
+        #                                                      "image": [
+        #     {
+        #         "number": 1,
+        #         "rotationAxisStart": 54.5,
+        #         "rotationAxisEnd": 55.5
+        #     },
+        #     {
+        #         "number": 2,
+        #         "rotationAxisStart": 144.5,
+        #         "rotationAxisEnd": 145.5
+        #     }
+        # ],
+        # "matrix": {
+        #     "matrixA": [
+        #         [
+        #             -0.00520639,
+        #             0.00409075,
+        #             0.00598777
+        #         ],
+        #         [
+        #             -0.00922857,
+        #             -0.00696139,
+        #             0.00233786
+        #         ],
+        #         [
+        #             0.00580022,
+        #             -0.00738658,
+        #             0.00518602
+        #         ]
+        #     ],
+        #     "missettingsAngles": [
+        #         0.0,
+        #         0.0,
+        #         0.0
+        #     ],
+        #     "matrixU": [
+        #         [
+        #             -0.4310086,
+        #             0.3741439,
+        #             0.8211259
+        #         ],
+        #         [
+        #             -0.7639828,
+        #             -0.6355417,
+        #             -0.1114313
+        #         ],
+        #         [
+        #             0.4801684,
+        #             -0.6753541,
+        #             0.5597635
+        #         ]
+        #     ],
+        #     "cell": {
+        #         "a": 74.4515,
+        #         "b": 84.8724,
+        #         "c": 115.476,
+        #         "alpha": 70.0227,
+        #         "beta": 76.0723,
+        #         "gamma": 85.3234
+        #     }
+        # },
+        # "mosaicityEstimation": 0.8500000000000001,
+        # "deviationAngular": 1.906892,
+        # "refinedDistance": 305.222015,
+        # "symmetry": "P1"
+        # }
+        # outData = {
+        #     "xds": xdsIndexingOutData
+        # }
+
     def generateMOSFLMCommands(self, inData, workingDirectory):
         """
-        This method creates a list of MOSFLM indexing commands given a valid
-        XSDataMOSFLMInput as self.getDataInput()
+        This method creates a list of MOSFLM commands
         """
         detector = inData['detector']
         detectorType = detector['type']
