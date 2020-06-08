@@ -335,9 +335,9 @@ class AutoCrystFEL(object):
         geomfile = self.jshandle.get('geometry_file', None)
         if geomfile is None:
             image1 = type('', (), {})  # initialize image1 as an empty object
-            if self.jshandle['detectorType'] == 'pilatus2m' or self.jshandle['detectorType'] == 'pilatus6m':
+            if self.jshandle['suffix'] == 'cbf':
                 image1 = Im(self.filelist[0])
-            elif self.jshandle['detectorType'] == 'eiger4m':
+            elif self.jshandle['suffix'] == 'h5':
                 master_str = self.jshandle['prefix'] + '*master.h5'
                 masterfile = list(pathlib.Path(self.jshandle['image_directory']).glob(master_str))[0]
                 image1 = Im(str(masterfile))

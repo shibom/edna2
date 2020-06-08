@@ -73,7 +73,7 @@ class Geom(object):
         self.geomfilename = 'empty.geom'
         self.supportedType = ['pilatus3', 'pilatus', 'eiger']
         self.supportedSize = ["2m", "6m", "4m", "16m"]
-        self.supportedList = ['pilatus32m', 'pilatus36m', 'pilatus6m', 'eiger4m', 'eiger16m']
+        self.supportedList = ['pilatus32m', 'pilatus36m', 'pilatus6m', 'pilatus2m', 'eiger4m', 'eiger16m']
         if self.detectorName not in self.supportedList:
             err = "%s detector type not supported" % self.detectorName
             logger.info('Detector_Error:{}'.format(err))

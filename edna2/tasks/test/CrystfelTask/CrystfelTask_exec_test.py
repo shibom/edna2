@@ -22,6 +22,7 @@
 __authors__ = ["O. Svensson", "S.Basu"]
 __license__ = "MIT"
 __date__ = "12/07/2019"
+__commandtoRun__ = "python -m unittest edna2.tasks.test.CrystfelTask.CrystfelTask_exec_test"
 
 import unittest
 

@@ -144,8 +144,8 @@ class ExeCrystFEL(AbstractTask):
             in_for_crystfel['prefix'] = inData['cbfFileInfo']['template'].strip('####.cbf')
             in_for_crystfel['suffix'] = UtilsImage.getSuffix(inData['cbfFileInfo']['template'])
             in_for_crystfel['ImageRange'] = (inData['cbfFileInfo']['startNo'], inData['cbfFileInfo']['endNo'])
-            FirstImage = os.path.join(inData['image_directory'], inData['cbfFileInfo']['template'].replace('####',
-                                                                                                           '0001'))
+            FirstImage = os.path.join(inData['cbfFileInfo']['directory'], inData['cbfFileInfo']['template'].
+                                      replace('####', '0001'))
             Image = Im(FirstImage)
             in_for_crystfel['detectorType'] = Image.imobject.headers['detector_name'][0] + \
                                               Image.imobject.headers['detector_name'][1]
