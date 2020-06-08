@@ -91,9 +91,10 @@ class AbstractMosflmTask(AbstractTask):
         firstImage = listImage[0]
         firstPath = firstImage["path"]
         mosflmInData = {
+            # The MOSFLM beam position convention is opposite to the XDS / CBF/ Dozor convention
             "beam": {
-                "x": detector["beamPositionX"],
-                "y": detector["beamPositionY"]
+                "x": detector["beamPositionY"],
+                "y": detector["beamPositionX"]
             },
             "detector": {
                 "numberPixelX": detector["numberPixelX"],
