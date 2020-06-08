@@ -1,12 +1,12 @@
 {
-	"doDistlSignalStrength": true,
+	"doDistlSignalStrength": false,
 	"doCrystfel": true,
 	"doIndexing": false,
 	"doUploadToIspyb": false,
-	"directory": "/scisoft/pxsoft/data/WORKFLOW_TEST_DATA/id30a3/inhouse/opid30a3/20181126/RAW_DATA/tryp3/MXPressA_01",
-	"template": "mesh-opid30a3_1_####.h5",
+	"directory": "$EDNA2_TESTDATA_IMAGES",
+	"template": "mesh-mx415_1_####.h5",
 	"startNo": 1,
-	"endNo": 10,
-    "batchSize": 10,
+	"endNo": 51,
+    "batchSize": 17,
     "fastMesh": true
 }

@@ -1,5 +1,5 @@
 {
   "startImageNumber": 1,
   "endImageNumber": 10,
-  "hdf5File": "$EDNA2_TESTDATA_IMAGES/Trx6_19_1_0001.h5"
+  "hdf5File": "$EDNA2_TESTDATA_IMAGES/mesh-mx415_1_0001.h5"
 }

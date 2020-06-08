@@ -1,0 +1,132 @@
+{
+    "subWedge": [
+        {
+            "experimentalCondition": {
+                "detector": {
+                    "numberPixelX": 1475,
+                    "numberPixelY": 1679,
+                    "pixelSizeX": 0.17200000000000001,
+                    "pixelSizeY": 0.17200000000000001,
+                    "beamPositionX": 146.46144,
+                    "beamPositionY": 128.54076,
+                    "distance": 236.17499999999998,
+                    "serialNumber": "PILATUS3 2M, S/N 24-0118, ESRF ID30",
+                    "name": "PILATUS2 3M",
+                    "type": "pilatus2m"
+                },
+                "beam": {
+                    "wavelength": 0.965,
+                    "exposureTime": 0.333
+                },
+                "goniostat": {
+                    "rotationAxisStart": 0.0,
+                    "rotationAxisEnd": 1.0,
+                    "oscillationWidth": 1.0
+                }
+            },
+            "image": [
+                {
+                    "path": "/home/svensson/git/edna2/testdata/images/ref-opid30a1_4_0001.cbf",
+                    "date": "2014/Nov/14 16:31:00",
+                    "number": 1
+                }
+            ]
+        },
+        {
+            "experimentalCondition": {
+                "detector": {
+                    "numberPixelX": 1475,
+                    "numberPixelY": 1679,
+                    "pixelSizeX": 0.17200000000000001,
+                    "pixelSizeY": 0.17200000000000001,
+                    "beamPositionX": 146.46144,
+                    "beamPositionY": 128.54076,
+                    "distance": 236.17499999999998,
+                    "serialNumber": "PILATUS3 2M, S/N 24-0118, ESRF ID30",
+                    "name": "PILATUS2 3M",
+                    "type": "pilatus2m"
+                },
+                "beam": {
+                    "wavelength": 0.965,
+                    "exposureTime": 0.333
+                },
+                "goniostat": {
+                    "rotationAxisStart": 90.0,
+                    "rotationAxisEnd": 91.0,
+                    "oscillationWidth": 1.0
+                }
+            },
+            "image": [
+                {
+                    "path": "/home/svensson/git/edna2/testdata/images/ref-opid30a1_4_0002.cbf",
+                    "date": "2014/Nov/14 16:31:10",
+                    "number": 2
+                }
+            ]
+        },
+        {
+            "experimentalCondition": {
+                "detector": {
+                    "numberPixelX": 1475,
+                    "numberPixelY": 1679,
+                    "pixelSizeX": 0.17200000000000001,
+                    "pixelSizeY": 0.17200000000000001,
+                    "beamPositionX": 146.46144,
+                    "beamPositionY": 128.54076,
+                    "distance": 236.17499999999998,
+                    "serialNumber": "PILATUS3 2M, S/N 24-0118, ESRF ID30",
+                    "name": "PILATUS2 3M",
+                    "type": "pilatus2m"
+                },
+                "beam": {
+                    "wavelength": 0.965,
+                    "exposureTime": 0.333
+                },
+                "goniostat": {
+                    "rotationAxisStart": 180.0,
+                    "rotationAxisEnd": 181.0,
+                    "oscillationWidth": 1.0
+                }
+            },
+            "image": [
+                {
+                    "path": "/home/svensson/git/edna2/testdata/images/ref-opid30a1_4_0003.cbf",
+                    "date": "2014/Nov/14 16:31:16",
+                    "number": 3
+                }
+            ]
+        },
+        {
+            "experimentalCondition": {
+                "detector": {
+                    "numberPixelX": 1475,
+                    "numberPixelY": 1679,
+                    "pixelSizeX": 0.17200000000000001,
+                    "pixelSizeY": 0.17200000000000001,
+                    "beamPositionX": 146.46144,
+                    "beamPositionY": 128.54076,
+                    "distance": 236.17499999999998,
+                    "serialNumber": "PILATUS3 2M, S/N 24-0118, ESRF ID30",
+                    "name": "PILATUS2 3M",
+                    "type": "pilatus2m"
+                },
+                "beam": {
+                    "wavelength": 0.965,
+                    "exposureTime": 0.333
+                },
+                "goniostat": {
+                    "rotationAxisStart": 270.0,
+                    "rotationAxisEnd": 271.0,
+                    "oscillationWidth": 1.0
+                }
+            },
+            "image": [
+                {
+                    "path": "/home/svensson/git/edna2/testdata/images/ref-opid30a1_4_0004.cbf",
+                    "date": "2014/Nov/14 16:31:23",
+                    "number": 4
+                }
+            ]
+        }
+    ]
+}

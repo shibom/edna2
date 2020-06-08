@@ -1,0 +1,35 @@
+{
+    "image": [
+        {
+            "experimentalCondition": {
+                "detector": {
+                    "numberPixelX": 1475,
+                    "numberPixelY": 1679,
+                    "pixelSizeX": 0.17200000000000001,
+                    "pixelSizeY": 0.17200000000000001,
+                    "beamPositionX": 146.46144,
+                    "beamPositionY": 128.54076,
+                    "distance": 236.17499999999998,
+                    "serialNumber": "PILATUS3 2M, S/N 24-0118, ESRF ID30",
+                    "name": "PILATUS2 3M",
+                    "type": "pilatus2m"
+                },
+                "beam": {
+                    "wavelength": 0.965,
+                    "exposureTime": 0.333
+                },
+                "goniostat": {
+                    "rotationAxisStart": 0.0,
+                    "rotationAxisEnd": 1.0,
+                    "oscillationWidth": 1.0
+                }
+            },
+            "dozorSpotFile": [
+                "$EDNA2_TASK_DATA/00001.spot",
+                "$EDNA2_TASK_DATA/00002.spot",
+                "$EDNA2_TASK_DATA/00003.spot",
+                "$EDNA2_TASK_DATA/00004.spot"
+            ]
+        }
+    ]
+}

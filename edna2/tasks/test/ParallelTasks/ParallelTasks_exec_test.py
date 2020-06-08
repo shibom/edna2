@@ -22,7 +22,7 @@ import unittest
 from edna2.utils import UtilsTest
 from edna2.utils import UtilsLogging
 
-from edna2.tasks.test.ParallelTasks.TestTask import TestTask
+from edna2.tasks.test.ParallelTasks.ExampleTask import ExampleTask
 from edna2.tasks.test.ParallelTasks.ControlTestTask import ControlTestTask
 
 logger = UtilsLogging.getLogger()
@@ -36,7 +36,7 @@ class ParallelTasksExecTest(unittest.TestCase):
     def test_runTestTask(self):
         inData = {'taskNumber': 1}
         logger.info('*'*80)
-        testTask = TestTask(inData=inData)
+        testTask = ExampleTask(inData=inData)
         testTask.execute()
         if not testTask.isFailure():
             logger.info(1)

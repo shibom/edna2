@@ -27,7 +27,7 @@ from edna2.utils import UtilsLogging
 
 from edna2.tasks.AbstractTask import AbstractTask
 
-from edna2.tasks.test.ParallelTasks.TestTask import TestTask
+from edna2.tasks.test.ParallelTasks.ExampleTask import ExampleTask
 
 logger = UtilsLogging.getLogger()
 
@@ -43,7 +43,7 @@ class ControlTestTask(AbstractTask):
         listTasks = []
         for taskNumber in range(startNumber, startNumber+numberOfTasks):
             testTaskInData = {'taskNumber': taskNumber}
-            testTask = TestTask(inData=testTaskInData)
+            testTask = ExampleTask(inData=testTaskInData)
             logger.info(testTask)
             listTasks.append(testTask)
             testTask.start()

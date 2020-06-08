@@ -20,8 +20,11 @@
 
 import os
 import json
+from builtins import RuntimeError
+
 import numpy
 import shlex
+import distro
 import shutil
 import base64
 import pathlib
@@ -39,6 +42,7 @@ from edna2.utils import UtilsPath
 from edna2.utils import UtilsImage
 from edna2.utils import UtilsConfig
 from edna2.utils import UtilsLogging
+from edna2.utils import UtilsDetector
 
 # Corresponding EDNA code:
 # https://github.com/olofsvensson/edna-mx
@@ -89,6 +93,7 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
                          "nameTemplateImage"],
             "properties": {
                 "detectorType": {"type": "string"},
+                "beamline": {"type": "string"},
                 "exposureTime": {"type": "number"},
                 "spotSize": {"type": "integer"},
                 "detectorDistance": {"type": "number"},
@@ -134,7 +139,8 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
         with open(str(self.getWorkingDirectory() / 'dozor.dat'), 'w') as f:
             f.write(commands)
         # Create dozor command line
-        commandLine = 'dozor -pall'
+        executable = UtilsConfig.get(self, 'executable', 'dozor')
+        commandLine = executable + ' -pall'
         if 'radiationDamage' in inData:
             commandLine += ' -rd dozor.dat'
         else:
@@ -154,33 +160,38 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
         ixMax = None
         iyMin = None
         iyMax = None
-        nx = None
-        ny = None
-        pixel = None
-        if inData['detectorType'] == 'pilatus2m':
-            nx = 1475
-            ny = 1679
-            pixel = 0.172
+        detectorType = inData['detectorType']
+        nx = UtilsDetector.getNx(detectorType)
+        ny = UtilsDetector.getNy(detectorType)
+        pixelSize = UtilsDetector.getPixelsize(detectorType)
+        sitePrefix = UtilsConfig.get(self, 'site_prefix')
+        if sitePrefix is not None and 'beamline' in inData and inData['beamline'] is not None:
+            # Try to read corresponding config file
+            site = sitePrefix + inData['beamline']
+            taskConfig = UtilsConfig.getTaskConfig(self.__class__.__name__, site)
+            ixMin = int(taskConfig["ix_min"])
+            ixMax = int(taskConfig["ix_max"])
+            iyMin = int(taskConfig["iy_min"])
+            iyMax = int(taskConfig["iy_max"])
+        elif detectorType == 'pilatus2m':
             ixMin = IX_MIN_PILATUS_2M
             ixMax = IX_MAX_PILATUS_2M
             iyMin = IY_MIN_PILATUS_2M
             iyMax = IY_MAX_PILATUS_2M
-        elif inData['detectorType'] == 'pilatus6m':
-            nx = 2463
-            ny = 2527
-            pixel = 0.172
+        elif detectorType == 'pilatus6m':
             ixMin = IX_MIN_PILATUS_6M
             ixMax = IX_MAX_PILATUS_6M
             iyMin = IY_MIN_PILATUS_6M
             iyMax = IY_MAX_PILATUS_6M
-        elif inData['detectorType'] == 'eiger4m':
-            nx = 2070
-            ny = 2167
-            pixel = 0.075
+        elif detectorType == 'eiger4m':
             ixMin = IX_MIN_EIGER_4M
             ixMax = IX_MAX_EIGER_4M
             iyMin = IY_MIN_EIGER_4M
             iyMax = IY_MAX_EIGER_4M
+        if detectorType.startswith('eiger'):
+            library = self.getLibrary('hdf5')
+        else:
+            library =  self.getLibrary('cbf')
         processInfo = 'name template: {0}'.format(
             os.path.basename(inData['nameTemplateImage']))
         processInfo += ', first image no: {0}'.format(
@@ -188,10 +199,11 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
         processInfo += ', no images: {0}'.format(
             inData['numberImages'])
         command = '!\n'
-        command += 'detector %s\n' % inData['detectorType']
+        command += 'detector %s\n' % detectorType
+        command += 'library %s\n' % library
         command += 'nx %d\n' % nx
         command += 'ny %d\n' % ny
-        command += 'pixel %f\n' % pixel
+        command += 'pixel %f\n' % pixelSize
         command += 'exposure %.3f\n' % inData['exposureTime']
         command += 'spot_size %d\n' % inData['spotSize']
         command += 'detector_distance %.3f\n' % \
@@ -218,7 +230,7 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
             inData['oscillationRange']
         imageStep = inData.get('imageStep', DEFAULT_IMAGE_STEP)
         command += 'image_step %.3f\n' % imageStep
-        command += 'starting_angle %.3f\n' % inData['startingAngle']
+        command += 'starting_angle %.3f\n' % (inData['startingAngle'] - (inData['firstImageNumber'] - 1) * inData['oscillationRange'])
         command += 'first_image_number %d\n' % inData['firstImageNumber']
         command += 'number_images %d\n' % inData['numberImages']
         if 'wedgeNumber' in inData:
@@ -440,6 +452,21 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
             listXSFile.append(plotPath)
         return listXSFile
 
+    def getLibrary(self, libraryType):
+        libraryName = 'library_' + libraryType
+        idName, version, codename = distro.linux_distribution()
+        if 'Debian' in idName:
+            libraryName += '_debian_'
+        elif idName == 'Ubuntu':
+            libraryName += '_ubuntu_'
+        else:
+            raise RuntimeError('ExecDozor: unknown os name {0}'.format(idName))
+        libraryName += version
+        library = UtilsConfig.get(self, libraryName)
+        if library is None:
+            raise RuntimeError('ExecDozor: library configuration {0} not found')
+        return library
+
 
 class ControlDozor(AbstractTask):
 
@@ -459,6 +486,7 @@ class ControlDozor(AbstractTask):
                     "items": {"type": "string"},
                 },
                 "directory": {"type": "string"},
+                "beamline": {"type": "string"},
                 "template": {"type": "string"},
                 "startNo": {"type": "integer"},
                 "endNo": {"type": "integer"},
@@ -501,25 +529,25 @@ class ControlDozor(AbstractTask):
         if 'hdf5BatchSize' in inData:
            hdf5BatchSize = inData['hdf5BatchSize']
         listAllBatches = self.createListOfBatches(dictImage.keys(), batchSize)
-        if dictImage[listAllBatches[0][0]].endswith('h5'):
-            hasHdf5Prefix = True
-            # Convert HDF5 images to CBF
-            logger.debug("HDF5 converter batch size: {0}".format(batchSize))
-            doRadiationDamage = inData.get('doRadiationDamage', False)
-            if doRadiationDamage:
-               cbfTempDir = None
-            else:
-               cbfTempDir = tempfile.mkdtemp(prefix='CbfTemp_')
-            listHdf5Batches = self.createListOfBatches(
-                dictImage.keys(),
-                batchSize
-            )
-            dictImage, hasHdf5Prefix = self.convertToCBF(
-                dictImage,
-                listHdf5Batches,
-                doRadiationDamage=doRadiationDamage,
-                cbfTempDir=cbfTempDir
-            )
+        # if dictImage[listAllBatches[0][0]].endswith('h5'):
+        #     hasHdf5Prefix = True
+        #     # Convert HDF5 images to CBF
+        #     logger.debug("HDF5 converter batch size: {0}".format(batchSize))
+        #     doRadiationDamage = inData.get('doRadiationDamage', False)
+        #     if doRadiationDamage:
+        #        cbfTempDir = None
+        #     else:
+        #        cbfTempDir = tempfile.mkdtemp(prefix='CbfTemp_')
+        #     listHdf5Batches = self.createListOfBatches(
+        #         dictImage.keys(),
+        #         batchSize
+        #     )
+        #     dictImage, hasHdf5Prefix = self.convertToCBF(
+        #         dictImage,
+        #         listHdf5Batches,
+        #         doRadiationDamage=doRadiationDamage,
+        #         cbfTempDir=cbfTempDir
+        #     )
         outData['imageQualityIndicators'] = []
         for listBatch in listAllBatches:
             outDataDozor, detectorType = self.runDozorTask(
@@ -607,8 +635,21 @@ class ControlDozor(AbstractTask):
                      hasHdf5Prefix, hasOverlap):
         outDataDozor = None
         image = dictImage[listBatch[0]]
+        prefix = UtilsImage.getPrefix(image)
+        suffix = UtilsImage.getSuffix(image)
+        imageNumber = UtilsImage.getImageNumber(image)
+        if image.endswith('h5'):
+            hasHdf5Prefix = True
+            prefix = UtilsImage.getPrefix(image)
+            directory = pathlib.Path(image).parent
+            hdf5ImageNumber = 1
+            if UtilsConfig.isEMBL():
+                fileName = '{0}_master.h5'.format(prefix)
+            else:
+                fileName = '{0}_{1}_master.h5'.format(prefix, hdf5ImageNumber)
+            image = directory / fileName
         inDataReadHeader = {
-            'image': image
+            'imagePath': [image]
         }
         controlHeader = ReadImageHeader(inData=inDataReadHeader)
         controlHeader.execute()
@@ -627,17 +668,17 @@ class ControlDozor(AbstractTask):
                        'orgy': detector['beamPositionY'] / detector['pixelSizeY'],
                        'oscillationRange': goniostat['oscillationWidth'],
                        'startingAngle': goniostat['rotationAxisStart'],
-                       'firstImageNumber': subWedge['image'][0]['number'],
+                       'firstImageNumber': imageNumber,
                        'numberImages': len(listBatch),
                        'workingDirectory': workingDirectory,
                        'overlap': overlap}
+        if 'beamline' in inData:
+            inDataDozor['beamline'] = inData['beamline']
         fileName = os.path.basename(subWedge['image'][0]['path'])
-        prefix = UtilsImage.getPrefix(fileName)
-        suffix = UtilsImage.getSuffix(fileName)
         if UtilsConfig.isEMBL():
             template = '{0}_?????.{1}'.format(prefix, suffix)
         elif hasHdf5Prefix and not hasOverlap:
-            template = '{0}_??????.{1}'.format(prefix, suffix)
+            template = '{0}_1_??????.{1}'.format(prefix, suffix)
         else:
             template = '{0}_????.{1}'.format(prefix, suffix)
         inDataDozor['nameTemplateImage'] = os.path.join(

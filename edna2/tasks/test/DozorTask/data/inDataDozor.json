@@ -1,5 +1,6 @@
 {
 	"detectorType": "pilatus6m",
+	"beamline": "id23eh1",
 	"exposureTime": 0.1,
 	"spotSize":  3,
 	"detectorDistance": 269.60,

@@ -51,3 +51,21 @@ class ExecDozorTest(unittest.TestCase):
         self.assertTrue(dozor.isSuccess())
         outData = dozor.outData
         self.assertEqual(len(outData['imageDozor']), 10)
+
+    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
+                     'Cannot run control dozor test with default config')
+    @unittest.skipIf(not os.path.exists('/data/visitor/mx415/id30a3/20171127/' +
+                                        'RAW_DATA/mx415/1-2-2/MXPressF_01/' +
+                                        'mesh-mx415_1_1_master.h5'),
+                     'Image /data/visitor/mx415/id30a3/20171127/RAW_DATA/mx415/' +
+                     '1-2-2/MXPressF_01/mesh-mx415_1_1_master.h5 doesn\'t exist')
+    def test_execute_ExecDozor_eiger4m(self):
+        currentSite = UtilsConfig.getSite()
+        # UtilsConfig.setSite('esrf_ispyb_valid')
+        referenceDataPath = self.dataPath / 'ExecDozor_eiger4m.json'
+        self.inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
+        dozor = ExecDozor(inData=self.inData)
+        dozor.execute()
+        self.assertTrue(dozor.isSuccess())
+        outData = dozor.outData
+        self.assertEqual(len(outData['imageDozor']), 51)

@@ -46,7 +46,7 @@ class ImageQualityIndicatorsPilatus2MExecTest(unittest.TestCase):
                      'Cannot run ImageQualityIndicatorsExecTest ' +
                      'test with default config')
     def test_execute_pilatus2m_10images(self):
-        referenceDataPath = self.dataPath / 'pilatus2m_10images.json'
+        referenceDataPath = self.dataPath / 'pilatus2m_20images.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         task = ImageQualityIndicatorsTask(inData=inData)
         task.execute()
