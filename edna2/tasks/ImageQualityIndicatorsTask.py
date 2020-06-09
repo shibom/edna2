@@ -227,10 +227,18 @@ class ImageQualityIndicatorsTask(AbstractTask):
                 if doCrystfel:
                     # a work around as autocryst module works with only json file/string
                     inDataCrystFEL = {
-                        'detectorType': detectorType,
-                        'imageQualityIndicators': listOutDataControlDozor,
-                        'listH5FilePath': listH5FilePath
+                        'doCBFtoH5': False,
                     }
+                    if len(listH5FilePath) > 0:
+                        inDataCrystFEL['listH5FilePath']: listH5FilePath
+                    else:
+                        inDataCrystFEL['cbfFileInfo'] = {
+                            "directory": inData['directory'],
+                            "template": inData['template'],
+                            "startNo": inData["startNo"],
+                            "endNo": inData['endNo'],
+                            "batchSize": inData['batchSize']
+                        }
                     crystfel = ExeCrystFEL(inData=inDataCrystFEL)
                     crystfel.execute()
                     if not crystfel.isFailure():
