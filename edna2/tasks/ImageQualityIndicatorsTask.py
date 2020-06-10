@@ -151,28 +151,8 @@ class ImageQualityIndicatorsTask(AbstractTask):
             for image in listImage:
                 listOfAllH5Files.append(pathlib.Path(image))
 
-        if doCrystfel:
-            # a work around as autocryst module works with only json file/string
-            inDataCrystFEL = {
-                'doCBFtoH5': False,
-            }
-            if len(listOfAllH5Files) > 0:
-                inDataCrystFEL['listH5FilePath']: listOfAllH5Files
-            else:
-                inDataCrystFEL['cbfFileInfo'] = {
-                    "directory": inData['directory'],
-                    "template": inData['template'],
-                    "startNo": inData["startNo"],
-                    "endNo": inData['endNo'],
-                    "batchSize": inData['batchSize']
-                }
-            crystfel = ExeCrystFEL(inData=inDataCrystFEL)
-            crystfel.execute()
-            if not crystfel.isFailure():
-                listcrystfel_output.append(crystfel.outData)
-            else:
-                logger.error("CrystFEL did not run properly")
-                
+
+
         # Loop over batches:
         # - Wait for all files in batch
         # - If H5: First convert to CBF
@@ -250,7 +230,27 @@ class ImageQualityIndicatorsTask(AbstractTask):
                 else:
                     listImageQualityIndicators += listOutDataControlDozor
 
-
+            if doCrystfel:
+                # a work around as autocryst module works with only json file/string
+                inDataCrystFEL = {
+                    'doCBFtoH5': False,
+                }
+                if len(listOfAllH5Files) > 0:
+                    inDataCrystFEL['listH5FilePath']: listOfAllH5Files
+                else:
+                    inDataCrystFEL['cbfFileInfo'] = {
+                        "directory": inData['directory'],
+                        "template": inData['template'],
+                        "startNo": inData["startNo"],
+                        "endNo": inData['endNo'],
+                        "batchSize": inData['batchSize']
+                    }
+                crystfel = ExeCrystFEL(inData=inDataCrystFEL)
+                crystfel.execute()
+                if not crystfel.isFailure():
+                    listcrystfel_output.append(crystfel.outData)
+                else:
+                    logger.error("CrystFEL did not run properly")
 
 
         #                     xsDataImageQualityIndicators.dozorSpotsIntAver = imageDozor.spotsIntAver
