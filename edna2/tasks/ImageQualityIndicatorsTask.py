@@ -121,6 +121,13 @@ class ImageQualityIndicatorsTask(AbstractTask):
                 imageName = template.replace("####", "{0:04d}".format(index))
                 imagePath = directory / imageName
                 listImage.append(str(imagePath))
+        else:
+            firstImage = listImage[0]
+            lastImage = listImage[-1]
+            template = UtilsImage.getTemplate(firstImage)
+            directory = os.path.dirname(firstImage)
+            startNo = UtilsImage.getImageNumber(firstImage)
+            endNo = UtilsImage.getImageNumber(lastImage)
         outData = dict()
         listImageQualityIndicators = []
         listcrystfel_output = []
@@ -233,11 +240,11 @@ class ImageQualityIndicatorsTask(AbstractTask):
                         inDataCrystFEL['listH5FilePath']: listH5FilePath
                     else:
                         inDataCrystFEL['cbfFileInfo'] = {
-                            "directory": inData['directory'],
-                            "template": inData['template'],
-                            "startNo": inData["startNo"],
-                            "endNo": inData['endNo'],
-                            "batchSize": inData['batchSize']
+                            "directory": directory,
+                            "template": template,
+                            "startNo": startNo,
+                            "endNo": endNo,
+                            "batchSize": batchSize
                         }
                     crystfel = ExeCrystFEL(inData=inDataCrystFEL)
                     crystfel.execute()
