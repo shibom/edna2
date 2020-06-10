@@ -121,13 +121,6 @@ class ImageQualityIndicatorsTask(AbstractTask):
                 imageName = template.replace("####", "{0:04d}".format(index))
                 imagePath = directory / imageName
                 listImage.append(str(imagePath))
-        else:
-            firstImage = listImage[0]
-            lastImage = listImage[-1]
-            template = UtilsImage.getTemplate(firstImage)
-            directory = os.path.dirname(firstImage)
-            startNo = UtilsImage.getImageNumber(firstImage)
-            endNo = UtilsImage.getImageNumber(lastImage)
         outData = dict()
         listImageQualityIndicators = []
         listcrystfel_output = []
@@ -136,6 +129,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
         listDozorTask = []
         listOfImagesInBatch = []
         listOfAllBatches = []
+        listOfAllH5Files = []
         indexBatch = 0
         self.listH5FilePath = []
         detectorType = None
@@ -153,7 +147,32 @@ class ImageQualityIndicatorsTask(AbstractTask):
         if len(listOfImagesInBatch) > 0:
             listOfAllBatches.append(listOfImagesInBatch)
             listOfImagesInBatch = []
+        if UtilsImage.getSuffix(pathlib.Path(listImage[0])) == 'h5':
+            for image in listImage:
+                listOfAllH5Files.append(pathlib.Path(image))
 
+        if doCrystfel:
+            # a work around as autocryst module works with only json file/string
+            inDataCrystFEL = {
+                'doCBFtoH5': False,
+            }
+            if len(listOfAllH5Files) > 0:
+                inDataCrystFEL['listH5FilePath']: listOfAllH5Files
+            else:
+                inDataCrystFEL['cbfFileInfo'] = {
+                    "directory": inData['directory'],
+                    "template": inData['template'],
+                    "startNo": inData["startNo"],
+                    "endNo": inData['endNo'],
+                    "batchSize": inData['batchSize']
+                }
+            crystfel = ExeCrystFEL(inData=inDataCrystFEL)
+            crystfel.execute()
+            if not crystfel.isFailure():
+                listcrystfel_output.append(crystfel.outData)
+            else:
+                logger.error("CrystFEL did not run properly")
+                
         # Loop over batches:
         # - Wait for all files in batch
         # - If H5: First convert to CBF
@@ -231,27 +250,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
                 else:
                     listImageQualityIndicators += listOutDataControlDozor
 
-                if doCrystfel:
-                    # a work around as autocryst module works with only json file/string
-                    inDataCrystFEL = {
-                        'doCBFtoH5': False,
-                    }
-                    if len(listH5FilePath) > 0:
-                        inDataCrystFEL['listH5FilePath']: listH5FilePath
-                    else:
-                        inDataCrystFEL['cbfFileInfo'] = {
-                            "directory": directory,
-                            "template": template,
-                            "startNo": startNo,
-                            "endNo": endNo,
-                            "batchSize": batchSize
-                        }
-                    crystfel = ExeCrystFEL(inData=inDataCrystFEL)
-                    crystfel.execute()
-                    if not crystfel.isFailure():
-                        cryst_result_out = crystfel.outData
-                        listcrystfel_output.append(cryst_result_out)
-                        # listImageQualityIndicators += listcrystfel_output
+
 
 
         #                     xsDataImageQualityIndicators.dozorSpotsIntAver = imageDozor.spotsIntAver
@@ -321,7 +320,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
         #                     xsDataResultControlImageQualityIndicator.selectedIndexingSolution = selectedSolution
 
         outData['imageQualityIndicators'] = listImageQualityIndicators
-        outData['crystfel_per_batch'] = listcrystfel_output
+        outData['crystfel_all_batches'] = listcrystfel_output
         return outData
 
     @classmethod
