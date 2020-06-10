@@ -162,7 +162,6 @@ class ExeCrystFEL(AbstractTask):
             in_for_crystfel['peak_info'] = '/data/peakinfo'
             in_for_crystfel['maxchunksize'] = 10
 
-        in_for_crystfel['indexing_method'] = "xgandlf"
         results = run_crystfel.__run__(in_for_crystfel)
         return results
 
