@@ -121,13 +121,17 @@ class ImageQualityIndicatorsTask(AbstractTask):
                 imageName = template.replace("####", "{0:04d}".format(index))
                 imagePath = directory / imageName
                 listImage.append(str(imagePath))
-
+        else:
+            firstImage = listImage[0]
+            directory = pathlib.Path(firstImage).parent
+            template = UtilsImage.getTemplate(firstImage)
         outData = dict()
         listImageQualityIndicators = []
         listcrystfel_output = []
         inDataWaitFile = {}
         listDistlTask = []
         listDozorTask = []
+        listCrystFELTask = []
         listOfImagesInBatch = []
         listOfAllBatches = []
         listOfAllH5Files = []
@@ -151,13 +155,11 @@ class ImageQualityIndicatorsTask(AbstractTask):
         if UtilsImage.getSuffix(pathlib.Path(listImage[0])) == 'h5':
             for image in listImage:
                 listOfAllH5Files.append(pathlib.Path(image))
-
-
+        #
         # Loop over batches:
         # - Wait for all files in batch
-        # - If H5: First convert to CBF
-        # - Run Dozor and then run Crystfel if required
-        # -
+        # - Run Dozor and Crystfel (if required) in parallel
+        #
         for listOfImagesInBatch in listOfAllBatches:
             listOfH5FilesInBatch = []
             for imagePath in listOfImagesInBatch:
@@ -171,11 +173,18 @@ class ImageQualityIndicatorsTask(AbstractTask):
                     listofH5FilesInBatch=listOfH5FilesInBatch
                 )
             if not self.isFailure():
+                # Determine start and end image no
                 pathToFirstImage = listOfImagesInBatch[0]
+                pathToLastImage = listOfImagesInBatch[-1]
+                batchStartNo = UtilsImage.getImageNumber(pathToFirstImage)
+                batchEndNo = UtilsImage.getImageNumber(pathToLastImage)
                 # Run Control Dozor
                 inDataControlDozor = {
-                    'image': listOfImagesInBatch,
-                    'batchSize': len(listOfImagesInBatch)
+                    'template': template,
+                    'directory': directory,
+                    'startNo': batchStartNo,
+                    'endNo': batchEndNo,
+                    'batchSize': batchSize,
                 }
                 controlDozor = ControlDozor(inDataControlDozor)
                 controlDozor.start()
@@ -190,6 +199,26 @@ class ImageQualityIndicatorsTask(AbstractTask):
                         distlTask = DistlSignalStrengthTask(inData=inDataDistl)
                         distlTask.start()
                         listDistlTask.append((image, distlTask))
+                # Check if we should run CrystFEL:
+                if doCrystfel:
+                    # a work around as autocryst module works with only json file/string
+                    inDataCrystFEL = {
+                        'doCBFtoH5': False,
+                    }
+                    if len(listOfH5FilesInBatch) > 0:
+                        inDataCrystFEL['listH5FilePath']: listOfH5FilesInBatch
+                    else:
+                        inDataCrystFEL['cbfFileInfo'] = {
+                            "directory": directory,
+                            "startNo": batchStartNo,
+                            "endNo": batchEndNo,
+                            "template": template,
+                            "batchSize": batchSize
+                        }
+                    crystfel = ExeCrystFEL(inData=inDataCrystFEL)
+                    crystfel.start()
+                    listCrystFELTask.append(crystfel)
+
         if not self.isFailure():
             # listIndexing = []
             listDistlResult = []
@@ -229,94 +258,12 @@ class ImageQualityIndicatorsTask(AbstractTask):
                                 listImageQualityIndicators.append(imageQualityIndicators)
                 else:
                     listImageQualityIndicators += listOutDataControlDozor
-
-            if doCrystfel:
-                # a work around as autocryst module works with only json file/string
-                inDataCrystFEL = {
-                    'doCBFtoH5': False,
-                }
-                if len(listOfAllH5Files) > 0:
-                    inDataCrystFEL['listH5FilePath']: listOfAllH5Files
-                else:
-                    inDataCrystFEL['cbfFileInfo'] = {
-                        "directory": inData['directory'],
-                        "startNo": inData.get('startNo', 1),
-                        "endNo": inData.get('endNo', len(listImage)),
-                        "template": inData.get('template', UtilsImage.getTemplate(listImage[0])),
-                        "batchSize": inData['batchSize']
-                    }
-                crystfel = ExeCrystFEL(inData=inDataCrystFEL)
-                crystfel.execute()
+            for crystfel in listCrystFELTask:
+                crystfel.join()
                 if not crystfel.isFailure():
                     listcrystfel_output.append(crystfel.outData)
                 else:
                     logger.error("CrystFEL did not run properly")
-
-        #                     xsDataImageQualityIndicators.dozorSpotsIntAver = imageDozor.spotsIntAver
-        #                     xsDataImageQualityIndicators.dozorSpotsResolution = imageDozor.spotsResolution
-        #                     xsDataImageQualityIndicators.dozorVisibleResolution = imageDozor.visibleResolution
-        #                     if self.xsDataResultControlImageQualityIndicators.inputDozor is None:
-        #                         if edPluginControlDozor.dataOutput.inputDozor is not None:
-        #                             self.xsDataResultControlImageQualityIndicators.inputDozor = XSDataDozorInput().parseString(
-        #                                 edPluginControlDozor.dataOutput.inputDozor.marshal())
-        #         if self.dataInput.doUploadToIspyb is not None and self.dataInput.doUploadToIspyb.value:
-        #             xsDataISPyBImageQualityIndicators = \
-        #                 XSDataISPyBImageQualityIndicators.parseString(xsDataImageQualityIndicators.marshal())
-        #             xsDataInputStoreListOfImageQualityIndicators.addImageQualityIndicators(
-        #                 xsDataISPyBImageQualityIndicators)
-        #     #        print xsDataInputStoreListOfImageQualityIndicators.marshal()
-        #     if self.dataInput.doUploadToIspyb is not None and self.dataInput.doUploadToIspyb.value:
-        #         self.edPluginISPyB = self.loadPlugin(self.strISPyBPluginName)
-        #         self.edPluginISPyB.dataInput = xsDataInputStoreListOfImageQualityIndicators
-        #         self.edPluginISPyB.execute()
-        #     #
-        #     if bDoIndexing:
-        #         # Find the 5 most intensive images (TIS):
-        #         listImage = []
-        #         # Check that we have dozor_score from all images:
-        #         has_dozor_score = True
-        #         for imageQualityIndicators in self.xsDataResultControlImageQualityIndicators.imageQualityIndicators:
-        #             if imageQualityIndicators.dozor_score is None:
-        #                 has_dozor_score = False
-        #         if has_dozor_score:
-        #             listSorted = sorted(self.xsDataResultControlImageQualityIndicators.imageQualityIndicators,
-        #                                 key=lambda imageQualityIndicators: imageQualityIndicators.dozor_score.value)
-        #         else:
-        #             listSorted = sorted(self.xsDataResultControlImageQualityIndicators.imageQualityIndicators,
-        #                                 key=lambda
-        #                                     imageQualityIndicators: imageQualityIndicators.totalIntegratedSignal.value)
-        #         for xsDataResultControlImageQualityIndicator in listSorted[-5:]:
-        #             if xsDataResultControlImageQualityIndicator.dozor_score.value > 1:
-        #                 xsDataInputReadImageHeader = XSDataInputReadImageHeader()
-        #                 xsDataInputReadImageHeader.image = XSDataFile(
-        #                     xsDataResultControlImageQualityIndicator.image.path)
-        #                 self.edPluginReadImageHeader = self.loadPlugin(self.strPluginReadImageHeaderName)
-        #                 self.edPluginReadImageHeader.dataInput = xsDataInputReadImageHeader
-        #                 self.edPluginReadImageHeader.executeSynchronous()
-        #                 xsDataResultReadImageHeader = self.edPluginReadImageHeader.dataOutput
-        #                 if xsDataResultReadImageHeader is not None:
-        #                     xsDataSubWedge = xsDataResultReadImageHeader.subWedge
-        #                     self.xsDataCollection = XSDataCollection()
-        #                     self.xsDataCollection.addSubWedge(xsDataSubWedge)
-        #                     xsDataIndexingInput = XSDataIndexingInput()
-        #                     xsDataIndexingInput.setDataCollection(self.xsDataCollection)
-        #                     xsDataMOSFLMIndexingInput = EDHandlerXSDataMOSFLMv10.generateXSDataMOSFLMInputIndexing(
-        #                         xsDataIndexingInput)
-        #                     edPluginMOSFLMIndexing = self.loadPlugin(self.strIndexingMOSFLMPluginName)
-        #                     self.listPluginMOSFLM.append(
-        #                         [edPluginMOSFLMIndexing, xsDataResultControlImageQualityIndicator])
-        #                     edPluginMOSFLMIndexing.setDataInput(xsDataMOSFLMIndexingInput)
-        #                     edPluginMOSFLMIndexing.execute()
-        #         for tupleMOSFLM in self.listPluginMOSFLM:
-        #             edPluginMOSFLMIndexing = tupleMOSFLM[0]
-        #             xsDataResultControlImageQualityIndicator = tupleMOSFLM[1]
-        #             edPluginMOSFLMIndexing.synchronize()
-        #             if not edPluginMOSFLMIndexing.isFailure():
-        #                 xsDataMOSFLMOutput = edPluginMOSFLMIndexing.dataOutput
-        #                 xsDataIndexingResult = EDHandlerXSDataMOSFLMv10.generateXSDataIndexingResult(xsDataMOSFLMOutput)
-        #                 selectedSolution = xsDataIndexingResult.selectedSolution
-        #                 if selectedSolution is not None:
-        #                     xsDataResultControlImageQualityIndicator.selectedIndexingSolution = selectedSolution
 
         outData['imageQualityIndicators'] = listImageQualityIndicators
         outData['crystfel_all_batches'] = listcrystfel_output

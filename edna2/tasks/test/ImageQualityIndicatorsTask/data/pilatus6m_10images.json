@@ -1,12 +1,12 @@
 {
 	"doDistlSignalStrength": true,
 	"doIndexing": true,
-	"doCrystfel": false,
+	"doCrystfel": true,
 	"doUploadToIspyb": false,
 	"directory": "$EDNA2_TESTDATA_IMAGES",
 	"template": "x_1_####.cbf",
 	"startNo": 1,
 	"endNo": 10,
-    "batchSize": 10,
+    "batchSize": 5,
     "fastMesh": false
 }

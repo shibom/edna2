@@ -888,7 +888,11 @@ plot '{dozorCsvFileName}' using 1:3 title 'Number of spots' axes x1y1 with point
             # Create list of images
             listImage = []
             self.directory = inData['directory']
-            self.template = inData['template']
+            if "#" in inData['template']:
+                noWildCards = inData['template'].count('#')
+                self.template = inData['template'].replace('#' * noWildCards, '%0' + str(noWildCards) + 'd')
+            else:
+                self.template = inData['template']
             startNo = int(inData['startNo'])
             endNo = int(inData['endNo'])
             for imageIndex in range(startNo, endNo + 1):
