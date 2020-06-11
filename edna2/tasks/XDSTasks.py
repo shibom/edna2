@@ -343,62 +343,65 @@ class XDSIndexingTask(XDSTask):
         Inspired from parse_xparm written by Pierre Legrand:
         https://github.com/legrandp/xdsme/blob/67001a75f3c363bfe19b8bd7cae999f4fb9ad49d/XOconv/XOconv.py#L372
         """
-        with open(str(pathToXparmXds)) as f:
-            xparm = f.readlines()
-        xparamDict = {
-            "rot":          list(map(float, xparm[1].split()[3:])),
-            "beam":         list(map(float, xparm[2].split()[1:])),
-            "distance":     float(xparm[8].split()[2]),
-            "originXDS":    list(map(float, xparm[8].split()[:2])),
-            "A":            list(map(float, xparm[4].split())),
-            "B":            list(map(float, xparm[5].split())),
-            "C":            list(map(float, xparm[6].split())),
-            "cell":         list(map(float, xparm[3].split()[1:])),
-            "pixel_size":   list(map(float, xparm[7].split()[3:])),
-            "pixel_numb":   list(map(float, xparm[7].split()[1:])),
-            "symmetry":     int(xparm[3].split()[0]),
-            "num_init":     list(map(float, xparm[1].split()[:3]))[0],
-            "phi_init":     list(map(float, xparm[1].split()[:3]))[1],
-            "delta_phi":    list(map(float, xparm[1].split()[:3]))[2],
-            "detector_X":   list(map(float, xparm[9].split())),
-            "detector_Y":   list(map(float, xparm[10].split()))
-        }
-        A = np.array(xparamDict["A"])
-        B = np.array(xparamDict["B"])
-        C = np.array(xparamDict["C"])
+        if pathToXparmXds.exists():
+            with open(str(pathToXparmXds)) as f:
+                xparm = f.readlines()
+            xparamDict = {
+                "rot":          list(map(float, xparm[1].split()[3:])),
+                "beam":         list(map(float, xparm[2].split()[1:])),
+                "distance":     float(xparm[8].split()[2]),
+                "originXDS":    list(map(float, xparm[8].split()[:2])),
+                "A":            list(map(float, xparm[4].split())),
+                "B":            list(map(float, xparm[5].split())),
+                "C":            list(map(float, xparm[6].split())),
+                "cell":         list(map(float, xparm[3].split()[1:])),
+                "pixel_size":   list(map(float, xparm[7].split()[3:])),
+                "pixel_numb":   list(map(float, xparm[7].split()[1:])),
+                "symmetry":     int(xparm[3].split()[0]),
+                "num_init":     list(map(float, xparm[1].split()[:3]))[0],
+                "phi_init":     list(map(float, xparm[1].split()[:3]))[1],
+                "delta_phi":    list(map(float, xparm[1].split()[:3]))[2],
+                "detector_X":   list(map(float, xparm[9].split())),
+                "detector_Y":   list(map(float, xparm[10].split()))
+            }
+            A = np.array(xparamDict["A"])
+            B = np.array(xparamDict["B"])
+            C = np.array(xparamDict["C"])
 
-        volum = np.cross(A, B).dot(C)
-        Ar = np.cross(B, C) / volum
-        Br = np.cross(C, A) / volum
-        Cr = np.cross(A, B) / volum
-        UBxds = np.array([Ar, Br, Cr]).transpose()
+            volum = np.cross(A, B).dot(C)
+            Ar = np.cross(B, C) / volum
+            Br = np.cross(C, A) / volum
+            Cr = np.cross(A, B) / volum
+            UBxds = np.array([Ar, Br, Cr]).transpose()
 
-        BEAM = np.array(xparamDict["beam"])
-        ROT = np.array(xparamDict["rot"])
-        wavelength = 1 / np.linalg.norm(BEAM)
+            BEAM = np.array(xparamDict["beam"])
+            ROT = np.array(xparamDict["rot"])
+            wavelength = 1 / np.linalg.norm(BEAM)
 
-        xparamDict["cell_volum"] = volum
-        xparamDict["wavelength"] = wavelength
-        xparamDict["Ar"] = Ar.tolist()
-        xparamDict["Br"] = Br.tolist()
-        xparamDict["Cr"] = Cr.tolist()
-        xparamDict["UB"] = UBxds.tolist()
+            xparamDict["cell_volum"] = volum
+            xparamDict["wavelength"] = wavelength
+            xparamDict["Ar"] = Ar.tolist()
+            xparamDict["Br"] = Br.tolist()
+            xparamDict["Cr"] = Cr.tolist()
+            xparamDict["UB"] = UBxds.tolist()
 
-        normROT = float(np.linalg.norm(ROT))
-        CAMERA_z = np.true_divide(ROT, normROT)
-        CAMERA_y = np.cross(CAMERA_z, BEAM)
-        normCAMERA_y = float(np.linalg.norm(CAMERA_y))
-        CAMERA_y = np.true_divide(CAMERA_y, normCAMERA_y)
-        CAMERA_x = np.cross(CAMERA_y, CAMERA_z)
-        CAMERA = np.transpose(np.array([CAMERA_x, CAMERA_y, CAMERA_z]))
+            normROT = float(np.linalg.norm(ROT))
+            CAMERA_z = np.true_divide(ROT, normROT)
+            CAMERA_y = np.cross(CAMERA_z, BEAM)
+            normCAMERA_y = float(np.linalg.norm(CAMERA_y))
+            CAMERA_y = np.true_divide(CAMERA_y, normCAMERA_y)
+            CAMERA_x = np.cross(CAMERA_y, CAMERA_z)
+            CAMERA = np.transpose(np.array([CAMERA_x, CAMERA_y, CAMERA_z]))
 
-        mosflmUB = CAMERA.dot(UBxds)*xparamDict["wavelength"]
-        # mosflmUB = UBxds*xparamDict["wavelength"]
-        xparamDict["mosflmUB"] = mosflmUB.tolist()
+            mosflmUB = CAMERA.dot(UBxds)*xparamDict["wavelength"]
+            # mosflmUB = UBxds*xparamDict["wavelength"]
+            xparamDict["mosflmUB"] = mosflmUB.tolist()
 
-        reciprocCell = XDSIndexingTask.reciprocal(xparamDict["cell"])
-        B = XDSIndexingTask.BusingLevy(reciprocCell)
-        mosflmU = np.dot(mosflmUB, np.linalg.inv(B)) / xparamDict["wavelength"]
-        xparamDict["mosflmU"] = mosflmU.tolist()
+            reciprocCell = XDSIndexingTask.reciprocal(xparamDict["cell"])
+            B = XDSIndexingTask.BusingLevy(reciprocCell)
+            mosflmU = np.dot(mosflmUB, np.linalg.inv(B)) / xparamDict["wavelength"]
+            xparamDict["mosflmU"] = mosflmU.tolist()
+        else:
+            xparamDict = {}
         return xparamDict
 
