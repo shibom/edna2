@@ -121,6 +121,11 @@ class AutoCrystFEL(object):
                 "detectorType": {"type": "string"},
                 "suffix": {"type": "string"},
                 "prefix": {"type": "string"},
+                "ImageRange": {"type": "array",
+                               "items": {
+                                   "type": "integer"
+                                    }
+                               },
                 "maxchunksize": {"type": "integer"},
                 "processing_directory": {"type": "string"},
                 "doMerging": {"type": "boolean"},
@@ -140,7 +145,8 @@ class AutoCrystFEL(object):
                 "threshold": {"type": "string"},
                 "local_bg_radius": {"type": "string"},
                 "min_res": {"type": "string"},
-                "highres": {"type": "string"}
+                "highres": {"type": "string"},
+                "wait_time": {"type": "string"}
             },
         }
 
@@ -293,13 +299,20 @@ class AutoCrystFEL(object):
 
     def datafinder(self):
         datadir = pathlib.Path(self.jshandle['image_directory'])
+        image_range = self.jshandle.get('ImageRange', ())
         if datadir.exists():
-            listofimagefiles = list(datadir.glob(self.jshandle['prefix'] + '*' + self.jshandle['suffix']))
-            for fname in listofimagefiles:
-                if 'master' not in str(fname):
-                    self.filelist.append(fname.as_posix())
-                else:
-                    pass
+            if len(image_range) > 0:
+                for index in range(image_range[0], image_range[1]+1):
+                    imageName = self.jshandle['prefix'] + '{0:04d}'.format(index) + '.' + self.jshandle['suffix']
+                    imagePath = datadir / imageName
+                    self.filelist.append(imagePath.as_posix())
+            else:
+                listofimagefiles = list(datadir.glob(self.jshandle['prefix'] + '*' + self.jshandle['suffix']))
+                for fname in listofimagefiles:
+                    if 'master' not in str(fname):
+                        self.filelist.append(fname.as_posix())
+                    else:
+                        pass
         else:
             self.setFailure()
             logger.error('dataError:{}'.format('no data found'))
@@ -322,9 +335,9 @@ class AutoCrystFEL(object):
         geomfile = self.jshandle.get('geometry_file', None)
         if geomfile is None:
             image1 = type('', (), {})  # initialize image1 as an empty object
-            if self.jshandle['detectorType'] == 'pilatus2m' or self.jshandle['detectorType'] == 'pilatus6m':
+            if self.jshandle['suffix'] == 'cbf':
                 image1 = Im(self.filelist[0])
-            elif self.jshandle['detectorType'] == 'eiger4m':
+            elif self.jshandle['suffix'] == 'h5':
                 master_str = self.jshandle['prefix'] + '*master.h5'
                 masterfile = list(pathlib.Path(self.jshandle['image_directory']).glob(master_str))[0]
                 image1 = Im(str(masterfile))
@@ -373,6 +386,7 @@ class AutoCrystFEL(object):
         int_radius = self.jshandle.get('int_radius', '3,4,6')
         highres = self.jshandle.get('highres', '0.0')
         nproc = self.jshandle.get('num_processors', '20')
+        waiting = self.jshandle.get('wait_time', '0')
 
         if self.is_executable('indexamajig'):
             command = 'indexamajig -i %s -o %s -g %s' \
@@ -397,8 +411,8 @@ class AutoCrystFEL(object):
                 min_res = self.jshandle.get('min_res', '50')
                 threshold = self.jshandle.get('threshold', '10')
 
-                command += ' --peak-radius=%s --min-peaks=%s' \
-                           % (peak_radius, min_peaks)
+                command += ' --peak-radius=%s --min-peaks=%s --wait-for-file=%s' \
+                           % (peak_radius, min_peaks, waiting)
                 command += ' --min-snr=%s --threshold=%s --local-bg-radius=%s --min-res=%s' \
                            % (min_snr, threshold, local_bg_radius, min_res)
                 command += ' --no-non-hits-in-stream'

@@ -121,6 +121,13 @@ class ImageQualityIndicatorsTask(AbstractTask):
                 imageName = template.replace("####", "{0:04d}".format(index))
                 imagePath = directory / imageName
                 listImage.append(str(imagePath))
+        else:
+            firstImage = listImage[0]
+            lastImage = listImage[-1]
+            template = UtilsImage.getTemplate(firstImage)
+            directory = os.path.dirname(firstImage)
+            startNo = UtilsImage.getImageNumber(firstImage)
+            endNo = UtilsImage.getImageNumber(lastImage)
         outData = dict()
         listImageQualityIndicators = []
         listcrystfel_output = []
@@ -227,10 +234,18 @@ class ImageQualityIndicatorsTask(AbstractTask):
                 if doCrystfel:
                     # a work around as autocryst module works with only json file/string
                     inDataCrystFEL = {
-                        'detectorType': detectorType,
-                        'imageQualityIndicators': listOutDataControlDozor,
-                        'listH5FilePath': listH5FilePath
+                        'doCBFtoH5': False,
                     }
+                    if len(listH5FilePath) > 0:
+                        inDataCrystFEL['listH5FilePath']: listH5FilePath
+                    else:
+                        inDataCrystFEL['cbfFileInfo'] = {
+                            "directory": directory,
+                            "template": template,
+                            "startNo": startNo,
+                            "endNo": endNo,
+                            "batchSize": batchSize
+                        }
                     crystfel = ExeCrystFEL(inData=inDataCrystFEL)
                     crystfel.execute()
                     if not crystfel.isFailure():

@@ -123,8 +123,9 @@ def waitForFile(file, expectedSize=None, timeOut=DEFAULT_TIMEOUT):
     if os.name != 'nt' and fileDir.exists():
         # Patch provided by Sebastien 2018/02/09 for forcing NFS cache:
         # logger.debug("NFS cache clear, doing os.fstat on directory {0}".format(fileDir))
-        d = os.open(fileDir.as_posix(), os.O_DIRECTORY)
-        statResult = os.fstat(d)
+        fd = os.open(fileDir.as_posix(), os.O_DIRECTORY)
+        statResult = os.fstat(fd)
+        os.close(fd)
         # logger.debug("Results of os.fstat: {0}".format(statResult))
     # Check if file is there
     if filePath.exists():
@@ -144,8 +145,9 @@ def waitForFile(file, expectedSize=None, timeOut=DEFAULT_TIMEOUT):
             if os.name != 'nt' and fileDir.exists():
                 # Patch provided by Sebastien 2018/02/09 for forcing NFS cache:
                 # logger.debug("NFS cache clear, doing os.fstat on directory {0}".format(fileDir))
-                d = os.open(fileDir.as_posix(), os.O_DIRECTORY)
-                statResult = os.fstat(d)
+                fd = os.open(fileDir.as_posix(), os.O_DIRECTORY)
+                statResult = os.fstat(fd)
+                os.close(fd)
                 # logger.debug("Results of os.fstat: {0}".format(statResult))
             timeElapsed = time.time() - timeStart
             # Check if time out

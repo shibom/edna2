@@ -31,8 +31,6 @@ import logging
 import pathlib
 import argparse
 
-from edna2.utils import UtilsLogging
-
 # Set up PYTHONPATH
 
 filePath = pathlib.Path(__file__)
@@ -40,9 +38,11 @@ if filePath.parent == pathlib.Path('.'):
     cwd = os.getcwd()
     projectHome = pathlib.Path(cwd).parent
 else:
-    projectHome = filePath.parent
+    projectHome = filePath.parents[2]
 edna2TopLevelDir = projectHome / 'edna2'
 sys.path.insert(0, str(edna2TopLevelDir))
+
+from edna2.utils import UtilsLogging
 
 # Parse command line
 

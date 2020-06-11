@@ -1,5 +1,6 @@
 {
 	"doCrystfel": true,
+    "batchSize": 10,
 	"image": [
 		"$EDNA2_TESTDATA_IMAGES/x_1_0001.cbf",
 		"$EDNA2_TESTDATA_IMAGES/x_1_0002.cbf",

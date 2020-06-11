@@ -54,7 +54,7 @@ class XDSTasksUnitTest(unittest.TestCase):
         self.assertEqual(spotXdsReference, spotXds)
 
     def test_readIdxrefLp(self):
-        idxRefLpPath = self.dataPath / 'IDXREF.LP'
+        idxRefLpPath = self.dataPath / 'IDXREF.LP_TRYP'
         resultXDSIndexing = XDSIndexingTask.readIdxrefLp(idxRefLpPath)
 
     def test_parseXparm(self):

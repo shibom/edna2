@@ -160,9 +160,9 @@ class ReadImageHeader(AbstractTask):
         detector['pixelSizeY'] = float(listPixelSizeXY[3]) * 1000
         # Beam position
         listBeamPosition = dictHeader['Beam_xy'].replace('(', ' ').replace(')', ' ').replace(',', ' ').split()
-        detector['beamPositionX'] = float(listBeamPosition[1]) * \
+        detector['beamPositionX'] = float(listBeamPosition[0]) * \
                                     detector['pixelSizeX']
-        detector['beamPositionY'] = float(listBeamPosition[0]) * \
+        detector['beamPositionY'] = float(listBeamPosition[1]) * \
                                     detector['pixelSizeY']
         distance = float(dictHeader['Detector_distance'].split(' ')[0]) * 1000
         detector['distance'] = distance

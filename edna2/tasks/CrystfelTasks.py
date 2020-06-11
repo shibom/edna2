@@ -26,14 +26,13 @@ import json
 import logging
 import pathlib
 
-
 import edna2.lib.autocryst.src.saveDozor as sd
+from edna2.lib.autocryst.src.Image import ImageHandler as Im
 from edna2.lib.autocryst.src import run_crystfel
 
 from edna2.tasks.AbstractTask import AbstractTask
 from edna2.utils import UtilsLogging
 from edna2.utils import UtilsImage
-
 
 __author__ = ['S. Basu']
 __license__ = 'MIT'
@@ -47,20 +46,30 @@ class ExeCrystFEL(AbstractTask):
     def getInDataSchema(self):
         return {
             "type": "object",
-            "required": ["imageQualityIndicators", "detectorType"],
             "properties": {
-                "detectorType": {"type": "string"},
                 "listH5FilePath": {
                     "type": "array",
                     "items": {"type": "string"}
-                    },
+                },
+                "doCBFtoH5": {"type": "boolean"},
+                "cbfFileInfo": {
+                    "directory": {"type": "string"},
+                    "template": {"type": "string"},
+                    "startNo": {"type": "integer"},
+                    "endNo": {"type": "integer"},
+                    "batchSize": {"type": "integer"}
+                },
                 "imageQualityIndicators": {
                     "type": "array",
                     "items": {
                         "$ref": self.getSchemaUrl("imageQualityIndicators.json")
                     }
                 }
-            }
+            },
+            "oneOf": [
+                {"required": ["listH5FilePath"]},
+                {"required": ['cbfFileInfo']}
+            ]
         }
 
     def getOutDataSchema(self):
@@ -83,12 +92,9 @@ class ExeCrystFEL(AbstractTask):
         }
 
     def run(self, inData):
+        doCBFtoH5 = inData.get('doCBFtoH5', False)
         outData = {}
-        if inData['detectorType'] == 'eiger4m':
-            os.chdir(self.getWorkingDirectory())
-            outData = self.exeIndexing(inData)
-
-        else:
+        if doCBFtoH5:
             dd = sd.Dozor(inData)
             dd.extract_olof_json(inData)
 
@@ -110,19 +116,43 @@ class ExeCrystFEL(AbstractTask):
             else:
                 self.setFailure()
                 logger.error('CrystFEL Task failed due to failure of dozor packing into cxi')
+        else:
+            os.chdir(self.getWorkingDirectory())
+            outData = self.exeIndexing(inData)
+
         return outData
 
     def exeIndexing(self, inData):
+        doCBFtoH5 = inData.get('doCBFtoH5', False)
         in_for_crystfel = dict()
-        in_for_crystfel['detectorType'] = inData['detectorType']
-        in_for_crystfel['maxchunksize'] = 10
-        if inData['detectorType'] == 'eiger4m':
+        # in_for_crystfel['detectorType'] = inData['detectorType']
+
+        if 'listH5FilePath' in inData.keys():
             tmp = UtilsImage.getPrefix(inData['listH5FilePath'][0])
+            FirstImage = tmp.replace('data', 'master.h5')
+            Image = Im(FirstImage)
+            in_for_crystfel['detectorType'] = Image.imobject.headers['detector_name'][0] + \
+                                              Image.imobject.headers['detector_name'][1]
             in_for_crystfel['prefix'] = tmp.strip('data')
             in_for_crystfel['suffix'] = UtilsImage.getSuffix(inData['listH5FilePath'][0])
             in_for_crystfel['image_directory'] = str(pathlib.Path(inData['listH5FilePath'][0]).parent)
+            in_for_crystfel['maxchunksize'] = 10
 
+        elif 'cbfFileInfo' in inData.keys():
+            in_for_crystfel['maxchunksize'] = inData['cbfFileInfo']['batchSize']
+            in_for_crystfel['image_directory'] = inData['cbfFileInfo']['directory']
+            in_for_crystfel['prefix'] = inData['cbfFileInfo']['template'].strip('####.cbf')
+            in_for_crystfel['suffix'] = UtilsImage.getSuffix(inData['cbfFileInfo']['template'])
+            in_for_crystfel['ImageRange'] = (inData['cbfFileInfo']['startNo'], inData['cbfFileInfo']['endNo'])
+            FirstImage = os.path.join(inData['cbfFileInfo']['directory'], inData['cbfFileInfo']['template'].
+                                      replace('####', '0001'))
+            Image = Im(FirstImage)
+            in_for_crystfel['detectorType'] = Image.imobject.headers['detector_name'][0] + \
+                                              Image.imobject.headers['detector_name'][1]
         else:
+            logger.error("input json must have either listH5FilePath or cbfFileInfo")
+
+        if doCBFtoH5:
             cxi_all = list(self.getWorkingDirectory().glob('dozor*cxi'))
             current = len(cxi_all) - 1
             in_for_crystfel['image_directory'] = self.getWorkingDirectory()
@@ -130,6 +160,7 @@ class ExeCrystFEL(AbstractTask):
             in_for_crystfel['suffix'] = 'cxi'
             in_for_crystfel['peak_search'] = 'cxi'
             in_for_crystfel['peak_info'] = '/data/peakinfo'
+            in_for_crystfel['maxchunksize'] = 10
 
         results = run_crystfel.__run__(in_for_crystfel)
         return results
