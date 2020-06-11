@@ -1,0 +1,92 @@
+{
+    "beam": {
+        "x": 146.85704,
+        "y": 129.05676000000003
+    },
+    "detector": {
+        "numberPixelX": 1475,
+        "numberPixelY": 1679,
+        "pixelSizeX": 0.17200000000000001,
+        "pixelSizeY": 0.17200000000000001,
+        "type": "PILATUS"
+    },
+    "directory": "$EDNA2_TESTDATA_IMAGES",
+    "distance": 234.92499999999998,
+    "template": "ref-TRYP-X1_4_####.cbf",
+    "wavelength": 0.966,
+    "image": [
+        {
+            "number": 1,
+            "rotationAxisStart": 330.6128,
+            "rotationAxisEnd": 331.6128
+        },
+        {
+            "number": 2,
+            "rotationAxisStart": 420.6128,
+            "rotationAxisEnd": 421.6128
+        },
+        {
+            "number": 3,
+            "rotationAxisStart": 510.6128,
+            "rotationAxisEnd": 511.6128
+        },
+        {
+            "number": 4,
+            "rotationAxisStart": 600.6128,
+            "rotationAxisEnd": 601.6128
+        }
+    ],
+   "matrix": {
+        "matrixA": [
+            [
+                0.0150811,
+                0.00462673,
+                -0.00109845
+            ],
+            [
+                0.00356085,
+                -0.01236848,
+                -0.00716823
+            ],
+            [
+                -0.00359999,
+                0.00714834,
+                -0.01169194
+            ]
+        ],
+        "missettingsAngles": [
+            0.0,
+            0.0,
+            0.0
+        ],
+        "matrixU": [
+            [
+                0.9479924,
+                0.3081172,
+                -0.0798389
+            ],
+            [
+                0.2238337,
+                -0.8236787,
+                -0.5210105
+            ],
+            [
+                -0.2262938,
+                0.4760433,
+                -0.8498081
+            ]
+        ],
+        "cell": {
+            "a": 60.7224,
+            "b": 64.3307,
+            "c": 70.212,
+            "alpha": 90.0,
+            "beta": 90.0,
+            "gamma": 90.0
+        }
+    },
+    "mosaicityEstimation": 0.8374999999999999,
+    "deviationAngular": 0.558362,
+    "refinedDistance": 234.925003,
+    "symmetry": "P222"
+}

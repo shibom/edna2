@@ -10,7 +10,7 @@
         "pixelSizeY": 0.172,
         "type": "PILATUS"
     },
-    "directory": "/users/svensson/git/edna2/testdata/images",
+    "directory": "$EDNA2_TESTDATA_IMAGES",
     "distance": 305.222,
     "template": "ref-2m_RNASE_1_####.cbf",
     "wavelength": 0.8729,
