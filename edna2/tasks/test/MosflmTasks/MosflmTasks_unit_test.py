@@ -119,7 +119,7 @@ class MosflmTasksUnitTest(unittest.TestCase):
         tempdir = tempfile.mkdtemp(prefix='generateMOSFLMCommands_' +
                                           'generatePrediction_test_')
         tmpWorkingDir = pathlib.Path(tempdir)
-        referenceDataPath = self.dataPath / 'mosflm_generatePrediction.json'
+        referenceDataPath = self.dataPath / 'mosflm_generatePrediction_2m_RNASE_1.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         task = MosflmGeneratePredictionTask(inData)
         listCommands = task.generateMOSFLMCommands(inData, tmpWorkingDir)

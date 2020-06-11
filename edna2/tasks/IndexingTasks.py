@@ -28,6 +28,7 @@ from edna2.tasks.AbstractTask import AbstractTask
 from edna2.tasks.ReadImageHeader import ReadImageHeader
 from edna2.tasks.DozorTasks import ControlDozor
 from edna2.tasks.XDSTasks import XDSIndexingTask
+from edna2.tasks.MosflmTasks import MosflmGeneratePredictionTask
 
 
 class ControlIndexingTask(AbstractTask):
@@ -86,7 +87,36 @@ class ControlIndexingTask(AbstractTask):
                 "xdsIndexing": xdsIndexingOutData
             }
             # Run MOSFLM prediction
-
+            mosflmUB = xdsIndexingOutData["xparm"]["mosflmUB"]
+            mosflmU = xdsIndexingOutData["xparm"]["mosflmU"]
+            matrix = {
+                "matrixA": mosflmUB,
+                "missettingsAngles": [
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                "matrixU": mosflmU,
+                "cell": {
+                    "a": xdsIndexingOutData["idxref"]["a"],
+                    "b": xdsIndexingOutData["idxref"]["b"],
+                    "c": xdsIndexingOutData["idxref"]["c"],
+                    "alpha": xdsIndexingOutData["idxref"]["alpha"],
+                    "beta": xdsIndexingOutData["idxref"]["beta"],
+                    "gamma": xdsIndexingOutData["idxref"]["gamma"]
+                },
+            }
+            mosflmInData = MosflmGeneratePredictionTask.generateMOSFLMInData(inData={"subWedge": listSubWedge})
+            mosflmInData["matrix"] = matrix
+            mosflmInData.update({
+                "mosaicityEstimation": xdsIndexingOutData["idxref"]["mosaicity"],
+                "deviationAngular": 1.0,
+                "refinedDistance": xdsIndexingOutData["idxref"]["distance"],
+                "symmetry": "P1"
+            })
+            mosflmGeneratePredictionTask =MosflmGeneratePredictionTask(inData=mosflmInData)
+            mosflmGeneratePredictionTask.execute()
+            pass
         return outData
 
     @staticmethod

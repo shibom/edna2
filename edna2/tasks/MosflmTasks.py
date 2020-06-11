@@ -29,6 +29,7 @@ __date__ = "10/05/2019"
 # mxPluginExec/plugins/EDPluginGroupMOSFLM-v1.0/plugins/EDPluginMOSFLMIndexingv10.py
 
 import os
+import json
 
 from edna2.tasks.AbstractTask import AbstractTask
 from edna2.tasks.ReadImageHeader import ReadImageHeader
@@ -54,6 +55,9 @@ class AbstractMosflmTask(AbstractTask):
         commandLine = 'mosflm DNA dnaTables.xml'
         # Translate from generic data model to specific MOSFLM data model
         mosflmInData = self.generateMOSFLMInData(inData)
+        # Save MOSFLM inData
+        with open(str(self.getWorkingDirectory() / "mosflmInData.json"), "w") as f:
+            f.write(json.dumps(mosflmInData, indent=4))
         listCommand = self.generateMOSFLMCommands(mosflmInData, self.getWorkingDirectory())
         self.setLogFileName('mosflm.log')
         self.runCommandLine(commandLine, listCommand=listCommand)

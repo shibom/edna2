@@ -41,10 +41,23 @@ class MosflmTasksExecTest(unittest.TestCase):
 
     @unittest.skipIf(UtilsConfig.getSite() == 'Default',
                      'Cannot run mosflm test with default config')
-    def test_execute_MosflmGeneratePredictionTask(self):
+    def tes_execute_MosflmGeneratePredictionTask_2m_RNASE_1(self):
         UtilsTest.loadTestImage('ref-2m_RNASE_1_0001.cbf')
         UtilsTest.loadTestImage('ref-2m_RNASE_1_0002.cbf')
-        referenceDataPath = self.dataPath / 'mosflm_generatePrediction.json'
+        referenceDataPath = self.dataPath / 'mosflm_generatePrediction_2m_RNASE_1.json'
+        inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
+        mosflmIndexingTask = MosflmGeneratePredictionTask(inData=inData)
+        mosflmIndexingTask.execute()
+        self.assertTrue(mosflmIndexingTask.isSuccess())
+
+    @unittest.skipIf(UtilsConfig.getSite() == 'Default',
+                     'Cannot run mosflm test with default config')
+    def test_execute_MosflmGeneratePredictionTaskTRYP_X1_4(self):
+        UtilsTest.loadTestImage('ref-TRYP-X1_4_0001.cbf')
+        UtilsTest.loadTestImage('ref-TRYP-X1_4_0002.cbf')
+        UtilsTest.loadTestImage('ref-TRYP-X1_4_0003.cbf')
+        UtilsTest.loadTestImage('ref-TRYP-X1_4_0004.cbf')
+        referenceDataPath = self.dataPath / 'mosflm_generatePrediction_TRYP-X1_4.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         mosflmIndexingTask = MosflmGeneratePredictionTask(inData=inData)
         mosflmIndexingTask.execute()
