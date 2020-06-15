@@ -204,7 +204,7 @@ class AbstractTask(object):
                 f.write(script)
                 f.close()
             shellFile.chmod(0o755)
-            slurmCommandLine = 'srun -p mx {0}'.format(shellFile)
+            slurmCommandLine = 'sbatch --wait {0}'.format(shellFile)
             pipes = subprocess.Popen(
                 slurmCommandLine,
                 shell=True,
