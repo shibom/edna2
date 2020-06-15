@@ -170,7 +170,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
                 'doCBFtoH5': False,
             }
             if len(listOfAllH5Files) > 0:
-                inDataCrystFEL['listH5FilePath'] = listOfH5FilesInBatch
+                inDataCrystFEL['listH5FilePath'] = listOfAllH5Files
             else:
                 inDataCrystFEL['cbfFileInfo'] = {
                     "directory": directory,
