@@ -52,6 +52,7 @@ class ExeCrystFEL(AbstractTask):
                     "items": {"type": "string"}
                 },
                 "doCBFtoH5": {"type": "boolean"},
+                "doSubmit": {"type": "boolean"},
                 "cbfFileInfo": {
                     "directory": {"type": "string"},
                     "template": {"type": "string"},
@@ -93,6 +94,7 @@ class ExeCrystFEL(AbstractTask):
 
     def run(self, inData):
         doCBFtoH5 = inData.get('doCBFtoH5', False)
+
         outData = {}
         if doCBFtoH5:
             dd = sd.Dozor(inData)
@@ -125,7 +127,6 @@ class ExeCrystFEL(AbstractTask):
     def exeIndexing(self, inData):
         doCBFtoH5 = inData.get('doCBFtoH5', False)
         in_for_crystfel = dict()
-        # in_for_crystfel['detectorType'] = inData['detectorType']
 
         if 'listH5FilePath' in inData.keys():
             tmp = UtilsImage.getPrefix(inData['listH5FilePath'][0])
@@ -162,6 +163,7 @@ class ExeCrystFEL(AbstractTask):
             in_for_crystfel['peak_info'] = '/data/peakinfo'
             in_for_crystfel['maxchunksize'] = 10
 
+        in_for_crystfel['doSubmit'] = inData.get('doSubmit', True)
         results = run_crystfel.__run__(in_for_crystfel)
         return results
 

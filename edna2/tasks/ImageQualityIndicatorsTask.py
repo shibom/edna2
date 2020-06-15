@@ -168,6 +168,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
             # a work around as autocryst module works with only json file/string
             inDataCrystFEL = {
                 'doCBFtoH5': False,
+                'doSubmit': True,
             }
             if len(listOfAllH5Files) > 0:
                 inDataCrystFEL['listH5FilePath'] = listOfAllH5Files

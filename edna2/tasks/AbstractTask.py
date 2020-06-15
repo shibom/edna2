@@ -199,7 +199,7 @@ class AbstractTask(object):
             script += '#SBATCH --output={0}/stdout.txt\n'.format(self._workingDirectory)
             script += '#SBATCH --error={0}/stderr.txt\n'.format(self._workingDirectory)
             script += commandLine + '\n'
-            shellFile =  self._workingDirectory / (jobName + '_slurm.sh')
+            shellFile = self._workingDirectory / (jobName + '_slurm.sh')
             with open(str(shellFile), 'w') as f:
                 f.write(script)
                 f.close()
