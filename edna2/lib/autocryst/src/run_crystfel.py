@@ -511,7 +511,9 @@ class AutoCrystFEL(object):
                         ofh.write('\n')
                     ofh.close()
 
-                    if self.is_executable('oarsub'):
+                    if self.is_executable('sbatch') is True and self.is_executable('oarsub') is True:
+                        self.slurm_submit(shellfile, self.indexamajig_cmd(infile, outstream, str(geomfile)))
+                    elif self.is_executable('oarsub'):
                         self.oarshell_submit(shellfile, self.indexamajig_cmd(infile, outstream, str(geomfile)))
                     elif self.is_executable('sbatch'):
                         self.slurm_submit(shellfile, self.indexamajig_cmd(infile, outstream, str(geomfile)))
@@ -656,7 +658,10 @@ def __run__(inData):
         crystTask.run_indexing()
         crystTask.writeInputData(inData)
 
-        if crystTask.is_executable('oarsub'):
+        if crystTask.is_executable('sbatch') is True and crystTask.is_executable('oarsub') is True:
+            crystTask.combine_streams()
+
+        elif crystTask.is_executable('oarsub'):
             crystTask.check_oarstat()
 
         elif crystTask.is_executable('sbatch'):
