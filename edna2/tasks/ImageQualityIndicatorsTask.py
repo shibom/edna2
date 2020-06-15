@@ -123,8 +123,11 @@ class ImageQualityIndicatorsTask(AbstractTask):
                 listImage.append(str(imagePath))
         else:
             firstImage = listImage[0]
+            lastImage = listImage[-1]
             directory = pathlib.Path(firstImage).parent
             template = UtilsImage.getTemplate(firstImage)
+            startNo = UtilsImage.getImageNumber(firstImage)
+            endNo = UtilsImage.getImageNumber(lastImage)
         outData = dict()
         listImageQualityIndicators = []
         listcrystfel_output = []
@@ -160,6 +163,25 @@ class ImageQualityIndicatorsTask(AbstractTask):
         # - Wait for all files in batch
         # - Run Dozor and Crystfel (if required) in parallel
         #
+        # Check if we should run CrystFEL:
+        if doCrystfel:
+            # a work around as autocryst module works with only json file/string
+            inDataCrystFEL = {
+                'doCBFtoH5': False,
+            }
+            if len(listOfAllH5Files) > 0:
+                inDataCrystFEL['listH5FilePath'] = listOfH5FilesInBatch
+            else:
+                inDataCrystFEL['cbfFileInfo'] = {
+                    "directory": directory,
+                    "startNo": startNo,
+                    "endNo": endNo,
+                    "template": template,
+                    "batchSize": batchSize
+                }
+            crystfel = ExeCrystFEL(inData=inDataCrystFEL)
+            crystfel.start()
+            listCrystFELTask.append(crystfel)
         for listOfImagesInBatch in listOfAllBatches:
             listOfH5FilesInBatch = []
             for imagePath in listOfImagesInBatch:
@@ -199,25 +221,6 @@ class ImageQualityIndicatorsTask(AbstractTask):
                         distlTask = DistlSignalStrengthTask(inData=inDataDistl)
                         distlTask.start()
                         listDistlTask.append((image, distlTask))
-                # Check if we should run CrystFEL:
-                if doCrystfel:
-                    # a work around as autocryst module works with only json file/string
-                    inDataCrystFEL = {
-                        'doCBFtoH5': False,
-                    }
-                    if len(listOfH5FilesInBatch) > 0:
-                        inDataCrystFEL['listH5FilePath'] = listOfH5FilesInBatch
-                    else:
-                        inDataCrystFEL['cbfFileInfo'] = {
-                            "directory": directory,
-                            "startNo": batchStartNo,
-                            "endNo": batchEndNo,
-                            "template": template,
-                            "batchSize": batchSize
-                        }
-                    crystfel = ExeCrystFEL(inData=inDataCrystFEL)
-                    crystfel.start()
-                    listCrystFELTask.append(crystfel)
 
         if not self.isFailure():
             # listIndexing = []
@@ -258,12 +261,13 @@ class ImageQualityIndicatorsTask(AbstractTask):
                                 listImageQualityIndicators.append(imageQualityIndicators)
                 else:
                     listImageQualityIndicators += listOutDataControlDozor
-            for crystfel in listCrystFELTask:
-                crystfel.join()
-                if not crystfel.isFailure():
-                    listcrystfel_output.append(crystfel.outData)
-                else:
-                    logger.error("CrystFEL did not run properly")
+
+        if doCrystfel:
+            crystfel.join()
+            if not crystfel.isFailure():
+                listcrystfel_output.append(crystfel.outData)
+            else:
+                logger.error("CrystFEL did not run properly")
 
         outData['imageQualityIndicators'] = listImageQualityIndicators
         outData['crystfel_all_batches'] = listcrystfel_output
