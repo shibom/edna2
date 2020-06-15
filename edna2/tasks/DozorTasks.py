@@ -146,7 +146,7 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
         else:
             commandLine += ' -p dozor.dat'
         self.setLogFileName('dozor.log')
-        self.runCommandLine(commandLine)
+        self.runCommandLine(commandLine, doSubmit=True)
         log = self.getLog()
         outData = self.parseOutput(inData, log,
                                    workingDir=self.getWorkingDirectory())

@@ -168,44 +168,97 @@ class AbstractTask(object):
         return log
 
     def runCommandLine(self, commandLine, logPath=None, listCommand=None,
-                       ignoreErrors=False):
+                       ignoreErrors=False, doSubmit=False):
+        if logPath is None:
+            logPath = self.getLogPath()
+        jobName = self.__class__.__name__
+        errorLogFileName = jobName + ".err.txt"
+        errorLogPath = self._workingDirectory / errorLogFileName
+        commandLine += ' 1>{0} 2>{1}'.format(logPath, errorLogPath)
         if listCommand is not None:
             commandLine += ' << EOF-EDNA2\n'
             for command in listCommand:
                 commandLine += command + '\n'
             commandLine += "EOF-EDNA2"
-        commandLogFileName = self.__class__.__name__ + ".commandLine.txt"
+        commandLogFileName = jobName + ".commandLine.txt"
         commandLinePath = self._workingDirectory / commandLogFileName
         with open(str(commandLinePath), 'w') as f:
             f.write(commandLine)
-        pipes = subprocess.Popen(
-            commandLine,
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            close_fds=True,
-            cwd=str(self._workingDirectory)
-        )
-        stdout, stderr = pipes.communicate()
-        if len(stdout) > 0:
-            log = str(stdout, 'utf-8')
-            if logPath is None:
-                logPath = self.getLogPath()
-            with open(str(logPath), 'w') as f:
-                f.write(log)
-        if len(stderr) > 0:
-            if not ignoreErrors:
-                logger.warning("Error messages from command {0}".format(
-                    commandLine.split(' ')[0])
-                )
-            errorLogFileName = self.__class__.__name__ + ".err.txt"
-            errorLogPath = self._workingDirectory / errorLogFileName
-            with open(str(errorLogPath), 'w') as f:
-                f.write(str(stderr, 'utf-8'))
-        if pipes.returncode != 0:
-            # Error!
-            errorMessage = "{0}, code {1}".format(stderr, pipes.returncode)
-            raise RuntimeError(errorMessage)
+        if doSubmit:
+            nodes = 1
+            core = 20
+            time = '0:10:00'
+            script = '#!/bin/bash\n'
+            script += '#SBATCH --job-name="{0}"\n'.format(jobName)
+            script += '#SBATCH --partition={0}\n'.format('mx')
+            mem = 2000  # 2 Gb memory by default
+            script += '#SBATCH --mem={0}\n'.format(mem)
+            script += '#SBATCH --nodes={0}\n'.format(nodes)
+            script += '#SBATCH --cpus-per-task={0}\n'.format(core)
+            script += '#SBATCH --time={0}\n'.format(time)
+            script += '#SBATCH --output={0}/stdout.txt\n'.format(self._workingDirectory)
+            script += '#SBATCH --error={0}/stderr.txt\n'.format(self._workingDirectory)
+            script += commandLine + '\n'
+            shellFile =  self._workingDirectory / (jobName + '_slurm.sh')
+            with open(str(shellFile), 'w') as f:
+                f.write(script)
+                f.close()
+            shellFile.chmod(0o755)
+            slurmCommandLine = 'srun -p mx {0}'.format(shellFile)
+            pipes = subprocess.Popen(
+                slurmCommandLine,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                close_fds=True,
+                cwd=str(self._workingDirectory)
+            )
+            stdout, stderr = pipes.communicate()
+            slurmLogPath = self._workingDirectory / (jobName + '_slurm.log')
+            slurmErrorLogPath = self._workingDirectory / (jobName + '_slurm.error.log')
+            if len(stdout) > 0:
+                log = str(stdout, 'utf-8')
+                with open(str(slurmLogPath), 'w') as f:
+                    f.write(log)
+            if len(stderr) > 0:
+                if not ignoreErrors:
+                    logger.warning("Error messages from command {0}".format(
+                        commandLine.split(' ')[0])
+                    )
+                with open(str(slurmErrorLogPath), 'w') as f:
+                    f.write(str(stderr, 'utf-8'))
+            if pipes.returncode != 0:
+                # Error!
+                warningMessage = "{0}, code {1}".format(stderr, pipes.returncode)
+                logger.warning(warningMessage)
+                # raise RuntimeError(errorMessage)
+        else:
+            pipes = subprocess.Popen(
+                commandLine,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                close_fds=True,
+                cwd=str(self._workingDirectory)
+            )
+            stdout, stderr = pipes.communicate()
+            if len(stdout) > 0:
+                log = str(stdout, 'utf-8')
+                with open(str(logPath), 'w') as f:
+                    f.write(log)
+            if len(stderr) > 0:
+                if not ignoreErrors:
+                    logger.warning("Error messages from command {0}".format(
+                        commandLine.split(' ')[0])
+                    )
+                errorLogFileName = jobName + ".err.txt"
+                errorLogPath = self._workingDirectory / errorLogFileName
+                with open(str(errorLogPath), 'w') as f:
+                    f.write(str(stderr, 'utf-8'))
+            if pipes.returncode != 0:
+                # Error!
+                errorMessage = "{0}, code {1}".format(stderr, pipes.returncode)
+                raise RuntimeError(errorMessage)
 
     def onError(self):
         pass
