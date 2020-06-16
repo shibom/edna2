@@ -242,7 +242,7 @@ class AutoCrystFEL(object):
         slurm_handle.write("cat *.stream >> alltogether.stream")
         slurm_handle.close()
         AutoCrystFEL.run_as_command('chmod +x tmp_cat.sh')
-        AutoCrystFEL.run_as_command('sbatch -d singleton -J autoCryst -t 1:00 tmp_cat.sh')
+        AutoCrystFEL.run_as_command('sbatch --wait -d singleton -p mx -J autoCryst tmp_cat.sh')
         return
 
     @staticmethod
@@ -491,7 +491,10 @@ class AutoCrystFEL(object):
             doSubmit = self.jshandle.get('doSubmit', True)
 
             if doSubmit:
-                file_chunk = int(len(self.filelist) / maxchunksize) + 1
+                if len(self.filelist) % maxchunksize == 0:
+                    file_chunk = int(len(self.filelist) / maxchunksize)
+                else:
+                    file_chunk = int(len(self.filelist) / maxchunksize) + 1
                 for jj in range(file_chunk):
                     start = maxchunksize * jj
                     stop = maxchunksize * (jj + 1)
@@ -511,9 +514,7 @@ class AutoCrystFEL(object):
                         ofh.write('\n')
                     ofh.close()
 
-                    if self.is_executable('sbatch') is True and self.is_executable('oarsub') is True:
-                        self.slurm_submit(shellfile, self.indexamajig_cmd(infile, outstream, str(geomfile)))
-                    elif self.is_executable('oarsub'):
+                    if self.is_executable('oarsub'):
                         self.oarshell_submit(shellfile, self.indexamajig_cmd(infile, outstream, str(geomfile)))
                     elif self.is_executable('sbatch'):
                         self.slurm_submit(shellfile, self.indexamajig_cmd(infile, outstream, str(geomfile)))
@@ -556,13 +557,13 @@ class AutoCrystFEL(object):
                 break
             else:
                 pass
-        '''
+
         if self.is_success():
             cmd = 'cat *.stream >> alltogether.stream'
             self.run_as_command(cmd)
         else:
             pass
-        '''
+
         return
 
     def report_cell(self, streampath):
@@ -658,10 +659,7 @@ def __run__(inData):
         crystTask.run_indexing()
         crystTask.writeInputData(inData)
 
-        if crystTask.is_executable('sbatch') is True and crystTask.is_executable('oarsub') is True:
-            crystTask.combine_streams()
-
-        elif crystTask.is_executable('oarsub'):
+        if crystTask.is_executable('oarsub'):
             crystTask.check_oarstat()
 
         elif crystTask.is_executable('sbatch'):
