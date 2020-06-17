@@ -26,7 +26,7 @@ import json
 import logging
 import pathlib
 import jsonschema
-import datetime
+from datetime import datetime
 
 import edna2.lib.autocryst.src.saveDozor as sd
 from edna2.lib.autocryst.src.Image import ImageHandler as Im
@@ -80,6 +80,7 @@ class ExeCrystFEL(AbstractTask):
             "type": "object",
             "properties": {
                 "streamfile": {"type": "string"},
+                "autoCryst": {"type": "object"},
                 "centering": {"type": "string"},
                 "num_indexed_frames": {"type": "integer"},
                 "lattice": {"type": "string"},
@@ -128,6 +129,7 @@ class ExeCrystFEL(AbstractTask):
                 outData = crysttask.report_stats(streampath)
                 crysttask.write_cell_file(outData)
                 outData['streamfile'] = streampath
+                outData['autoCryst'] = crysttask
             else:
                 self.isFailure()
                 logger.error("AutoCryst returned empty stream file")
