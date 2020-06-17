@@ -215,8 +215,8 @@ class ImageQualityIndicatorsTask(AbstractTask):
                     else:
                         inDataCrystFEL['cbfFileInfo'] = {
                             "directory": directory,
-                            "startNo": startNo,
-                            "endNo": endNo,
+                            "startNo": batchStartNo,
+                            "endNo": batchEndNo,
                             "template": template,
                             "batchSize": batchSize
                         }
@@ -266,17 +266,22 @@ class ImageQualityIndicatorsTask(AbstractTask):
 
             if len(listCrystFELTask) != 0:
                 masterstream = str(self.getWorkingDirectory() / 'alltogether.stream')
-                for crystfel in listCrystFELTask:
-                    crystfel.join()
-                    catcommand = "cat %s >> %s" % (crystfel.outData['streamfile'], masterstream)
-                    self.runCommandLine(catcommand, doSubmit=False)
+                try:
+                    for crystfel in listCrystFELTask:
+                        crystfel.join()
+                        print(crystfel.outData)
+                        catcommand = "cat %s >> %s" % (crystfel.outData['streamfile'], masterstream)
+                        self.runCommandLine(catcommand, doSubmit=False)
 
-                if not self.isFailure() and os.path.exists(masterstream):
-                    crystfel_outdata = listCrystFELTask[0].outData['autoCryst'].report_stat(masterstream)
-                    listcrystfel_output.append(crystfel_outdata)
-                else:
-                    logger.error("CrystFEL did not run properly")
-
+                    if not self.isFailure() and os.path.exists(masterstream):
+                        print(listCrystFELTask)
+                        crystfel_outdata = listCrystFELTask[0].outData['autoCryst'].report_stats(masterstream)
+                        listcrystfel_output.append(crystfel_outdata)
+                    else:
+                        logger.error("CrystFEL did not run properly")
+                except Exception as err:
+                    self.setFailure()
+                    logger.error(err)
         outData['imageQualityIndicators'] = listImageQualityIndicators
         outData['crystfel_all_batches'] = listcrystfel_output
         return outData
