@@ -270,7 +270,6 @@ class ImageQualityIndicatorsTask(AbstractTask):
                 try:
                     for crystfel in listCrystFELTask:
                         crystfel.join()
-                        print(crystfel.outData)
                         catcommand = "cat %s >> %s" % (crystfel.outData['streamfile'], masterstream)
                         AutoCrystFEL.run_as_command(catcommand)
 
