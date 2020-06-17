@@ -272,10 +272,11 @@ class ImageQualityIndicatorsTask(AbstractTask):
                         crystfel.join()
                         print(crystfel.outData)
                         catcommand = "cat %s >> %s" % (crystfel.outData['streamfile'], masterstream)
-                        self.runCommandLine(catcommand, doSubmit=False)
+                        AutoCrystFEL.run_as_command(catcommand)
 
                     if not self.isFailure() and os.path.exists(masterstream):
                         crystfel_outdata = AutoCrystFEL.report_stats(masterstream)
+                        AutoCrystFEL.write_cell_file(crystfel_outdata)
                         listcrystfel_output.append(crystfel_outdata)
                     else:
                         logger.error("CrystFEL did not run properly")
