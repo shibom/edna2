@@ -43,6 +43,7 @@ from edna2.tasks.PhenixTasks import DistlSignalStrengthTask
 from edna2.tasks.ReadImageHeader import ReadImageHeader
 try:
     from edna2.tasks.CrystfelTasks import ExeCrystFEL
+    from edna2.lib.autocryst.src.run_crystfel import AutoCrystFEL
     crystFelImportFailed = False
 except ImportError:
     crystFelImportFailed = True
@@ -274,8 +275,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
                         self.runCommandLine(catcommand, doSubmit=False)
 
                     if not self.isFailure() and os.path.exists(masterstream):
-                        print(listCrystFELTask)
-                        crystfel_outdata = listCrystFELTask[0].outData['autoCryst'].report_stats(masterstream)
+                        crystfel_outdata = AutoCrystFEL.report_stats(masterstream)
                         listcrystfel_output.append(crystfel_outdata)
                     else:
                         logger.error("CrystFEL did not run properly")

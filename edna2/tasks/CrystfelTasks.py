@@ -80,7 +80,6 @@ class ExeCrystFEL(AbstractTask):
             "type": "object",
             "properties": {
                 "streamfile": {"type": "string"},
-                "autoCryst": {"type": "edna2.lib.autocryst.src.run_crystfel.AutoCrystFEL"},
                 "centering": {"type": "string"},
                 "num_indexed_frames": {"type": "integer"},
                 "lattice": {"type": "string"},

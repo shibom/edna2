@@ -566,7 +566,8 @@ class AutoCrystFEL(object):
 
         return
 
-    def report_cell(self, streampath):
+    @staticmethod
+    def report_cell(streampath):
         # cellobject = type('', (), {})  # c is a Cell type which is initialized as None type for python 2.7.
         results = dict()
         if os.path.exists(streampath):
@@ -596,17 +597,17 @@ class AutoCrystFEL(object):
                 results['space_group_number'] = sg_num
 
             except AssertionError as err:
-                self.setFailure()
                 logger.error("Cell_Error:{}".format(err))
         else:
-            self.setFailure()
+            logger.error("Cell_Error:{}".format("%s file did not exist" % streampath))
         return results
 
-    def report_stats(self, streampath):
+    @staticmethod
+    def report_stats(streampath):
         stats = {}
         try:
-            stats = self.report_cell(streampath)
-            if not self.is_success():
+            stats = AutoCrystFEL.report_cell(streampath)
+            if not stats:
                 err = 'alltogether.stream file does not exist or empty'
                 logger.error('Job_Error:'.format(err))
                 return
@@ -624,7 +625,6 @@ class AutoCrystFEL(object):
                 stats['resolution_limit'] = Counter(rescut).most_common(1)[0][0]
                 stats['average_num_spots'] = Counter(npeaks).most_common(1)[0][0]
             else:
-                self.setFailure()
                 err = "either nothing detected as hit or indexed in the stream file"
                 logger.error('Job_Error:{}'.format(err))
 
@@ -632,7 +632,6 @@ class AutoCrystFEL(object):
             # self.scale_merge(streampath)
 
         except Exception as err:
-            self.setFailure()
             logger.error('Job_Error:{}'.format(err))
 
         return stats
@@ -672,7 +671,8 @@ def __run__(inData):
             pass
         streampath = crystTask.getOutputDirectory() / 'alltogether.stream'
         results['QualityMetrics'] = crystTask.report_stats(str(streampath))
-        crystTask.write_cell_file(results['QualityMetrics'])
+        if results:
+            crystTask.write_cell_file(results['QualityMetrics'])
 
         if inData.get("doMerging", False):
             crystTask.set_outData(results['QualityMetrics'])
