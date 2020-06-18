@@ -25,6 +25,8 @@ import sys
 import json
 import logging
 import pathlib
+import jsonschema
+from datetime import datetime
 
 import edna2.lib.autocryst.src.saveDozor as sd
 from edna2.lib.autocryst.src.Image import ImageHandler as Im
@@ -52,6 +54,7 @@ class ExeCrystFEL(AbstractTask):
                     "items": {"type": "string"}
                 },
                 "doCBFtoH5": {"type": "boolean"},
+                "doSubmit": {"type": "boolean"},
                 "cbfFileInfo": {
                     "directory": {"type": "string"},
                     "template": {"type": "string"},
@@ -76,6 +79,7 @@ class ExeCrystFEL(AbstractTask):
         return {
             "type": "object",
             "properties": {
+                "streamfile": {"type": "string"},
                 "centering": {"type": "string"},
                 "num_indexed_frames": {"type": "integer"},
                 "lattice": {"type": "string"},
@@ -93,6 +97,7 @@ class ExeCrystFEL(AbstractTask):
 
     def run(self, inData):
         doCBFtoH5 = inData.get('doCBFtoH5', False)
+
         outData = {}
         if doCBFtoH5:
             dd = sd.Dozor(inData)
@@ -118,14 +123,20 @@ class ExeCrystFEL(AbstractTask):
                 logger.error('CrystFEL Task failed due to failure of dozor packing into cxi')
         else:
             os.chdir(self.getWorkingDirectory())
-            outData = self.exeIndexing(inData)
-
+            streampath, crysttask = self.exeIndexing(inData)
+            if os.path.exists(streampath):
+                outData = crysttask.report_stats(streampath)
+                crysttask.write_cell_file(outData)
+                outData['streamfile'] = streampath
+                outData['autoCryst'] = crysttask
+            else:
+                self.isFailure()
+                logger.error("AutoCryst returned empty stream file")
         return outData
 
     def exeIndexing(self, inData):
         doCBFtoH5 = inData.get('doCBFtoH5', False)
         in_for_crystfel = dict()
-        # in_for_crystfel['detectorType'] = inData['detectorType']
 
         if 'listH5FilePath' in inData.keys():
             tmp = UtilsImage.getPrefix(inData['listH5FilePath'][0])
@@ -162,8 +173,40 @@ class ExeCrystFEL(AbstractTask):
             in_for_crystfel['peak_info'] = '/data/peakinfo'
             in_for_crystfel['maxchunksize'] = 10
 
-        results = run_crystfel.__run__(in_for_crystfel)
-        return results
+        crysttask = run_crystfel.AutoCrystFEL(in_for_crystfel)
+        outstream = None
+        try:
+            jsonschema.validate(instance=crysttask.jshandle, schema=crysttask.getInDataSchema())
+            crysttask.datafinder()
+            crysttask.makeOutputDirectory()
+            kk = {}
+            if crysttask.jshandle['suffix'] == 'cxi':
+                kk['cxi'] = """dim0 = %\ndim1 = ss\ndim2 = fs\ndata = /data/data\n"""
+                geomfile = crysttask.make_geometry_file(**kk)
+            else:
+                geomfile = crysttask.make_geometry_file(**kk)
+
+            crysttask.make_list_events(str(geomfile))
+            if len(crysttask.filelist) == in_for_crystfel['maxchunksize']:
+                infile = str(crysttask.getOutputDirectory() / 'input.lst')
+                outname = datetime.now().strftime('%H-%M-%S.stream')
+                outstream = str(crysttask.getOutputDirectory() / outname)
+
+                ofh = open(infile, 'w')
+                for fname in crysttask.filelist:
+                    ofh.write(fname)
+                    ofh.write('\n')
+                ofh.close()
+                crystfel_cmd = crysttask.indexamajig_cmd(infile, outstream, geomfile)
+                self.runCommandLine(crystfel_cmd, doSubmit=inData.get('doSubmit', True))
+            else:
+                self.isFailure()
+                logger.error("crystfel_error: {}".format('Filelist not equal to batchSize'))
+        except Exception as err:
+            self.setFailure()
+            logger.error(err)
+
+        return outstream, crysttask
 
 
 if __name__ == '__main__':

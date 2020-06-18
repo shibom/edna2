@@ -59,6 +59,7 @@ class ImageQualityIndicatorsExecTest(unittest.TestCase):
         self.assertFalse(task.isFailure())
         outData = task.outData
         self.assertTrue('imageQualityIndicators' in outData)
+        self.assertTrue('resolution_limit' in outData['crystfel_all_batches'][0])
         self.assertEqual(72, len(outData['imageQualityIndicators']))
 
 

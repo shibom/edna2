@@ -43,6 +43,7 @@ from edna2.tasks.PhenixTasks import DistlSignalStrengthTask
 from edna2.tasks.ReadImageHeader import ReadImageHeader
 try:
     from edna2.tasks.CrystfelTasks import ExeCrystFEL
+    from edna2.lib.autocryst.src.run_crystfel import AutoCrystFEL
     crystFelImportFailed = False
 except ImportError:
     crystFelImportFailed = True
@@ -165,24 +166,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
         # - Run Dozor and Crystfel (if required) in parallel
         #
         # Check if we should run CrystFEL:
-        if doCrystfel:
-            # a work around as autocryst module works with only json file/string
-            inDataCrystFEL = {
-                'doCBFtoH5': False,
-            }
-            if len(listOfAllH5Files) > 0:
-                inDataCrystFEL['listH5FilePath'] = listOfAllH5Files
-            else:
-                inDataCrystFEL['cbfFileInfo'] = {
-                    "directory": directory,
-                    "startNo": startNo,
-                    "endNo": endNo,
-                    "template": template,
-                    "batchSize": batchSize
-                }
-            crystfel = ExeCrystFEL(inData=inDataCrystFEL)
-            crystfel.start()
-            listCrystFELTask.append(crystfel)
+
         for listOfImagesInBatch in listOfAllBatches:
             listOfH5FilesInBatch = []
             for imagePath in listOfImagesInBatch:
@@ -223,6 +207,25 @@ class ImageQualityIndicatorsTask(AbstractTask):
                         distlTask = DistlSignalStrengthTask(inData=inDataDistl)
                         distlTask.start()
                         listDistlTask.append((image, distlTask))
+                if doCrystfel:
+                    # a work around as autocryst module works with only json file/string
+                    inDataCrystFEL = {
+                        'doCBFtoH5': False,
+                        'doSubmit': True,
+                    }
+                    if len(listOfH5FilesInBatch) > 0:
+                        inDataCrystFEL['listH5FilePath'] = listOfH5FilesInBatch
+                    else:
+                        inDataCrystFEL['cbfFileInfo'] = {
+                            "directory": directory,
+                            "startNo": batchStartNo,
+                            "endNo": batchEndNo,
+                            "template": template,
+                            "batchSize": batchSize
+                        }
+                    crystfel = ExeCrystFEL(inData=inDataCrystFEL)
+                    crystfel.start()
+                    listCrystFELTask.append(crystfel)
 
         if not self.isFailure():
             # listIndexing = []
@@ -264,13 +267,23 @@ class ImageQualityIndicatorsTask(AbstractTask):
                 else:
                     listImageQualityIndicators += listOutDataControlDozor
 
-        if doCrystfel:
-            crystfel.join()
-            if not crystfel.isFailure():
-                listcrystfel_output.append(crystfel.outData)
-            else:
-                logger.error("CrystFEL did not run properly")
+            if len(listCrystFELTask) != 0:
+                masterstream = str(self.getWorkingDirectory() / 'alltogether.stream')
+                try:
+                    for crystfel in listCrystFELTask:
+                        crystfel.join()
+                        catcommand = "cat %s >> %s" % (crystfel.outData['streamfile'], masterstream)
+                        AutoCrystFEL.run_as_command(catcommand)
 
+                    if not self.isFailure() and os.path.exists(masterstream):
+                        crystfel_outdata = AutoCrystFEL.report_stats(masterstream)
+                        AutoCrystFEL.write_cell_file(crystfel_outdata)
+                        listcrystfel_output.append(crystfel_outdata)
+                    else:
+                        logger.error("CrystFEL did not run properly")
+                except Exception as err:
+                    self.setFailure()
+                    logger.error(err)
         outData['imageQualityIndicators'] = listImageQualityIndicators
         outData['crystfel_all_batches'] = listcrystfel_output
         return outData

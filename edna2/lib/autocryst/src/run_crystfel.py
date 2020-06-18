@@ -128,6 +128,7 @@ class AutoCrystFEL(object):
                                },
                 "maxchunksize": {"type": "integer"},
                 "processing_directory": {"type": "string"},
+                "doSubmit": {"type": "boolean"},
                 "doMerging": {"type": "boolean"},
                 "GeneratePeaklist": {"type": "boolean"},
                 "geometry_file": {"type": "string"},
@@ -241,7 +242,7 @@ class AutoCrystFEL(object):
         slurm_handle.write("cat *.stream >> alltogether.stream")
         slurm_handle.close()
         AutoCrystFEL.run_as_command('chmod +x tmp_cat.sh')
-        AutoCrystFEL.run_as_command('sbatch -d singleton -J autoCryst -t 1:00 tmp_cat.sh')
+        AutoCrystFEL.run_as_command('sbatch --wait -d singleton -p mx -J autoCryst tmp_cat.sh')
         return
 
     @staticmethod
@@ -487,20 +488,13 @@ class AutoCrystFEL(object):
             self.make_list_events(str(geomfile))
 
             maxchunksize = self.jshandle.get('maxchunksize', 10)
-            if len(self.filelist) <= maxchunksize:
-                infile = str(self.getOutputDirectory() / 'input.lst')
-                outname = datetime.now().strftime('%H-%M-%S.stream')
-                outstream = str(self.getOutputDirectory() / outname)
+            doSubmit = self.jshandle.get('doSubmit', True)
 
-                ofh = open(infile, 'w')
-                for fname in self.filelist:
-                    ofh.write(fname)
-                    ofh.write('\n')
-                ofh.close()
-
-                self.run_as_command(self.indexamajig_cmd(infile, outstream, str(geomfile)))
-            elif len(self.filelist) > maxchunksize:
-                file_chunk = int(len(self.filelist) / maxchunksize) + 1
+            if doSubmit:
+                if len(self.filelist) % maxchunksize == 0:
+                    file_chunk = int(len(self.filelist) / maxchunksize)
+                else:
+                    file_chunk = int(len(self.filelist) / maxchunksize) + 1
                 for jj in range(file_chunk):
                     start = maxchunksize * jj
                     stop = maxchunksize * (jj + 1)
@@ -525,7 +519,21 @@ class AutoCrystFEL(object):
                     elif self.is_executable('sbatch'):
                         self.slurm_submit(shellfile, self.indexamajig_cmd(infile, outstream, str(geomfile)))
                     else:
-                        self.run_as_command(self.indexamajig_cmd(infile, outstream, str(geomfile)))
+                        error_message = "doSubmit was set True but queue system is unavailable in running node; " \
+                                        "please change doSubmit to False"
+                        logger.error(error_message)
+            else:
+                infile = str(self.getOutputDirectory() / 'input.lst')
+                outname = datetime.now().strftime('%H-%M-%S.stream')
+                outstream = str(self.getOutputDirectory() / outname)
+
+                ofh = open(infile, 'w')
+                for fname in self.filelist:
+                    ofh.write(fname)
+                    ofh.write('\n')
+                ofh.close()
+
+                self.run_as_command(self.indexamajig_cmd(infile, outstream, str(geomfile)))
 
         except Exception as err:
             self.setFailure()
@@ -549,16 +557,17 @@ class AutoCrystFEL(object):
                 break
             else:
                 pass
-        '''
+
         if self.is_success():
             cmd = 'cat *.stream >> alltogether.stream'
             self.run_as_command(cmd)
         else:
             pass
-        '''
+
         return
 
-    def report_cell(self, streampath):
+    @staticmethod
+    def report_cell(streampath):
         # cellobject = type('', (), {})  # c is a Cell type which is initialized as None type for python 2.7.
         results = dict()
         if os.path.exists(streampath):
@@ -588,17 +597,17 @@ class AutoCrystFEL(object):
                 results['space_group_number'] = sg_num
 
             except AssertionError as err:
-                self.setFailure()
                 logger.error("Cell_Error:{}".format(err))
         else:
-            self.setFailure()
+            logger.error("Cell_Error:{}".format("%s file did not exist" % streampath))
         return results
 
-    def report_stats(self, streampath):
+    @staticmethod
+    def report_stats(streampath):
         stats = {}
         try:
-            stats = self.report_cell(streampath)
-            if not self.is_success():
+            stats = AutoCrystFEL.report_cell(streampath)
+            if not stats:
                 err = 'alltogether.stream file does not exist or empty'
                 logger.error('Job_Error:'.format(err))
                 return
@@ -616,7 +625,6 @@ class AutoCrystFEL(object):
                 stats['resolution_limit'] = Counter(rescut).most_common(1)[0][0]
                 stats['average_num_spots'] = Counter(npeaks).most_common(1)[0][0]
             else:
-                self.setFailure()
                 err = "either nothing detected as hit or indexed in the stream file"
                 logger.error('Job_Error:{}'.format(err))
 
@@ -624,7 +632,6 @@ class AutoCrystFEL(object):
             # self.scale_merge(streampath)
 
         except Exception as err:
-            self.setFailure()
             logger.error('Job_Error:{}'.format(err))
 
         return stats
@@ -664,7 +671,8 @@ def __run__(inData):
             pass
         streampath = crystTask.getOutputDirectory() / 'alltogether.stream'
         results['QualityMetrics'] = crystTask.report_stats(str(streampath))
-        crystTask.write_cell_file(results['QualityMetrics'])
+        if results:
+            crystTask.write_cell_file(results['QualityMetrics'])
 
         if inData.get("doMerging", False):
             crystTask.set_outData(results['QualityMetrics'])
@@ -704,6 +712,7 @@ def optparser():
     parser.add_argument("--processing_directory", type=str,
                         help="optional key, if you want to dump at a different folder")
     parser.add_argument("--doMerging", type=bool, default=False)
+    parser.add_argument("--doSubmit", type=bool, default=True)
     parser.add_argument("--GeneratePeaklist", type=bool, default=False)
     parser.add_argument("--indexing_method", type=str, default="mosflm",
                         help="change to asdf,or dirax or xds if needed")
