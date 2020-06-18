@@ -135,18 +135,25 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
         }
 
     def run(self, inData):
+        doSubmit = inData.get('doSubmit', False)
         commands = self.generateCommands(inData)
         with open(str(self.getWorkingDirectory() / 'dozor.dat'), 'w') as f:
             f.write(commands)
         # Create dozor command line
-        executable = UtilsConfig.get(self, 'executable', 'dozor')
+        if doSubmit:
+            path = UtilsConfig.get(self, 'slurm_path', 'dozor')
+            executable = "export PATH={0}:$PATH".format(path)
+            executable += ";export LD_LIBRARY_PATH={0}:$LD_LIBRARY_PATH".format(path)
+            executable += ";{0}/".format(path) + UtilsConfig.get(self, 'slurm_executable', 'dozor')
+        else:
+            executable = UtilsConfig.get(self, 'executable', 'dozor')
         commandLine = executable + ' -pall'
         if 'radiationDamage' in inData:
             commandLine += ' -rd dozor.dat'
         else:
             commandLine += ' -p dozor.dat'
         self.setLogFileName('dozor.log')
-        self.runCommandLine(commandLine, doSubmit=False)
+        self.runCommandLine(commandLine, doSubmit=doSubmit)
         log = self.getLog()
         outData = self.parseOutput(inData, log,
                                    workingDir=self.getWorkingDirectory())
@@ -165,6 +172,7 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
         ny = UtilsDetector.getNy(detectorType)
         pixelSize = UtilsDetector.getPixelsize(detectorType)
         sitePrefix = UtilsConfig.get(self, 'site_prefix')
+        doSubmit = inData.get('doSubmit', False)
         if sitePrefix is not None and 'beamline' in inData and inData['beamline'] is not None:
             # Try to read corresponding config file
             site = sitePrefix + inData['beamline']
@@ -189,9 +197,9 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
             iyMin = IY_MIN_EIGER_4M
             iyMax = IY_MAX_EIGER_4M
         if detectorType.startswith('eiger'):
-            library = self.getLibrary('hdf5')
+            library = self.getLibrary('hdf5', doSubmit=doSubmit)
         else:
-            library =  self.getLibrary('cbf')
+            library =  self.getLibrary('cbf', doSubmit=doSubmit)
         processInfo = 'name template: {0}'.format(
             os.path.basename(inData['nameTemplateImage']))
         processInfo += ', first image no: {0}'.format(
@@ -452,16 +460,19 @@ class ExecDozor(AbstractTask):  # pylint: disable=too-many-instance-attributes
             listXSFile.append(plotPath)
         return listXSFile
 
-    def getLibrary(self, libraryType):
+    def getLibrary(self, libraryType, doSubmit=False):
         libraryName = 'library_' + libraryType
-        idName, version, codename = distro.linux_distribution()
-        if 'Debian' in idName:
-            libraryName += '_debian_'
-        elif idName == 'Ubuntu':
-            libraryName += '_ubuntu_'
+        if doSubmit:
+            libraryName += '_ubuntu_20.04'
         else:
-            raise RuntimeError('ExecDozor: unknown os name {0}'.format(idName))
-        libraryName += version
+            idName, version, codename = distro.linux_distribution()
+            if 'Debian' in idName:
+                libraryName += '_debian_'
+            elif idName == 'Ubuntu':
+                libraryName += '_ubuntu_'
+            else:
+                raise RuntimeError('ExecDozor: unknown os name {0}'.format(idName))
+            libraryName += version
         library = UtilsConfig.get(self, libraryName)
         if library is None:
             raise RuntimeError('ExecDozor: library configuration {0} not found')
@@ -633,6 +644,7 @@ class ControlDozor(AbstractTask):
     def runDozorTask(cls, inData, dictImage, listBatch,
                      overlap, workingDirectory,
                      hasHdf5Prefix, hasOverlap):
+        doSubmit = inData.get('doSubmit', False)
         outDataDozor = None
         image = dictImage[listBatch[0]]
         prefix = UtilsImage.getPrefix(image)
@@ -671,7 +683,8 @@ class ControlDozor(AbstractTask):
                        'firstImageNumber': imageNumber,
                        'numberImages': len(listBatch),
                        'workingDirectory': workingDirectory,
-                       'overlap': overlap}
+                       'overlap': overlap,
+                       'doSubmit': doSubmit}
         if 'beamline' in inData:
             inDataDozor['beamline'] = inData['beamline']
         fileName = os.path.basename(subWedge['image'][0]['path'])

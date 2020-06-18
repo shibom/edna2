@@ -101,6 +101,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
         }
 
     def run(self, inData):
+        doSubmit = inData.get('doSubmit', False)
         batchSize = inData.get('batchSize', 1)
         doDistlSignalStrength = inData.get('doDistlSignalStrength', False)
         doIndexing = inData.get('doIndexing', False)
@@ -207,6 +208,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
                     'startNo': batchStartNo,
                     'endNo': batchEndNo,
                     'batchSize': batchSize,
+                    'doSubmit': doSubmit
                 }
                 controlDozor = ControlDozor(inDataControlDozor)
                 controlDozor.start()
