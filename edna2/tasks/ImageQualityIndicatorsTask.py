@@ -102,6 +102,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
         }
 
     def run(self, inData):
+        doSubmit = inData.get('doSubmit', False)
         batchSize = inData.get('batchSize', 1)
         doDistlSignalStrength = inData.get('doDistlSignalStrength', False)
         doIndexing = inData.get('doIndexing', False)
@@ -191,6 +192,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
                     'startNo': batchStartNo,
                     'endNo': batchEndNo,
                     'batchSize': batchSize,
+                    'doSubmit': doSubmit
                 }
                 controlDozor = ControlDozor(inDataControlDozor)
                 controlDozor.start()
@@ -209,7 +211,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
                     # a work around as autocryst module works with only json file/string
                     inDataCrystFEL = {
                         'doCBFtoH5': False,
-                        'doSubmit': True,
+                        'doSubmit': doSubmit,
                     }
                     if len(listOfH5FilesInBatch) > 0:
                         inDataCrystFEL['listH5FilePath'] = listOfH5FilesInBatch

@@ -171,10 +171,11 @@ class AbstractTask(object):
                        ignoreErrors=False, doSubmit=False):
         if logPath is None:
             logPath = self.getLogPath()
+        logFileName = os.path.basename(logPath)
+        # Fix problem with /mntdirect
         jobName = self.__class__.__name__
         errorLogFileName = jobName + ".err.txt"
-        errorLogPath = self._workingDirectory / errorLogFileName
-        commandLine += ' 1>{0} 2>{1}'.format(logPath, errorLogPath)
+        commandLine += ' 1>{0} 2>{1}'.format(logFileName, errorLogFileName)
         if listCommand is not None:
             commandLine += ' << EOF-EDNA2\n'
             for command in listCommand:
@@ -185,6 +186,9 @@ class AbstractTask(object):
         with open(str(commandLinePath), 'w') as f:
             f.write(commandLine)
         if doSubmit:
+            workingDir = str(self._workingDirectory)
+            if workingDir.startswith("/mntdirect/_users"):
+                workingDir = workingDir.replace("/mntdirect/_users", "/home/esrf")
             nodes = 1
             core = 20
             time = '0:10:00'
@@ -196,8 +200,9 @@ class AbstractTask(object):
             script += '#SBATCH --nodes={0}\n'.format(nodes)
             script += '#SBATCH --cpus-per-task={0}\n'.format(core)
             script += '#SBATCH --time={0}\n'.format(time)
-            script += '#SBATCH --output={0}/stdout.txt\n'.format(self._workingDirectory)
-            script += '#SBATCH --error={0}/stderr.txt\n'.format(self._workingDirectory)
+            script += '#SBATCH --chdir={0}\n'.format(workingDir)
+            script += '#SBATCH --output=stdout.txt\n'
+            script += '#SBATCH --error=stderr.txt\n'
             script += commandLine + '\n'
             shellFile = self._workingDirectory / (jobName + '_slurm.sh')
             with open(str(shellFile), 'w') as f:

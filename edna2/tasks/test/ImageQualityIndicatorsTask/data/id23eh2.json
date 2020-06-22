@@ -1,0 +1,13 @@
+{
+    "doDistlSignalStrength": false,
+    "doCrystfel": false,
+    "doIndexing": false,
+    "doUploadToIspyb": false,
+    "fastMesh": true,
+   	"directory": "/scisoft/pxsoft/data/WORKFLOW_TEST_DATA/id23eh2/inhouse/opid232/20200527/RAW_DATA/Sample-1-3-12/XrayCentering_01",
+	"template": "mesh-LRmesh_0_####.cbf",
+	"startNo": 1,
+	"endNo": 4592,
+    "batchSize": 80,
+    "doSubmit": true
+}
