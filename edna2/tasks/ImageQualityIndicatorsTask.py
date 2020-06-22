@@ -207,25 +207,6 @@ class ImageQualityIndicatorsTask(AbstractTask):
                         distlTask = DistlSignalStrengthTask(inData=inDataDistl)
                         distlTask.start()
                         listDistlTask.append((image, distlTask))
-                if doCrystfel:
-                    # a work around as autocryst module works with only json file/string
-                    inDataCrystFEL = {
-                        'doCBFtoH5': False,
-                        'doSubmit': doSubmit,
-                    }
-                    if len(listOfH5FilesInBatch) > 0:
-                        inDataCrystFEL['listH5FilePath'] = listOfH5FilesInBatch
-                    else:
-                        inDataCrystFEL['cbfFileInfo'] = {
-                            "directory": directory,
-                            "startNo": batchStartNo,
-                            "endNo": batchEndNo,
-                            "template": template,
-                            "batchSize": batchSize
-                        }
-                    crystfel = ExeCrystFEL(inData=inDataCrystFEL)
-                    crystfel.start()
-                    listCrystFELTask.append(crystfel)
 
         if not self.isFailure():
             # listIndexing = []
@@ -267,23 +248,32 @@ class ImageQualityIndicatorsTask(AbstractTask):
                 else:
                     listImageQualityIndicators += listOutDataControlDozor
 
-            if len(listCrystFELTask) != 0:
+        if not self.isFailure() and doCrystfel:
+            # Select only the strongest images to be run by CrystFEL
+            listIndicatorsSorted = sorted(listImageQualityIndicators, key=lambda k: k['dozorScore'])[::-1]
+            listForCrystFEL = [k['image'] for k in listIndicatorsSorted[0:min(200, len(listIndicatorsSorted))-1]]
+            # a work around as autocryst module works with only json file/string
+            inDataCrystFEL = {
+                'doCBFtoH5': False,
+                'cbfFileInfo': {
+                    'listofImages': listForCrystFEL
+                },
+                'doSubmit': doSubmit
+            }
+            crystfel = ExeCrystFEL(inData=inDataCrystFEL)
+            crystfel.execute()
+            if crystfel.isSuccess():
                 masterstream = str(self.getWorkingDirectory() / 'alltogether.stream')
-                try:
-                    for crystfel in listCrystFELTask:
-                        crystfel.join()
-                        catcommand = "cat %s >> %s" % (crystfel.outData['streamfile'], masterstream)
-                        AutoCrystFEL.run_as_command(catcommand)
+                catcommand = "cat %s >> %s" % (crystfel.outData['streamfile'], masterstream)
+                AutoCrystFEL.run_as_command(catcommand)
 
-                    if not self.isFailure() and os.path.exists(masterstream):
-                        crystfel_outdata = AutoCrystFEL.report_stats(masterstream)
-                        AutoCrystFEL.write_cell_file(crystfel_outdata)
-                        listcrystfel_output.append(crystfel_outdata)
-                    else:
-                        logger.error("CrystFEL did not run properly")
-                except Exception as err:
-                    self.setFailure()
-                    logger.error(err)
+                if not self.isFailure() and os.path.exists(masterstream):
+                    crystfel_outdata = AutoCrystFEL.report_stats(masterstream)
+                    AutoCrystFEL.write_cell_file(crystfel_outdata)
+                    listcrystfel_output.append(crystfel_outdata)
+                else:
+                    logger.error("CrystFEL did not run properly")
+
         outData['imageQualityIndicators'] = listImageQualityIndicators
         outData['crystfel_all_batches'] = listcrystfel_output
         return outData
