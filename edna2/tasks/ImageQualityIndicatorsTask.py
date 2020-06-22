@@ -256,6 +256,9 @@ class ImageQualityIndicatorsTask(AbstractTask):
             inDataCrystFEL = {
                 'doCBFtoH5': False,
                 'cbfFileInfo': {
+                    'directory': directory,
+                    'template': template,
+                    'batchSize': batchSize,
                     'listofImages': listForCrystFEL
                 },
                 'doSubmit': doSubmit
@@ -263,16 +266,18 @@ class ImageQualityIndicatorsTask(AbstractTask):
             crystfel = ExeCrystFEL(inData=inDataCrystFEL)
             crystfel.execute()
             if crystfel.isSuccess():
-                masterstream = str(self.getWorkingDirectory() / 'alltogether.stream')
-                catcommand = "cat %s >> %s" % (crystfel.outData['streamfile'], masterstream)
-                AutoCrystFEL.run_as_command(catcommand)
-
+                # masterstream = str(self.getWorkingDirectory() / 'alltogether.stream')
+                # catcommand = "cat %s >> %s" % (crystfel.outData['streamfile'], masterstream)
+                listcrystfel_output.append(crystfel.outData)
+                AutoCrystFEL.write_cell_file(crystfel.outData)
+                '''
                 if not self.isFailure() and os.path.exists(masterstream):
                     crystfel_outdata = AutoCrystFEL.report_stats(masterstream)
                     AutoCrystFEL.write_cell_file(crystfel_outdata)
                     listcrystfel_output.append(crystfel_outdata)
-                else:
-                    logger.error("CrystFEL did not run properly")
+                '''
+            else:
+                logger.error("CrystFEL did not run properly")
 
         outData['imageQualityIndicators'] = listImageQualityIndicators
         outData['crystfel_all_batches'] = listcrystfel_output
