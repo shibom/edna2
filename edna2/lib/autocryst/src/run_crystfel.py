@@ -126,6 +126,11 @@ class AutoCrystFEL(object):
                                    "type": "integer"
                                     }
                                },
+                "listofImages": {"type": "array",
+                                 "items": {
+                                     "type": "string"
+                                      }
+                                 },
                 "maxchunksize": {"type": "integer"},
                 "processing_directory": {"type": "string"},
                 "doSubmit": {"type": "boolean"},
@@ -300,6 +305,7 @@ class AutoCrystFEL(object):
 
     def datafinder(self):
         datadir = pathlib.Path(self.jshandle['image_directory'])
+        listofimagefiles = self.jshandle.get('listofImages', [])
         image_range = self.jshandle.get('ImageRange', ())
         if datadir.exists():
             if len(image_range) > 0:
@@ -307,6 +313,8 @@ class AutoCrystFEL(object):
                     imageName = self.jshandle['prefix'] + '{0:04d}'.format(index) + '.' + self.jshandle['suffix']
                     imagePath = datadir / imageName
                     self.filelist.append(imagePath.as_posix())
+            elif len(listofimagefiles) != 0:
+                self.filelist = listofimagefiles
             else:
                 listofimagefiles = list(datadir.glob(self.jshandle['prefix'] + '*' + self.jshandle['suffix']))
                 for fname in listofimagefiles:

@@ -60,7 +60,12 @@ class ExeCrystFEL(AbstractTask):
                     "template": {"type": "string"},
                     "startNo": {"type": "integer"},
                     "endNo": {"type": "integer"},
-                    "batchSize": {"type": "integer"}
+                    "batchSize": {"type": "integer"},
+                    "listofImages": {"type": "array",
+                                     "items": {
+                                         "type": "string"
+                                          }
+                                     },
                 },
                 "imageQualityIndicators": {
                     "type": "array",
@@ -125,8 +130,6 @@ class ExeCrystFEL(AbstractTask):
             os.chdir(self.getWorkingDirectory())
             streampath, crysttask = self.exeIndexing(inData)
             if os.path.exists(streampath):
-                outData = crysttask.report_stats(streampath)
-                crysttask.write_cell_file(outData)
                 outData['streamfile'] = streampath
                 outData['autoCryst'] = crysttask
             else:
@@ -150,13 +153,18 @@ class ExeCrystFEL(AbstractTask):
             in_for_crystfel['maxchunksize'] = 10
 
         elif 'cbfFileInfo' in inData.keys():
-            in_for_crystfel['maxchunksize'] = inData['cbfFileInfo']['batchSize']
+            in_for_crystfel['maxchunksize'] = inData['cbfFileInfo'].get('batchSize', 10)
             in_for_crystfel['image_directory'] = inData['cbfFileInfo']['directory']
             in_for_crystfel['prefix'] = inData['cbfFileInfo']['template'].strip('####.cbf')
             in_for_crystfel['suffix'] = UtilsImage.getSuffix(inData['cbfFileInfo']['template'])
-            in_for_crystfel['ImageRange'] = (inData['cbfFileInfo']['startNo'], inData['cbfFileInfo']['endNo'])
-            FirstImage = os.path.join(inData['cbfFileInfo']['directory'], inData['cbfFileInfo']['template'].
-                                      replace('####', '0001'))
+            in_for_crystfel['listofImages'] = inData['cbfFileInfo'].get('listofImages', [])
+            if len(in_for_crystfel['listofImages']) == 0:
+                in_for_crystfel['ImageRange'] = (inData['cbfFileInfo']['startNo'], inData['cbfFileInfo']['endNo'])
+                FirstImage = os.path.join(inData['cbfFileInfo']['directory'], inData['cbfFileInfo']['template'].
+                                          replace('####', '0001'))
+            else:
+                FirstImage = in_for_crystfel['listofImages'][0]
+
             Image = Im(FirstImage)
             in_for_crystfel['detectorType'] = Image.imobject.headers['detector_name'][0] + \
                                               Image.imobject.headers['detector_name'][1]
@@ -187,21 +195,18 @@ class ExeCrystFEL(AbstractTask):
                 geomfile = crysttask.make_geometry_file(**kk)
 
             crysttask.make_list_events(str(geomfile))
-            if len(crysttask.filelist) == in_for_crystfel['maxchunksize']:
-                infile = str(crysttask.getOutputDirectory() / 'input.lst')
-                outname = datetime.now().strftime('%H-%M-%S.stream')
-                outstream = str(crysttask.getOutputDirectory() / outname)
+            infile = str(crysttask.getOutputDirectory() / 'input.lst')
+            outname = datetime.now().strftime('%H-%M-%S.stream')
+            outstream = str(crysttask.getOutputDirectory() / outname)
 
-                ofh = open(infile, 'w')
-                for fname in crysttask.filelist:
-                    ofh.write(fname)
-                    ofh.write('\n')
-                ofh.close()
-                crystfel_cmd = crysttask.indexamajig_cmd(infile, outstream, geomfile)
-                self.runCommandLine(crystfel_cmd, doSubmit=inData.get('doSubmit', True))
-            else:
-                self.isFailure()
-                logger.error("crystfel_error: {}".format('Filelist not equal to batchSize'))
+            ofh = open(infile, 'w')
+            for fname in crysttask.filelist:
+                ofh.write(fname)
+                ofh.write('\n')
+            ofh.close()
+            crystfel_cmd = crysttask.indexamajig_cmd(infile, outstream, geomfile)
+            self.runCommandLine(crystfel_cmd, doSubmit=inData.get('doSubmit', True))
+
         except Exception as err:
             self.setFailure()
             logger.error(err)
