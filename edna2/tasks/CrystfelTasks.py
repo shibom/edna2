@@ -157,10 +157,10 @@ class ExeCrystFEL(AbstractTask):
         elif 'cbfFileInfo' in inData.keys():
             in_for_crystfel['maxchunksize'] = inData['cbfFileInfo'].get('batchSize', 10)
             in_for_crystfel['listofImages'] = inData['cbfFileInfo'].get('listofImages', [])
+            in_for_crystfel['image_directory'] = inData['cbfFileInfo']['directory']
+            in_for_crystfel['prefix'] = inData['cbfFileInfo']['template'].strip('####.cbf')
+            in_for_crystfel['suffix'] = UtilsImage.getSuffix(inData['cbfFileInfo']['template'])
             if len(in_for_crystfel['listofImages']) == 0:
-                in_for_crystfel['image_directory'] = inData['cbfFileInfo']['directory']
-                in_for_crystfel['prefix'] = inData['cbfFileInfo']['template'].strip('####.cbf')
-                in_for_crystfel['suffix'] = UtilsImage.getSuffix(inData['cbfFileInfo']['template'])
                 in_for_crystfel['ImageRange'] = (inData['cbfFileInfo']['startNo'], inData['cbfFileInfo']['endNo'])
                 FirstImage = os.path.join(inData['cbfFileInfo']['directory'], inData['cbfFileInfo']['template'].
                                           replace('####', '0001'))
