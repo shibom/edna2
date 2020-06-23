@@ -130,7 +130,7 @@ class ExeCrystFEL(AbstractTask):
             os.chdir(self.getWorkingDirectory())
             streampath, crysttask = self.exeIndexing(inData)
             if os.path.exists(streampath):
-                outData = crysttask.report_stats(streampath)
+                # outData = crysttask.report_stats(streampath)
                 outData['streamfile'] = streampath
                 outData['autoCryst'] = crysttask
 
