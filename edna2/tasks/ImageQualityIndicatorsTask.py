@@ -252,6 +252,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
             # Select only the strongest images to be run by CrystFEL
             listIndicatorsSorted = sorted(listImageQualityIndicators, key=lambda k: k['dozorScore'])[::-1]
             listForCrystFEL = [k['image'] for k in listIndicatorsSorted[0:min(200, len(listIndicatorsSorted))-1]]
+            print(len(listForCrystFEL))
             # a work around as autocryst module works with only json file/string
             inDataCrystFEL = {
                 'doCBFtoH5': False,

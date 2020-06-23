@@ -1,6 +1,6 @@
 {
     "doDistlSignalStrength": false,
-    "doCrystfel": false,
+    "doCrystfel": true,
     "doIndexing": false,
     "doUploadToIspyb": false,
     "fastMesh": true,

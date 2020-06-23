@@ -50,7 +50,7 @@ class CrystfelTaskExecTest(unittest.TestCase):
                      'Cannot run ImageQualityIndicatorsExecTest ' +
                      'test with default config')
     def test_execute_listOfImages(self):
-        referenceDataPath = self.dataPath / 'pilatus2m_10images_startEnd.json'
+        referenceDataPath = self.dataPath / 'pilatus2m_listimages.json'
         inData = UtilsTest.loadAndSubstitueTestData(referenceDataPath)
         task = ExeCrystFEL(inData=inData)
         task.execute()
