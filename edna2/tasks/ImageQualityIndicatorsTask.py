@@ -290,6 +290,7 @@ class ImageQualityIndicatorsTask(AbstractTask):
 
             if not self.isFailure() and os.path.exists(masterstream):
                 crystfel_outdata = AutoCrystFEL.report_stats(masterstream)
+                crystfel_outdata['number of DozorHits'] = len(listForCrystFEL)
                 AutoCrystFEL.write_cell_file(crystfel_outdata)
                 listcrystfel_output.append(crystfel_outdata)
             else:
