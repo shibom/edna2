@@ -585,18 +585,25 @@ class AutoCrystFEL(object):
             results['cellobject'] = cellobject
             try:
                 results['centering'] = cellobject.most_common_centering
-                lat, ua, cell_list = lattice_from_cell([cellobject.a_mode, cellobject.b_mode,
-                                                        cellobject.c_mode, cellobject.al_mode,
-                                                        cellobject.be_mode, cellobject.ga_mode])
-
                 results['num_indexed_frames'] = cellobject.cell_array.shape[0]
+                if cellobject.most_common_lattice_type == 'triclinic':
+                    lat, ua, cell_list = lattice_from_cell([cellobject.a_mode, cellobject.b_mode,
+                                                            cellobject.c_mode, cellobject.al_mode,
+                                                            cellobject.be_mode, cellobject.ga_mode])
 
-                assert isinstance(lat, str)
-                results['lattice'] = lat
-                assert isinstance(ua, str)
-                results['unique_axis'] = ua
-                assert isinstance(cell_list, list)
-                results['unit_cell'] = cell_list
+                    assert isinstance(lat, str)
+                    results['lattice'] = lat
+                    assert isinstance(ua, str)
+                    results['unique_axis'] = ua
+                    assert isinstance(cell_list, list)
+                    results['unit_cell'] = cell_list
+                else:
+                    results['lattice'] = cellobject.most_common_lattice_type
+                    results['unique_axis'] = cellobject.most_common_unique_axis
+                    results['unit_cell'] = [cellobject.a_mode, cellobject.b_mode,
+                                            cellobject.c_mode, cellobject.al_mode,
+                                            cellobject.be_mode, cellobject.ga_mode]
+                    
                 pg, sg_str, sg_num = assign_point_group(results['lattice'], results['centering'],
                                                         results['unique_axis'])
                 assert isinstance(pg, str)
