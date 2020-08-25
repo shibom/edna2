@@ -603,7 +603,7 @@ class AutoCrystFEL(object):
                     results['unit_cell'] = [cellobject.a_mode, cellobject.b_mode,
                                             cellobject.c_mode, cellobject.al_mode,
                                             cellobject.be_mode, cellobject.ga_mode]
-                    
+
                 pg, sg_str, sg_num = assign_point_group(results['lattice'], results['centering'],
                                                         results['unique_axis'])
                 assert isinstance(pg, str)

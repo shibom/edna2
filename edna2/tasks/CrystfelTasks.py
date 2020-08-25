@@ -132,7 +132,7 @@ class ExeCrystFEL(AbstractTask):
             if os.path.exists(streampath):
                 # outData = crysttask.report_stats(streampath)
                 outData['streamfile'] = streampath
-                outData['autoCryst'] = crysttask
+                # outData['autoCryst'] = crysttask
 
             else:
                 self.isFailure()
